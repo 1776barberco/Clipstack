@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase/client'
+import { supabase, DEMO_MODE, DEMO_USER } from '@/lib/supabase/client'
 import { startOfWeek, endOfWeek, format, subWeeks } from 'date-fns'
 
 type Expense = {
@@ -21,6 +21,82 @@ interface WeeklyExpenses {
   total: number
 }
 
+// Sample demo expenses
+const DEMO_EXPENSES: Expense[] = [
+  {
+    id: 'expense-1',
+    user_id: DEMO_USER.id,
+    bucket_id: 'bucket-4',
+    amount: 45.50,
+    description: 'Grocery shopping',
+    category: 'Food',
+    entry_date: format(new Date(), 'yyyy-MM-dd'),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    bucket_name: 'Spending',
+  },
+  {
+    id: 'expense-2',
+    user_id: DEMO_USER.id,
+    bucket_id: 'bucket-4',
+    amount: 120.00,
+    description: 'Office supplies',
+    category: 'Business',
+    entry_date: format(new Date(), 'yyyy-MM-dd'),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    bucket_name: 'Spending',
+  },
+  {
+    id: 'expense-3',
+    user_id: DEMO_USER.id,
+    bucket_id: 'bucket-4',
+    amount: 85.00,
+    description: 'Team lunch',
+    category: 'Food',
+    entry_date: format(subWeeks(new Date(), 1), 'yyyy-MM-dd'),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    bucket_name: 'Spending',
+  },
+  {
+    id: 'expense-4',
+    user_id: DEMO_USER.id,
+    bucket_id: 'bucket-4',
+    amount: 250.00,
+    description: 'Software subscription',
+    category: 'Tools',
+    entry_date: format(subWeeks(new Date(), 1), 'yyyy-MM-dd'),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    bucket_name: 'Spending',
+  },
+  {
+    id: 'expense-5',
+    user_id: DEMO_USER.id,
+    bucket_id: 'bucket-4',
+    amount: 60.00,
+    description: 'Gas',
+    category: 'Transport',
+    entry_date: format(subWeeks(new Date(), 2), 'yyyy-MM-dd'),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    bucket_name: 'Spending',
+  },
+  {
+    id: 'expense-6',
+    user_id: DEMO_USER.id,
+    bucket_id: 'bucket-4',
+    amount: 180.00,
+    description: 'Client dinner',
+    category: 'Business',
+    entry_date: format(subWeeks(new Date(), 3), 'yyyy-MM-dd'),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    bucket_name: 'Spending',
+  },
+]
+
 export function useExpenses(userId: string | undefined) {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [weeklyExpenses, setWeeklyExpenses] = useState<WeeklyExpenses[]>([])
@@ -28,7 +104,20 @@ export function useExpenses(userId: string | undefined) {
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
-    if (!userId || !supabase) {
+    if (!userId) {
+      setLoading(false)
+      return
+    }
+
+    // DEMO MODE: Use sample data
+    if (DEMO_MODE) {
+      setExpenses(DEMO_EXPENSES)
+      calculateWeeklyExpenses(DEMO_EXPENSES)
+      setLoading(false)
+      return
+    }
+
+    if (!supabase) {
       setLoading(false)
       return
     }
@@ -113,6 +202,38 @@ export function useExpenses(userId: string | undefined) {
   }, [userId])
 
   const addExpense = async (expense: Omit<Expense, 'id' | 'created_at' | 'updated_at'>) => {
+    if (DEMO_MODE) {
+      const newExpense: Expense = {
+        ...expense,
+        id: `expense-${Date.now()}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+      setExpenses(prev => [newExpense, ...prev])
+      // Recalculate weekly expenses
+      const updatedExpenses = [newExpense, ...expenses]
+      const weeklyMap = new Map<string, number>()
+      updatedExpenses.forEach((exp) => {
+        const date = new Date(exp.entry_date)
+        const weekStart = startOfWeek(date, { weekStartsOn: 1 })
+        const weekKey = format(weekStart, 'yyyy-MM-dd')
+        weeklyMap.set(weekKey, (weeklyMap.get(weekKey) || 0) + Number(exp.amount))
+      })
+      const weekly: WeeklyExpenses[] = []
+      for (let i = 0; i < 8; i++) {
+        const weekStart = subWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), i)
+        const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 })
+        const weekKey = format(weekStart, 'yyyy-MM-dd')
+        weekly.push({
+          weekStart: weekKey,
+          weekEnd: format(weekEnd, 'yyyy-MM-dd'),
+          total: weeklyMap.get(weekKey) || 0,
+        })
+      }
+      setWeeklyExpenses(weekly.reverse())
+      return { data: newExpense, error: null }
+    }
+
     if (!supabase) return { data: null, error: new Error('Supabase not initialized') }
     const { data, error } = await supabase
       .from('expenses')
@@ -124,6 +245,11 @@ export function useExpenses(userId: string | undefined) {
   }
 
   const updateExpense = async (id: string, updates: Partial<Expense>) => {
+    if (DEMO_MODE) {
+      setExpenses(prev => prev.map(e => e.id === id ? { ...e, ...updates, updated_at: new Date().toISOString() } : e))
+      return { data: expenses.find(e => e.id === id) || null, error: null }
+    }
+
     if (!supabase) return { data: null, error: new Error('Supabase not initialized') }
     const { data, error } = await supabase
       .from('expenses')
@@ -136,6 +262,11 @@ export function useExpenses(userId: string | undefined) {
   }
 
   const deleteExpense = async (id: string) => {
+    if (DEMO_MODE) {
+      setExpenses(prev => prev.filter(e => e.id !== id))
+      return { error: null }
+    }
+
     if (!supabase) return { error: new Error('Supabase not initialized') }
     const { error } = await supabase
       .from('expenses')

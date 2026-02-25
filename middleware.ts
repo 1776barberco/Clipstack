@@ -8,6 +8,12 @@ export async function middleware(request: NextRequest) {
     },
   })
 
+  // DEMO MODE: Skip all auth checks
+  const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+  if (DEMO_MODE) {
+    return response
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

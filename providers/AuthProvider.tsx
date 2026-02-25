@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { supabase } from '@/lib/supabase/client'
+import { supabase, DEMO_MODE, DEMO_USER } from '@/lib/supabase/client'
 import { User, Session } from '@supabase/supabase-js'
 import { useRouter, usePathname } from 'next/navigation'
 
@@ -15,6 +15,16 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+// Create a mock session for demo mode
+const DEMO_SESSION: Session = {
+  access_token: 'demo-token',
+  refresh_token: 'demo-refresh',
+  expires_in: 3600,
+  expires_at: Date.now() + 3600000,
+  token_type: 'bearer',
+  user: DEMO_USER as User,
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
@@ -23,6 +33,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname()
 
   useEffect(() => {
+    // DEMO MODE: Use mock user
+    if (DEMO_MODE) {
+      setUser(DEMO_USER as User)
+      setSession(DEMO_SESSION)
+      setLoading(false)
+      return
+    }
+
     if (!supabase) {
       setLoading(false)
       return
@@ -77,6 +95,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, loading, pathname, router])
 
   const signInWithMagicLink = async (email: string) => {
+    if (DEMO_MODE) {
+      // In demo mode, just redirect to dashboard
+      router.push('/dashboard')
+      return { error: null }
+    }
+
     if (!supabase) return { error: new Error('Supabase not initialized') }
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -88,6 +112,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = async () => {
+    if (DEMO_MODE) {
+      // In demo mode, just redirect to login
+      setUser(null)
+      setSession(null)
+      router.push('/login')
+      return { error: null }
+    }
+
     if (!supabase) return { error: new Error('Supabase not initialized') }
     const { error } = await supabase.auth.signOut()
     return { error }
