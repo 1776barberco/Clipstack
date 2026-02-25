@@ -350,9 +350,6 @@ CREATE POLICY "Users can view own weekly snapshots" ON weekly_snapshots FOR SELE
 CREATE POLICY "Users can view own notifications" ON notifications FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can update own notifications" ON notifications FOR UPDATE USING (auth.uid() = user_id);
 
--- Bucket balances view policy
-CREATE POLICY "Users can view own bucket balances" ON bucket_balances FOR SELECT USING (auth.uid() = user_id);
-
 -- ============================================
 -- SETUP COMPLETE!
 -- ============================================
