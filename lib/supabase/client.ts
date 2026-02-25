@@ -1,15 +1,17 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, User } from '@supabase/supabase-js'
 
 export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
 
-// Demo user for demo mode
-export const DEMO_USER = {
+// Demo user for demo mode - satisfies User type
+export const DEMO_USER: User = {
   id: 'demo-user-123',
   email: 'demo@clipstack.app',
   user_metadata: { full_name: 'Demo User' },
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
-}
+  app_metadata: {},
+  aud: 'authenticated',
+} as User
 
 let supabaseInstance: ReturnType<typeof createClient> | null = null
 

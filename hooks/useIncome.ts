@@ -51,26 +51,6 @@ const DEMO_INCOME: IncomeEntry[] = [
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
-  {
-    id: 'income-4',
-    user_id: DEMO_USER.id,
-    amount: 1500,
-    source: 'Side Project',
-    notes: 'SaaS revenue',
-    entry_date: format(subWeeks(new Date(), 2), 'yyyy-MM-dd'),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'income-5',
-    user_id: DEMO_USER.id,
-    amount: 3200,
-    source: 'Client Project',
-    notes: 'E-commerce integration',
-    entry_date: format(subWeeks(new Date(), 3), 'yyyy-MM-dd'),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
 ]
 
 export function useIncome(userId: string | undefined) {
@@ -78,6 +58,34 @@ export function useIncome(userId: string | undefined) {
   const [weeklyIncome, setWeeklyIncome] = useState<WeeklyIncome[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+
+  // Calculate weekly income helper function
+  const calculateWeeklyIncome = (incomeData: IncomeEntry[]) => {
+    const weeklyMap = new Map<string, number>()
+
+    incomeData.forEach((entry) => {
+      const date = new Date(entry.entry_date)
+      const weekStart = startOfWeek(date, { weekStartsOn: 1 })
+      const weekKey = format(weekStart, 'yyyy-MM-dd')
+
+      weeklyMap.set(weekKey, (weeklyMap.get(weekKey) || 0) + Number(entry.amount))
+    })
+
+    const weekly: WeeklyIncome[] = []
+    for (let i = 0; i < 8; i++) {
+      const weekStart = subWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), i)
+      const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 })
+      const weekKey = format(weekStart, 'yyyy-MM-dd')
+
+      weekly.push({
+        weekStart: weekKey,
+        weekEnd: format(weekEnd, 'yyyy-MM-dd'),
+        total: weeklyMap.get(weekKey) || 0,
+      })
+    }
+
+    setWeeklyIncome(weekly.reverse())
+  }
 
   useEffect(() => {
     if (!userId) {
@@ -109,41 +117,12 @@ export function useIncome(userId: string | undefined) {
 
         if (error) throw error
         setEntries((data as IncomeEntry[]) || [])
-
-        // Calculate weekly income
         calculateWeeklyIncome((data as IncomeEntry[]) || [])
       } catch (err) {
         setError(err as Error)
       } finally {
         setLoading(false)
       }
-    }
-
-    const calculateWeeklyIncome = (incomeData: IncomeEntry[]) => {
-      const weeklyMap = new Map<string, number>()
-
-      incomeData.forEach((entry) => {
-        const date = new Date(entry.entry_date)
-        const weekStart = startOfWeek(date, { weekStartsOn: 1 })
-        const weekKey = format(weekStart, 'yyyy-MM-dd')
-
-        weeklyMap.set(weekKey, (weeklyMap.get(weekKey) || 0) + Number(entry.amount))
-      })
-
-      const weekly: WeeklyIncome[] = []
-      for (let i = 0; i < 8; i++) {
-        const weekStart = subWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), i)
-        const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 })
-        const weekKey = format(weekStart, 'yyyy-MM-dd')
-
-        weekly.push({
-          weekStart: weekKey,
-          weekEnd: format(weekEnd, 'yyyy-MM-dd'),
-          total: weeklyMap.get(weekKey) || 0,
-        })
-      }
-
-      setWeeklyIncome(weekly.reverse())
     }
 
     fetchIncome()
@@ -178,28 +157,9 @@ export function useIncome(userId: string | undefined) {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }
-      setEntries(prev => [newIncome, ...prev])
-      // Recalculate weekly income
       const updatedEntries = [newIncome, ...entries]
-      const weeklyMap = new Map<string, number>()
-      updatedEntries.forEach((entry) => {
-        const date = new Date(entry.entry_date)
-        const weekStart = startOfWeek(date, { weekStartsOn: 1 })
-        const weekKey = format(weekStart, 'yyyy-MM-dd')
-        weeklyMap.set(weekKey, (weeklyMap.get(weekKey) || 0) + Number(entry.amount))
-      })
-      const weekly: WeeklyIncome[] = []
-      for (let i = 0; i < 8; i++) {
-        const weekStart = subWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), i)
-        const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 })
-        const weekKey = format(weekStart, 'yyyy-MM-dd')
-        weekly.push({
-          weekStart: weekKey,
-          weekEnd: format(weekEnd, 'yyyy-MM-dd'),
-          total: weeklyMap.get(weekKey) || 0,
-        })
-      }
-      setWeeklyIncome(weekly.reverse())
+      setEntries(updatedEntries)
+      calculateWeeklyIncome(updatedEntries)
       return { data: newIncome, error: null }
     }
 
@@ -232,7 +192,9 @@ export function useIncome(userId: string | undefined) {
 
   const deleteIncome = async (id: string) => {
     if (DEMO_MODE) {
-      setEntries(prev => prev.filter(e => e.id !== id))
+      const updatedEntries = entries.filter(e => e.id !== id)
+      setEntries(updatedEntries)
+      calculateWeeklyIncome(updatedEntries)
       return { error: null }
     }
 

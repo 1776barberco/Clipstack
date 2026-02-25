@@ -22,7 +22,7 @@ const DEMO_SESSION: Session = {
   expires_in: 3600,
   expires_at: Date.now() + 3600000,
   token_type: 'bearer',
-  user: DEMO_USER as User,
+  user: DEMO_USER,
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

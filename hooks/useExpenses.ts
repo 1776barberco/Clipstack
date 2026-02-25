@@ -59,42 +59,6 @@ const DEMO_EXPENSES: Expense[] = [
     updated_at: new Date().toISOString(),
     bucket_name: 'Spending',
   },
-  {
-    id: 'expense-4',
-    user_id: DEMO_USER.id,
-    bucket_id: 'bucket-4',
-    amount: 250.00,
-    description: 'Software subscription',
-    category: 'Tools',
-    entry_date: format(subWeeks(new Date(), 1), 'yyyy-MM-dd'),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    bucket_name: 'Spending',
-  },
-  {
-    id: 'expense-5',
-    user_id: DEMO_USER.id,
-    bucket_id: 'bucket-4',
-    amount: 60.00,
-    description: 'Gas',
-    category: 'Transport',
-    entry_date: format(subWeeks(new Date(), 2), 'yyyy-MM-dd'),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    bucket_name: 'Spending',
-  },
-  {
-    id: 'expense-6',
-    user_id: DEMO_USER.id,
-    bucket_id: 'bucket-4',
-    amount: 180.00,
-    description: 'Client dinner',
-    category: 'Business',
-    entry_date: format(subWeeks(new Date(), 3), 'yyyy-MM-dd'),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    bucket_name: 'Spending',
-  },
 ]
 
 export function useExpenses(userId: string | undefined) {
@@ -102,6 +66,34 @@ export function useExpenses(userId: string | undefined) {
   const [weeklyExpenses, setWeeklyExpenses] = useState<WeeklyExpenses[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+
+  // Calculate weekly expenses helper function
+  const calculateWeeklyExpenses = (expenseData: Expense[]) => {
+    const weeklyMap = new Map<string, number>()
+
+    expenseData.forEach((expense) => {
+      const date = new Date(expense.entry_date)
+      const weekStart = startOfWeek(date, { weekStartsOn: 1 })
+      const weekKey = format(weekStart, 'yyyy-MM-dd')
+
+      weeklyMap.set(weekKey, (weeklyMap.get(weekKey) || 0) + Number(expense.amount))
+    })
+
+    const weekly: WeeklyExpenses[] = []
+    for (let i = 0; i < 8; i++) {
+      const weekStart = subWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), i)
+      const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 })
+      const weekKey = format(weekStart, 'yyyy-MM-dd')
+
+      weekly.push({
+        weekStart: weekKey,
+        weekEnd: format(weekEnd, 'yyyy-MM-dd'),
+        total: weeklyMap.get(weekKey) || 0,
+      })
+    }
+
+    setWeeklyExpenses(weekly.reverse())
+  }
 
   useEffect(() => {
     if (!userId) {
@@ -150,33 +142,6 @@ export function useExpenses(userId: string | undefined) {
       }
     }
 
-    const calculateWeeklyExpenses = (expenseData: Expense[]) => {
-      const weeklyMap = new Map<string, number>()
-
-      expenseData.forEach((expense) => {
-        const date = new Date(expense.entry_date)
-        const weekStart = startOfWeek(date, { weekStartsOn: 1 })
-        const weekKey = format(weekStart, 'yyyy-MM-dd')
-
-        weeklyMap.set(weekKey, (weeklyMap.get(weekKey) || 0) + Number(expense.amount))
-      })
-
-      const weekly: WeeklyExpenses[] = []
-      for (let i = 0; i < 8; i++) {
-        const weekStart = subWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), i)
-        const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 })
-        const weekKey = format(weekStart, 'yyyy-MM-dd')
-
-        weekly.push({
-          weekStart: weekKey,
-          weekEnd: format(weekEnd, 'yyyy-MM-dd'),
-          total: weeklyMap.get(weekKey) || 0,
-        })
-      }
-
-      setWeeklyExpenses(weekly.reverse())
-    }
-
     fetchExpenses()
 
     // Subscribe to realtime changes
@@ -209,28 +174,9 @@ export function useExpenses(userId: string | undefined) {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }
-      setExpenses(prev => [newExpense, ...prev])
-      // Recalculate weekly expenses
       const updatedExpenses = [newExpense, ...expenses]
-      const weeklyMap = new Map<string, number>()
-      updatedExpenses.forEach((exp) => {
-        const date = new Date(exp.entry_date)
-        const weekStart = startOfWeek(date, { weekStartsOn: 1 })
-        const weekKey = format(weekStart, 'yyyy-MM-dd')
-        weeklyMap.set(weekKey, (weeklyMap.get(weekKey) || 0) + Number(exp.amount))
-      })
-      const weekly: WeeklyExpenses[] = []
-      for (let i = 0; i < 8; i++) {
-        const weekStart = subWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), i)
-        const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 })
-        const weekKey = format(weekStart, 'yyyy-MM-dd')
-        weekly.push({
-          weekStart: weekKey,
-          weekEnd: format(weekEnd, 'yyyy-MM-dd'),
-          total: weeklyMap.get(weekKey) || 0,
-        })
-      }
-      setWeeklyExpenses(weekly.reverse())
+      setExpenses(updatedExpenses)
+      calculateWeeklyExpenses(updatedExpenses)
       return { data: newExpense, error: null }
     }
 
@@ -263,7 +209,9 @@ export function useExpenses(userId: string | undefined) {
 
   const deleteExpense = async (id: string) => {
     if (DEMO_MODE) {
-      setExpenses(prev => prev.filter(e => e.id !== id))
+      const updatedExpenses = expenses.filter(e => e.id !== id)
+      setExpenses(updatedExpenses)
+      calculateWeeklyExpenses(updatedExpenses)
       return { error: null }
     }
 
