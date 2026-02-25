@@ -1,0 +1,58 @@
+import { QuickIncomeEntry } from '@/components/QuickIncomeEntry'
+import { QuickExpenseEntry } from '@/components/QuickExpenseEntry'
+import { BucketBalances } from '@/components/BucketBalances'
+import { StabilityMeter } from '@/components/StabilityMeter'
+import { BoothRentCard } from '@/components/BoothRentCard'
+import { TaxEstimateCard } from '@/components/TaxEstimateCard'
+import { WeeklyChart } from '@/components/WeeklyChart'
+import { RecentTransactions } from '@/components/RecentTransactions'
+import { UserMenu } from '@/components/UserMenu'
+import { WithdrawButton } from '@/components/WithdrawButton'
+import { Scissors } from 'lucide-react'
+
+export default function DashboardPage() {
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
+              <Scissors className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <span className="text-xl font-bold">ClipStack</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <WithdrawButton />
+            <UserMenu />
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto p-4">
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Left Column */}
+          <div className="space-y-6">
+            <QuickIncomeEntry />
+            <QuickExpenseEntry />
+            <BucketBalances />
+          </div>
+
+          {/* Middle Column */}
+          <div className="space-y-6">
+            <StabilityMeter />
+            <BoothRentCard />
+            <TaxEstimateCard />
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-6">
+            <WeeklyChart />
+            <RecentTransactions />
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
