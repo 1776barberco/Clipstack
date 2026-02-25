@@ -1,6 +1,7 @@
 import { createClient, User } from '@supabase/supabase-js'
 
-export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+// Check both env var and explicit false check
+export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || false
 
 // Demo user for demo mode - satisfies User type
 export const DEMO_USER: User = {
@@ -17,7 +18,7 @@ let supabaseInstance: ReturnType<typeof createClient> | null = null
 
 export function getSupabaseClient() {
   if (DEMO_MODE) {
-    // Return a mock client that does nothing in demo mode
+    console.log('DEMO_MODE is active, returning null client')
     return null as any
   }
 
@@ -26,8 +27,11 @@ export function getSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+  console.log('Supabase URL exists:', !!supabaseUrl)
+  console.log('Supabase Anon Key exists:', !!supabaseAnonKey)
+
   if (!supabaseUrl || !supabaseAnonKey) {
-    // Return a mock client during build time
+    console.error('Missing Supabase credentials')
     return null as any
   }
 
