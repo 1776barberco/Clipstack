@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { supabase, DEMO_MODE, DEMO_USER } from '@/lib/supabase/client'
 import { User, Session } from '@supabase/supabase-js'
 import { useRouter, usePathname } from 'next/navigation'
-import { signInWithOtp, signUpWithPassword, signInWithPasswordAction, signOutAction } from '@/app/actions/auth'
+import { signInWithOtp, signUpWithPassword, signInWithPasswordAction, signOutAction, resetPassword as resetPasswordAction } from '@/app/actions/auth'
 
 interface AuthContextType {
   user: User | null
@@ -13,6 +13,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>
   signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>
   signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>
+  resetPassword: (email: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<{ error: Error | null }>
 }
 
@@ -134,6 +135,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null }
   }
 
+  const resetPassword = async (email: string) => {
+    if (DEMO_MODE) {
+      return { error: null }
+    }
+
+    const result = await resetPasswordAction(email)
+    if (result.error) {
+      return { error: new Error(result.error) }
+    }
+    return { error: null }
+  }
+
   const signOut = async () => {
     if (DEMO_MODE) {
       setUser(null)
@@ -161,6 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signUp,
         signInWithPassword,
         signInWithMagicLink,
+        resetPassword,
         signOut,
       }}
     >

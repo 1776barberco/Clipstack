@@ -68,3 +68,19 @@ export async function signOutAction() {
 
   return { error: null }
 }
+
+export async function resetPassword(email: string) {
+  const supabase = await createClient()
+  const headersList = await headers()
+  const origin = headersList.get('origin') || ''
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/api/auth/callback?next=/reset-password`,
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  return { error: null }
+}
