@@ -1,0 +1,43 @@
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
+import { headers } from 'next/headers'
+
+export async function signInWithOtp(email: string) {
+  const supabase = await createClient()
+  const headersList = await headers()
+  const origin = headersList.get('origin') || ''
+
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: `${origin}/api/auth/callback`,
+    },
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  return { error: null }
+}
+
+export async function signUpWithPassword(email: string, password: string) {
+  const supabase = await createClient()
+  const headersList = await headers()
+  const origin = headersList.get('origin') || ''
+
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: `${origin}/api/auth/callback`,
+    },
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  return { error: null }
+}

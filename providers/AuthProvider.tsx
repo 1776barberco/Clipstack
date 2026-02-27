@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { supabase, DEMO_MODE, DEMO_USER } from '@/lib/supabase/client'
 import { User, Session } from '@supabase/supabase-js'
 import { useRouter, usePathname } from 'next/navigation'
+import { signInWithOtp, signUpWithPassword } from '@/app/actions/auth'
 
 interface AuthContextType {
   user: User | null
@@ -99,15 +100,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: null }
     }
 
-    if (!supabase) return { error: new Error('Supabase not initialized') }
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
-      },
-    })
-    return { error }
+    const result = await signUpWithPassword(email, password)
+    if (result.error) {
+      return { error: new Error(result.error) }
+    }
+    return { error: null }
   }
 
   const signInWithPassword = async (email: string, password: string) => {
@@ -130,14 +127,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: null }
     }
 
-    if (!supabase) return { error: new Error('Supabase not initialized') }
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
-      },
-    })
-    return { error }
+    const result = await signInWithOtp(email)
+    if (result.error) {
+      return { error: new Error(result.error) }
+    }
+    return { error: null }
   }
 
   const signOut = async () => {

@@ -13,9 +13,8 @@ function LoginContent() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const code = searchParams.get('code')
     const errorParam = searchParams.get('error')
-    
+
     if (errorParam) {
       setError(errorParam)
       setChecking(false)
@@ -27,34 +26,7 @@ function LoginContent() {
       return
     }
 
-    // PKCE flow: exchange the auth code for a session client-side
-    // (the code_verifier is stored in this browser's localStorage)
-    if (code) {
-      const exchange = async () => {
-        const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
-        if (exchangeError || !data.session) {
-          setError(exchangeError?.message ?? 'Authentication failed. Please try again.')
-          setChecking(false)
-          return
-        }
-
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('id', data.session.user.id)
-          .single()
-
-        if (!profile?.full_name) {
-          router.push('/onboarding')
-        } else {
-          router.push('/dashboard')
-        }
-      }
-      exchange()
-      return
-    }
-
-    // No auth params, check if already logged in
+    // Check if already logged in
     supabase.auth.getSession().then(async ({ data: { session } }: { data: { session: Session | null } }) => {
       if (session) {
         const { data: profile } = await supabase
