@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('profiles')
         .select('full_name')
         .eq('id', userId)
-        .single()
+        .maybeSingle()
 
       if (!profile?.full_name) {
         router.push('/onboarding')
@@ -119,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               .from('profiles')
               .select('full_name')
               .eq('id', session.user.id)
-              .single()
+              .maybeSingle()
 
             if (!profile?.full_name) {
               router.push('/onboarding')
