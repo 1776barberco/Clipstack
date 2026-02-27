@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthContext } from '@/providers/AuthProvider'
-import { supabase } from '@/lib/supabase/client'
+import { completeOnboarding } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -65,37 +65,18 @@ export function OnboardingForm() {
   }
 
   const handleComplete = async () => {
-    if (!user || !supabase) return
+    if (!user) return
 
     setLoading(true)
 
     try {
-      // Create profile
-      const { error: profileError } = await supabase.from('profiles').upsert({
-        id: user.id,
-        email: user.email!,
-        full_name: fullName,
-        booth_rent_amount: boothRent ? parseFloat(boothRent) : null,
-        booth_rent_due_day: dueDay ? parseInt(dueDay) : null,
-      } as any, { onConflict: 'id' })
+      const result = await completeOnboarding({
+        fullName: fullName,
+        boothRent: boothRent ? parseFloat(boothRent) : null,
+        dueDay: dueDay ? parseInt(dueDay) : null,
+      })
 
-      if (profileError) throw profileError
-
-      // Create bucket templates
-      const bucketInserts = BUCKET_TEMPLATES.map((template) => ({
-        user_id: user.id,
-        name: template.name,
-        percentage: template.percentage,
-        color: template.color,
-        priority: template.priority,
-        is_tax_bucket: template.is_tax_bucket || false,
-      }))
-
-      const { error: bucketsError } = await supabase
-        .from('bucket_configs')
-        .insert(bucketInserts as any)
-
-      if (bucketsError) throw bucketsError
+      if (result.error) throw new Error(result.error)
 
       toast.success('Welcome to TipJars!')
       router.push('/dashboard')

@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get('next') ?? '/dashboard'
 
   if (code) {
-    const response = NextResponse.redirect(`${origin}${next}`)
+    const cookieStore: { name: string; value: string; options: CookieOptions }[] = []
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,17 +18,30 @@ export async function GET(request: NextRequest) {
             return request.cookies.get(name)?.value
           },
           set(name: string, value: string, options: CookieOptions) {
-            response.cookies.set({ name, value, ...options })
+            cookieStore.push({ name, value, options })
           },
           remove(name: string, options: CookieOptions) {
-            response.cookies.set({ name, value: '', ...options })
+            cookieStore.push({ name, value: '', options })
           },
         },
       }
     )
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
+    const { data: { user }, error } = await supabase.auth.exchangeCodeForSession(code)
+    if (!error && user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      const destination = profile?.full_name ? next : '/onboarding'
+      const response = NextResponse.redirect(`${origin}${destination}`)
+
+      for (const cookie of cookieStore) {
+        response.cookies.set({ name: cookie.name, value: cookie.value, ...cookie.options })
+      }
+
       return response
     }
   }

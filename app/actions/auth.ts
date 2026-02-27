@@ -100,3 +100,53 @@ export async function resetPassword(email: string) {
 
   return { error: null }
 }
+
+export async function completeOnboarding(data: {
+  fullName: string
+  boothRent: number | null
+  dueDay: number | null
+}) {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return { error: 'Not authenticated' }
+  }
+
+  const { error: profileError } = await supabase.from('profiles').upsert({
+    id: user.id,
+    email: user.email!,
+    full_name: data.fullName,
+    booth_rent_amount: data.boothRent,
+    booth_rent_due_day: data.dueDay,
+  } as any, { onConflict: 'id' })
+
+  if (profileError) {
+    return { error: profileError.message }
+  }
+
+  const { data: existingBuckets } = await supabase
+    .from('bucket_configs')
+    .select('id')
+    .eq('user_id', user.id)
+    .limit(1)
+
+  if (!existingBuckets || existingBuckets.length === 0) {
+    const bucketTemplates = [
+      { user_id: user.id, name: 'Essentials', percentage: 50, color: '#3b82f6', priority: 1, is_tax_bucket: false },
+      { user_id: user.id, name: 'Taxes', percentage: 25, color: '#ef4444', priority: 2, is_tax_bucket: true },
+      { user_id: user.id, name: 'Savings', percentage: 15, color: '#22c55e', priority: 3, is_tax_bucket: false },
+      { user_id: user.id, name: 'Fun', percentage: 10, color: '#f59e0b', priority: 4, is_tax_bucket: false },
+    ]
+
+    const { error: bucketsError } = await supabase
+      .from('bucket_configs')
+      .insert(bucketTemplates as any)
+
+    if (bucketsError) {
+      return { error: bucketsError.message }
+    }
+  }
+
+  return { error: null }
+}
