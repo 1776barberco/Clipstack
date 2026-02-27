@@ -150,3 +150,24 @@ export async function completeOnboarding(data: {
 
   return { error: null }
 }
+
+export async function updateProfileAction(updates: Record<string, unknown>) {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return { error: 'Not authenticated' }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from('profiles')
+    .update(updates)
+    .eq('id', user.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  return { error: null }
+}

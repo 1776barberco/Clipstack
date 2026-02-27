@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useProfile } from '@/hooks/useProfile'
 import { useBuckets } from '@/hooks/useBuckets'
+import { updateProfileAction } from '@/app/actions/auth'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -65,10 +66,10 @@ export default function SettingsPage() {
       return
     }
 
-    const { error } = await updateProfile(updates)
+    const result = await updateProfileAction(updates)
     setSavingProfile(false)
 
-    if (error) {
+    if (result.error) {
       toast.error('Failed to update profile.')
     } else {
       setFullName(null)
