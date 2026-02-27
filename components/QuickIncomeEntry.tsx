@@ -20,7 +20,11 @@ export function QuickIncomeEntry() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!amount || !user) return
+    if (!amount) return
+    if (!user) {
+      toast.error('You must be signed in to add income.')
+      return
+    }
 
     setLoading(true)
     const { error } = await addIncome({
@@ -33,7 +37,8 @@ export function QuickIncomeEntry() {
     setLoading(false)
 
     if (error) {
-      toast.error('Failed to add income')
+      console.error('Income insert error:', error)
+      toast.error(`Failed to add income: ${error.message || 'Unknown error'}`)
     } else {
       toast.success('Income added!')
       setAmount('')

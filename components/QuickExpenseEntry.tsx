@@ -30,7 +30,11 @@ export function QuickExpenseEntry({ defaultBucketId, onSuccess }: QuickExpenseEn
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!amount || !bucketId || !user) return
+    if (!amount || !bucketId) return
+    if (!user) {
+      toast.error('You must be signed in to add an expense.')
+      return
+    }
 
     setLoading(true)
     const { error } = await addExpense({
@@ -44,7 +48,8 @@ export function QuickExpenseEntry({ defaultBucketId, onSuccess }: QuickExpenseEn
     setLoading(false)
 
     if (error) {
-      toast.error('Failed to add expense')
+      console.error('Expense insert error:', error)
+      toast.error(`Failed to add expense: ${error.message || 'Unknown error'}`)
     } else {
       toast.success('Expense added!')
       setAmount('')
