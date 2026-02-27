@@ -4,24 +4,40 @@ import { LoginForm } from '@/components/LoginForm'
 import { useEffect, useState, Suspense } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 
 function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [checking, setChecking] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const code = searchParams.get('code')
+    const errorParam = searchParams.get('error')
     
-    // Handle PKCE flow: code in query params
-    if (code && supabase) {
-      const exchangeCode = async () => {
-        const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-        if (!error && data.session) {
+    if (errorParam) {
+      setError(errorParam)
+      setChecking(false)
+      return
+    }
+
+    if (!supabase) {
+      setChecking(false)
+      return
+    }
+
+    // If there's a code param or hash fragment, Supabase's detectSessionInUrl
+    // will auto-exchange it. We just listen for the auth state change.
+    if (code || (typeof window !== 'undefined' && window.location.hash.includes('access_token'))) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
+        if (event === 'SIGNED_IN' && session) {
+          subscription.unsubscribe()
+          // Check if user needs onboarding
           const { data: profile } = await supabase
             .from('profiles')
             .select('full_name')
-            .eq('id', data.session.user.id)
+            .eq('id', session.user.id)
             .single()
 
           if (!profile?.full_name) {
@@ -29,44 +45,40 @@ function LoginContent() {
           } else {
             router.push('/dashboard')
           }
-          return
         }
-        console.error('Code exchange error:', error)
+      })
+
+      // Timeout after 10 seconds
+      const timeout = setTimeout(() => {
+        subscription.unsubscribe()
+        setError('Authentication timed out. Please try again.')
         setChecking(false)
+      }, 10000)
+
+      return () => {
+        subscription.unsubscribe()
+        clearTimeout(timeout)
       }
-      exchangeCode()
-      return
     }
 
-    // Handle implicit flow: access_token in hash fragment
-    if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
-      if (supabase) {
-        const checkSession = async () => {
-          await new Promise(resolve => setTimeout(resolve, 500))
-          const { data: { session } } = await supabase.auth.getSession()
-          if (session) {
-            window.history.replaceState(null, '', window.location.pathname)
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('full_name')
-              .eq('id', session.user.id)
-              .single()
+    // No auth params, check if already logged in
+    supabase.auth.getSession().then(async ({ data: { session } }: { data: { session: Session | null } }) => {
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', session.user.id)
+          .single()
 
-            if (!profile?.full_name) {
-              router.push('/onboarding')
-            } else {
-              router.push('/dashboard')
-            }
-            return
-          }
-          setChecking(false)
+        if (!profile?.full_name) {
+          router.push('/onboarding')
+        } else {
+          router.push('/dashboard')
         }
-        checkSession()
         return
       }
-    }
-
-    setChecking(false)
+      setChecking(false)
+    })
   }, [router, searchParams])
 
   if (checking) {
@@ -79,6 +91,11 @@ function LoginContent() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 p-4 dark:from-zinc-900 dark:to-zinc-800">
+      {error && (
+        <div className="absolute top-4 mx-auto rounded bg-red-100 px-4 py-2 text-sm text-red-700">
+          {error}
+        </div>
+      )}
       <LoginForm />
     </div>
   )
