@@ -41,3 +41,18 @@ export async function signUpWithPassword(email: string, password: string) {
 
   return { error: null }
 }
+
+export async function signInWithPasswordAction(email: string, password: string) {
+  const supabase = await createClient()
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  return { error: null }
+}
