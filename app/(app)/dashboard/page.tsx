@@ -1,3 +1,4 @@
+import { Footer } from '@/components/Footer'
 import { QuickIncomeEntry } from '@/components/QuickIncomeEntry'
 import { QuickExpenseEntry } from '@/components/QuickExpenseEntry'
 import { BucketBalances } from '@/components/BucketBalances'
@@ -55,6 +56,8 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   )
 }
