@@ -4,7 +4,16 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { supabase, DEMO_MODE, DEMO_USER } from '@/lib/supabase/client'
 import { User, Session } from '@supabase/supabase-js'
 import { useRouter, usePathname } from 'next/navigation'
-import { signInWithOtp, signUpWithPassword, signInWithPasswordAction, signOutAction, resetPassword as resetPasswordAction, getServerSession } from '@/app/actions/auth'
+import {
+  signInWithOtp,
+  signUpWithPassword,
+  signInWithPasswordAction,
+  signOutAction,
+  resetPassword as resetPasswordAction,
+  getServerSession,
+  checkOnboardingStatus,
+  ensureProfileExists,
+} from '@/app/actions/auth'
 
 interface AuthContextType {
   user: User | null
@@ -48,22 +57,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    const checkOnboarding = async (userId: string) => {
+    const handleOnboardingCheck = async () => {
       const publicPaths = ['/login', '/api/auth', '/onboarding', '/reset-password']
       if (publicPaths.some((p) => window.location.pathname.startsWith(p))) return
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', userId)
-        .maybeSingle()
-
-      if (!profile?.full_name) {
+      const status = await checkOnboardingStatus()
+      if (status.authenticated && status.needsOnboarding) {
         router.push('/onboarding')
       }
     }
 
-    // Get initial session - try browser client first, then sync from server cookies
     const initSession = async () => {
       const { data: { session: browserSession } } = await supabase.auth.getSession()
 
@@ -71,11 +74,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(browserSession)
         setUser(browserSession.user)
         setLoading(false)
-        await checkOnboarding(browserSession.user.id)
+        await handleOnboardingCheck()
         return
       }
 
-      // Browser client has no session - try syncing from server cookies
       const serverResult = await getServerSession()
       if (serverResult.session) {
         const { data, error } = await supabase.auth.setSession({
@@ -86,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setSession(data.session)
           setUser(data.session.user)
           setLoading(false)
-          await checkOnboarding(data.session.user.id)
+          await handleOnboardingCheck()
           return
         }
       }
@@ -95,33 +97,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     initSession()
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event: string, session: Session | null) => {
-        setSession(session)
-        setUser(session?.user ?? null)
+      async (event: string, newSession: Session | null) => {
+        setSession(newSession)
+        setUser(newSession?.user ?? null)
         setLoading(false)
 
         if (event === 'SIGNED_IN') {
-          if (session?.user && !window.location.pathname.startsWith('/reset-password')) {
-            // Ensure a profile row exists (upsert to avoid FK violations on other tables)
-            await supabase
-              .from('profiles')
-              .upsert(
-                {
-                  id: session.user.id,
-                  email: session.user.email ?? '',
-                },
-                { onConflict: 'id', ignoreDuplicates: true }
-              )
+          if (newSession?.user && !window.location.pathname.startsWith('/reset-password')) {
+            await ensureProfileExists()
 
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('full_name')
-              .eq('id', session.user.id)
-              .maybeSingle()
-
-            if (!profile?.full_name) {
+            const status = await checkOnboardingStatus()
+            if (status.needsOnboarding) {
               router.push('/onboarding')
             } else {
               router.push('/dashboard')
@@ -136,7 +123,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [router])
 
-  // Redirect unauthenticated users
   useEffect(() => {
     if (!loading && !user) {
       const publicPaths = ['/login', '/api/auth']
@@ -165,13 +151,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: null }
     }
 
-    // Sign in server-side (sets cookies for middleware/SSR)
     const result = await signInWithPasswordAction(email, password)
     if (result.error) {
       return { error: new Error(result.error) }
     }
 
-    // Also sign in on the browser client (for RLS on client-side DB calls)
     if (supabase) {
       const { data, error: clientError } = await supabase.auth.signInWithPassword({ email, password })
       if (!clientError && data.session) {
@@ -180,7 +164,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    router.push('/dashboard')
+    // Check onboarding status before deciding where to redirect
+    await ensureProfileExists()
+    const status = await checkOnboardingStatus()
+    if (status.needsOnboarding) {
+      router.push('/onboarding')
+    } else {
+      router.push('/dashboard')
+    }
+
     return { error: null }
   }
 
@@ -217,7 +209,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: null }
     }
 
-    // Sign out on both server (cookies) and browser (localStorage)
     if (supabase) {
       await supabase.auth.signOut()
     }

@@ -269,3 +269,41 @@ export async function fetchBucketsAction() {
     error: configsRes.error?.message || balancesRes.error?.message || null,
   }
 }
+
+export async function checkOnboardingStatus() {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return { needsOnboarding: false, authenticated: false }
+  }
+
+  const { data: profile } = await (supabase as any)
+    .from('profiles')
+    .select('full_name')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  return {
+    needsOnboarding: !profile?.full_name,
+    authenticated: true,
+  }
+}
+
+export async function ensureProfileExists() {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return { error: 'Not authenticated' }
+  }
+
+  await (supabase as any)
+    .from('profiles')
+    .upsert(
+      { id: user.id, email: user.email ?? '' },
+      { onConflict: 'id', ignoreDuplicates: true }
+    )
+
+  return { error: null }
+}
