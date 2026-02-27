@@ -1,13 +1,12 @@
 -- ============================================
--- CLIPSTACK DATABASE SETUP - ALL MIGRATIONS
+-- CLIPSTACK DATABASE SETUP - FIXED MIGRATION
 -- Run this entire file in Supabase SQL Editor
 -- ============================================
 
 -- ============================================
--- 1. INITIAL SCHEMA (001_initial_schema.sql)
+-- 1. TABLES
 -- ============================================
 
--- Profiles table
 CREATE TABLE IF NOT EXISTS profiles (
   id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email text NOT NULL,
@@ -20,7 +19,6 @@ CREATE TABLE IF NOT EXISTS profiles (
   updated_at timestamptz DEFAULT now()
 );
 
--- Bucket configs table
 CREATE TABLE IF NOT EXISTS bucket_configs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -34,7 +32,6 @@ CREATE TABLE IF NOT EXISTS bucket_configs (
   updated_at timestamptz DEFAULT now()
 );
 
--- Income entries table
 CREATE TABLE IF NOT EXISTS income_entries (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -46,7 +43,6 @@ CREATE TABLE IF NOT EXISTS income_entries (
   updated_at timestamptz DEFAULT now()
 );
 
--- Expenses table
 CREATE TABLE IF NOT EXISTS expenses (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -59,7 +55,6 @@ CREATE TABLE IF NOT EXISTS expenses (
   updated_at timestamptz DEFAULT now()
 );
 
--- Bucket transactions table
 CREATE TABLE IF NOT EXISTS bucket_transactions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -71,7 +66,6 @@ CREATE TABLE IF NOT EXISTS bucket_transactions (
   created_at timestamptz DEFAULT now()
 );
 
--- Weekly snapshots table
 CREATE TABLE IF NOT EXISTS weekly_snapshots (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -83,7 +77,6 @@ CREATE TABLE IF NOT EXISTS weekly_snapshots (
   created_at timestamptz DEFAULT now()
 );
 
--- Notifications table
 CREATE TABLE IF NOT EXISTS notifications (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -112,7 +105,7 @@ CREATE INDEX IF NOT EXISTS idx_bucket_transactions_income ON bucket_transactions
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, created_at DESC);
 
 -- ============================================
--- 3. VIEWS
+-- 3. VIEW
 -- ============================================
 
 CREATE OR REPLACE VIEW bucket_balances AS
@@ -139,7 +132,6 @@ GROUP BY bc.id, bc.user_id, bc.name, bc.color, bc.percentage, e.total_expenses;
 -- 4. FUNCTIONS
 -- ============================================
 
--- Function to allocate income to buckets
 CREATE OR REPLACE FUNCTION allocate_income_to_buckets(
   p_user_id uuid,
   p_income_entry_id uuid,
@@ -155,13 +147,11 @@ DECLARE
   v_remaining decimal := p_amount;
   v_tax_bucket_id uuid;
 BEGIN
-  -- Get tax bucket first
   SELECT id INTO v_tax_bucket_id
   FROM bucket_configs
   WHERE user_id = p_user_id AND is_tax_bucket = true
   LIMIT 1;
 
-  -- Allocate to each bucket based on percentage
   FOR v_bucket IN 
     SELECT id, percentage, is_tax_bucket
     FROM bucket_configs
@@ -186,7 +176,6 @@ BEGIN
     END IF;
   END LOOP;
 
-  -- If there's any remaining amount, put it in the first non-tax bucket
   IF v_remaining > 0 THEN
     INSERT INTO bucket_transactions (
       user_id, bucket_id, income_entry_id, amount, type, description
@@ -206,7 +195,6 @@ BEGIN
 END;
 $$;
 
--- Function to calculate stability score
 CREATE OR REPLACE FUNCTION get_stability_score(p_user_id uuid)
 RETURNS decimal
 LANGUAGE plpgsql
@@ -218,13 +206,11 @@ DECLARE
   v_score decimal;
   v_week_start date;
 BEGIN
-  -- Calculate average weekly income over last 8 weeks
   SELECT AVG(total_income) INTO v_avg_weekly_income
   FROM weekly_snapshots
   WHERE user_id = p_user_id
   AND week_start >= CURRENT_DATE - INTERVAL '8 weeks';
 
-  -- Get current week's income
   v_week_start := CURRENT_DATE - EXTRACT(DOW FROM CURRENT_DATE)::integer;
   
   SELECT COALESCE(SUM(amount), 0) INTO v_current_week_income
@@ -232,7 +218,6 @@ BEGIN
   WHERE user_id = p_user_id
   AND entry_date >= v_week_start;
 
-  -- Calculate stability score (0-100)
   IF v_avg_weekly_income IS NULL OR v_avg_weekly_income = 0 THEN
     v_score := 50;
   ELSE
@@ -313,43 +298,124 @@ ALTER TABLE weekly_snapshots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
--- 7. RLS POLICIES
+-- 7. RLS POLICIES (with DROP IF EXISTS to avoid duplicates)
 -- ============================================
 
--- Profiles policies
+-- Profiles
+DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
 CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
 CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
--- Bucket configs policies
+-- Bucket configs
+DROP POLICY IF EXISTS "Users can view own bucket configs" ON bucket_configs;
 CREATE POLICY "Users can view own bucket configs" ON bucket_configs FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can create own bucket configs" ON bucket_configs;
 CREATE POLICY "Users can create own bucket configs" ON bucket_configs FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own bucket configs" ON bucket_configs;
 CREATE POLICY "Users can update own bucket configs" ON bucket_configs FOR UPDATE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can delete own bucket configs" ON bucket_configs;
 CREATE POLICY "Users can delete own bucket configs" ON bucket_configs FOR DELETE USING (auth.uid() = user_id);
 
--- Income entries policies
+-- Income entries
+DROP POLICY IF EXISTS "Users can view own income entries" ON income_entries;
 CREATE POLICY "Users can view own income entries" ON income_entries FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can create own income entries" ON income_entries;
 CREATE POLICY "Users can create own income entries" ON income_entries FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own income entries" ON income_entries;
 CREATE POLICY "Users can update own income entries" ON income_entries FOR UPDATE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can delete own income entries" ON income_entries;
 CREATE POLICY "Users can delete own income entries" ON income_entries FOR DELETE USING (auth.uid() = user_id);
 
--- Expenses policies
+-- Expenses
+DROP POLICY IF EXISTS "Users can view own expenses" ON expenses;
 CREATE POLICY "Users can view own expenses" ON expenses FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can create own expenses" ON expenses;
 CREATE POLICY "Users can create own expenses" ON expenses FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own expenses" ON expenses;
 CREATE POLICY "Users can update own expenses" ON expenses FOR UPDATE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can delete own expenses" ON expenses;
 CREATE POLICY "Users can delete own expenses" ON expenses FOR DELETE USING (auth.uid() = user_id);
 
--- Bucket transactions policies
+-- Bucket transactions
+DROP POLICY IF EXISTS "Users can view own transactions" ON bucket_transactions;
 CREATE POLICY "Users can view own transactions" ON bucket_transactions FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can create own transactions" ON bucket_transactions;
 CREATE POLICY "Users can create own transactions" ON bucket_transactions FOR INSERT WITH CHECK (auth.uid() = user_id);
 
--- Weekly snapshots policies
+DROP POLICY IF EXISTS "Users can update own transactions" ON bucket_transactions;
+CREATE POLICY "Users can update own transactions" ON bucket_transactions FOR UPDATE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can delete own transactions" ON bucket_transactions;
+CREATE POLICY "Users can delete own transactions" ON bucket_transactions FOR DELETE USING (auth.uid() = user_id);
+
+-- Weekly snapshots
+DROP POLICY IF EXISTS "Users can view own weekly snapshots" ON weekly_snapshots;
 CREATE POLICY "Users can view own weekly snapshots" ON weekly_snapshots FOR SELECT USING (auth.uid() = user_id);
 
--- Notifications policies
+DROP POLICY IF EXISTS "Users can create own weekly snapshots" ON weekly_snapshots;
+CREATE POLICY "Users can create own weekly snapshots" ON weekly_snapshots FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Notifications
+DROP POLICY IF EXISTS "Users can view own notifications" ON notifications;
 CREATE POLICY "Users can view own notifications" ON notifications FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own notifications" ON notifications;
 CREATE POLICY "Users can update own notifications" ON notifications FOR UPDATE USING (auth.uid() = user_id);
 
 -- ============================================
--- SETUP COMPLETE!
+-- 8. CRON JOBS (run separately if pg_cron is enabled)
+-- Uncomment and update YOUR-PROJECT-REF and YOUR-SERVICE-ROLE-KEY
+-- ============================================
+
+-- SELECT cron.schedule(
+--   'booth-rent-reminder',
+--   '0 9 * * *',
+--   $$
+--   SELECT net.http_post(
+--     url:='https://YOUR-PROJECT-REF.supabase.co/functions/v1/booth-rent-reminder',
+--     headers:='{"Authorization": "Bearer YOUR-SERVICE-ROLE-KEY", "Content-Type": "application/json"}'::jsonb
+--   ) AS request_id;
+--   $$
+-- );
+
+-- SELECT cron.schedule(
+--   'weekly-snapshot',
+--   '59 23 * * 0',
+--   $$
+--   INSERT INTO weekly_snapshots (user_id, week_start, week_end, total_income, bucket_balances, stability_score)
+--   SELECT 
+--     p.id,
+--     CURRENT_DATE - EXTRACT(DOW FROM CURRENT_DATE)::integer,
+--     CURRENT_DATE,
+--     COALESCE(SUM(ie.amount), 0),
+--     jsonb_object_agg(bb.bucket_id, bb.current_balance),
+--     (SELECT get_stability_score(p.id))
+--   FROM profiles p
+--   LEFT JOIN income_entries ie ON p.id = ie.user_id 
+--     AND ie.entry_date >= CURRENT_DATE - EXTRACT(DOW FROM CURRENT_DATE)::integer
+--   LEFT JOIN bucket_balances bb ON p.id = bb.user_id
+--   GROUP BY p.id;
+--   $$
+-- );
+
+-- ============================================
+-- SETUP COMPLETE! ✅
+-- Tables: profiles, bucket_configs, income_entries, expenses,
+--         bucket_transactions, weekly_snapshots, notifications
+-- View:   bucket_balances
 -- ============================================

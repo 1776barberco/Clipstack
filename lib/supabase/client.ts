@@ -1,7 +1,7 @@
 import { createClient, User } from '@supabase/supabase-js'
 
-// Check both env var and explicit false check
-export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || false
+// Demo mode disabled - use real Supabase auth
+export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
 
 // Demo user for demo mode - satisfies User type
 export const DEMO_USER: User = {
@@ -27,9 +27,6 @@ export function getSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  console.log('Supabase URL exists:', !!supabaseUrl)
-  console.log('Supabase Anon Key exists:', !!supabaseAnonKey)
-
   if (!supabaseUrl || !supabaseAnonKey) {
     console.error('Missing Supabase credentials')
     return null as any
@@ -40,6 +37,7 @@ export function getSupabaseClient() {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
+      flowType: 'pkce',
     },
   })
 
