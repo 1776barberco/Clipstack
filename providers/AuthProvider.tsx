@@ -114,10 +114,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: null }
     }
 
+    // Sign in server-side (sets cookies for middleware/SSR)
     const result = await signInWithPasswordAction(email, password)
     if (result.error) {
       return { error: new Error(result.error) }
     }
+
+    // Also sign in on the browser client (for RLS on client-side DB calls)
+    if (supabase) {
+      await supabase.auth.signInWithPassword({ email, password })
+    }
+
     router.push('/dashboard')
     return { error: null }
   }
@@ -155,6 +162,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: null }
     }
 
+    // Sign out on both server (cookies) and browser (localStorage)
+    if (supabase) {
+      await supabase.auth.signOut()
+    }
     const result = await signOutAction()
     if (result.error) {
       return { error: new Error(result.error) }
