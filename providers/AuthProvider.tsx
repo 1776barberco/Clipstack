@@ -119,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       options: {
         // Redirect back to login page - the AuthProvider will detect the
         // hash fragment token and handle the session automatically
-        emailRedirectTo: `${window.location.origin}/login`,
+        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
       },
     })
     return { error }
