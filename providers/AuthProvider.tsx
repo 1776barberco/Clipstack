@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { supabase, DEMO_MODE, DEMO_USER } from '@/lib/supabase/client'
 import { User, Session } from '@supabase/supabase-js'
 import { useRouter, usePathname } from 'next/navigation'
-import { signInWithOtp, signUpWithPassword, signInWithPasswordAction } from '@/app/actions/auth'
+import { signInWithOtp, signUpWithPassword, signInWithPasswordAction, signOutAction } from '@/app/actions/auth'
 
 interface AuthContextType {
   user: User | null
@@ -142,9 +142,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: null }
     }
 
-    if (!supabase) return { error: new Error('Supabase not initialized') }
-    const { error } = await supabase.auth.signOut()
-    return { error }
+    const result = await signOutAction()
+    if (result.error) {
+      return { error: new Error(result.error) }
+    }
+    setUser(null)
+    setSession(null)
+    router.push('/login')
+    return { error: null }
   }
 
   return (

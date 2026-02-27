@@ -56,3 +56,15 @@ export async function signInWithPasswordAction(email: string, password: string) 
 
   return { error: null }
 }
+
+export async function signOutAction() {
+  const supabase = await createClient()
+
+  const { error } = await supabase.auth.signOut()
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  return { error: null }
+}
