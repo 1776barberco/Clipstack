@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
       // The supabase client with detectSessionInUrl will handle this automatically
       // Just need to make sure we wait for it
-      supabase.auth.getSession().then(({ data: { session } }) => {
+      supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
         if (session) {
           setSession(session)
           setUser(session.user)
