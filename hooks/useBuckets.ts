@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase, DEMO_MODE, DEMO_USER } from '@/lib/supabase/client'
+import { fetchBucketsAction } from '@/app/actions/auth'
 
 type BucketConfig = {
   id: string
@@ -153,23 +154,10 @@ export function useBuckets(userId: string | undefined) {
 
     const fetchBuckets = async () => {
       try {
-        const [configsRes, balancesRes] = await Promise.all([
-          supabase
-            .from('bucket_configs')
-            .select('*')
-            .eq('user_id', userId)
-            .order('priority', { ascending: false }),
-          supabase
-            .from('bucket_balances')
-            .select('*')
-            .eq('user_id', userId),
-        ])
-
-        if (configsRes.error) throw configsRes.error
-        if (balancesRes.error) throw balancesRes.error
-
-        setBuckets((configsRes.data as BucketConfig[]) || [])
-        setBalances((balancesRes.data as BucketBalance[]) || [])
+        const result = await fetchBucketsAction()
+        if (result.error) throw new Error(result.error)
+        setBuckets((result.buckets as BucketConfig[]) || [])
+        setBalances((result.balances as BucketBalance[]) || [])
       } catch (err) {
         setError(err as Error)
       } finally {

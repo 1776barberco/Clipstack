@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useProfile } from '@/hooks/useProfile'
 import { useBuckets } from '@/hooks/useBuckets'
-import { updateProfileAction } from '@/app/actions/auth'
+import { updateProfileAction, createBucketAction, updateBucketAction, deleteBucketAction, fetchBucketsAction } from '@/app/actions/auth'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -105,8 +105,8 @@ export default function SettingsPage() {
       if (changes.percentage !== undefined) updates.percentage = parseFloat(changes.percentage)
       if (changes.color !== undefined) updates.color = changes.color
 
-      const { error } = await updateBucket(id, updates)
-      if (error) {
+      const result = await updateBucketAction(id, updates)
+      if (result.error) {
         toast.error(`Failed to update jar.`)
         setSavingBuckets(false)
         return
@@ -116,6 +116,15 @@ export default function SettingsPage() {
     setEditedBuckets({})
     setSavingBuckets(false)
     toast.success('Jars updated!')
+    refreshBuckets()
+  }
+
+  const refreshBuckets = async () => {
+    const result = await fetchBucketsAction()
+    if (!result.error) {
+      // Force re-render by navigating
+      window.location.reload()
+    }
   }
 
   const handleAddBucket = async () => {
@@ -124,8 +133,7 @@ export default function SettingsPage() {
     const currentTotal = buckets.reduce((sum, b) => sum + b.percentage, 0)
     const remaining = Math.max(0, 100 - currentTotal)
 
-    const { error } = await createBucket({
-      user_id: user.id,
+    const result = await createBucketAction({
       name: 'New Jar',
       percentage: remaining,
       target_amount: null,
@@ -134,22 +142,24 @@ export default function SettingsPage() {
       color: '#6b7280',
     })
 
-    if (error) {
+    if (result.error) {
       toast.error('Failed to add jar.')
     } else {
       toast.success('Jar added!')
+      refreshBuckets()
     }
   }
 
   const handleDeleteBucket = async (id: string, name: string) => {
-    const { error } = await deleteBucket(id)
-    if (error) {
+    const result = await deleteBucketAction(id)
+    if (result.error) {
       toast.error(`Failed to delete ${name}.`)
     } else {
       const updated = { ...editedBuckets }
       delete updated[id]
       setEditedBuckets(updated)
       toast.success(`${name} deleted.`)
+      refreshBuckets()
     }
   }
 
