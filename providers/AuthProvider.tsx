@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false)
 
         if (event === 'SIGNED_IN') {
-          if (session?.user) {
+          if (session?.user && !window.location.pathname.startsWith('/reset-password')) {
             const { data: profile } = await supabase
               .from('profiles')
               .select('full_name')
