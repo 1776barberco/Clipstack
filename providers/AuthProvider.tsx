@@ -9,6 +9,8 @@ interface AuthContextType {
   user: User | null
   session: Session | null
   loading: boolean
+  signUp: (email: string, password: string) => Promise<{ error: Error | null }>
+  signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>
   signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<{ error: Error | null }>
 }
@@ -42,22 +44,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase) {
       setLoading(false)
       return
-    }
-
-    // Check for hash fragment tokens (implicit flow from magic link)
-    // This handles the case where Supabase redirects with #access_token=...
-    if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
-      // The supabase client with detectSessionInUrl will handle this automatically
-      // Just need to make sure we wait for it
-      supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
-        if (session) {
-          setSession(session)
-          setUser(session.user)
-          setLoading(false)
-          // Clean the URL
-          window.history.replaceState(null, '', window.location.pathname)
-        }
-      })
     }
 
     // Get initial session
@@ -107,6 +93,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, loading, pathname, router])
 
+  const signUp = async (email: string, password: string) => {
+    if (DEMO_MODE) {
+      router.push('/dashboard')
+      return { error: null }
+    }
+
+    if (!supabase) return { error: new Error('Supabase not initialized') }
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+      },
+    })
+    return { error }
+  }
+
+  const signInWithPassword = async (email: string, password: string) => {
+    if (DEMO_MODE) {
+      router.push('/dashboard')
+      return { error: null }
+    }
+
+    if (!supabase) return { error: new Error('Supabase not initialized') }
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+    return { error }
+  }
+
   const signInWithMagicLink = async (email: string) => {
     if (DEMO_MODE) {
       router.push('/dashboard')
@@ -117,8 +134,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        // Redirect back to login page - the AuthProvider will detect the
-        // hash fragment token and handle the session automatically
         emailRedirectTo: `${window.location.origin}/api/auth/callback`,
       },
     })
@@ -144,6 +159,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         session,
         loading,
+        signUp,
+        signInWithPassword,
         signInWithMagicLink,
         signOut,
       }}

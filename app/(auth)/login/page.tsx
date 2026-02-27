@@ -4,7 +4,7 @@ import { LoginForm } from '@/components/LoginForm'
 import { useEffect, useState, Suspense } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
-import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
+import type { Session } from '@supabase/supabase-js'
 
 function LoginContent() {
   const router = useRouter()
@@ -27,38 +27,31 @@ function LoginContent() {
       return
     }
 
-    // If there's a code param or hash fragment, Supabase's detectSessionInUrl
-    // will auto-exchange it. We just listen for the auth state change.
-    if (code || (typeof window !== 'undefined' && window.location.hash.includes('access_token'))) {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
-        if (event === 'SIGNED_IN' && session) {
-          subscription.unsubscribe()
-          // Check if user needs onboarding
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('full_name')
-            .eq('id', session.user.id)
-            .single()
-
-          if (!profile?.full_name) {
-            router.push('/onboarding')
-          } else {
-            router.push('/dashboard')
-          }
+    // PKCE flow: exchange the auth code for a session client-side
+    // (the code_verifier is stored in this browser's localStorage)
+    if (code) {
+      const exchange = async () => {
+        const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+        if (exchangeError || !data.session) {
+          setError(exchangeError?.message ?? 'Authentication failed. Please try again.')
+          setChecking(false)
+          return
         }
-      })
 
-      // Timeout after 10 seconds
-      const timeout = setTimeout(() => {
-        subscription.unsubscribe()
-        setError('Authentication timed out. Please try again.')
-        setChecking(false)
-      }, 10000)
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', data.session.user.id)
+          .single()
 
-      return () => {
-        subscription.unsubscribe()
-        clearTimeout(timeout)
+        if (!profile?.full_name) {
+          router.push('/onboarding')
+        } else {
+          router.push('/dashboard')
+        }
       }
+      exchange()
+      return
     }
 
     // No auth params, check if already logged in
