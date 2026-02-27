@@ -30,26 +30,28 @@ export default function DashboardPage() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto p-4">
+      <main className="container mx-auto p-4 space-y-6">
+        {/* Top Row: Quick actions + Stats */}
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Left Column */}
-          <div className="space-y-6">
-            <QuickIncomeEntry />
-            <QuickExpenseEntry />
+          <QuickIncomeEntry />
+          <QuickExpenseEntry />
+          <StabilityMeter />
+        </div>
+
+        {/* Middle Row: Charts + Financial info */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <WeeklyChart />
+          <RecentTransactions />
+        </div>
+
+        {/* Bottom Row: Jars + Rent/Tax details */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
             <BucketBalances />
           </div>
-
-          {/* Middle Column */}
           <div className="space-y-6">
-            <StabilityMeter />
             <BoothRentCard />
             <TaxEstimateCard />
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-6">
-            <WeeklyChart />
-            <RecentTransactions />
           </div>
         </div>
       </main>

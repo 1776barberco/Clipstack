@@ -44,7 +44,7 @@ export function BucketBalances() {
           <p className="text-3xl font-bold">{formatCurrency(totalBalance)}</p>
         </div>
 
-        <div className="space-y-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           {buckets.map((bucket) => (
             <BucketCard
               key={bucket.id}
