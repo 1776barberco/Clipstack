@@ -2,6 +2,14 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 
 export async function middleware(request: NextRequest) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  // If env vars are missing, skip auth check to avoid crashing
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return NextResponse.next()
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -9,8 +17,8 @@ export async function middleware(request: NextRequest) {
   })
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         get(name: string) {
@@ -40,7 +48,7 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const publicPaths = ['/login', '/api/auth/callback', '/auth/callback']
+  const publicPaths = ['/login', '/api/auth', '/onboarding']
   const isPublicPath = publicPaths.some((path) => request.nextUrl.pathname.startsWith(path))
 
   // If not authenticated and not on a public path, redirect to login
@@ -50,7 +58,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // If authenticated and on login page, redirect to dashboard
+  // If authenticated and on login page (without hash - server can't see hash),
+  // redirect to dashboard
   if (user && request.nextUrl.pathname === '/login') {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'

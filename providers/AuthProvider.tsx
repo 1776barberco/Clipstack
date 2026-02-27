@@ -15,7 +15,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Create a mock session for demo mode
 const DEMO_SESSION: Session = {
   access_token: 'demo-token',
   refresh_token: 'demo-refresh',
@@ -33,7 +32,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname()
 
   useEffect(() => {
-    // DEMO MODE: Use mock user
     if (DEMO_MODE) {
       setUser(DEMO_USER as User)
       setSession(DEMO_SESSION)
@@ -44,6 +42,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase) {
       setLoading(false)
       return
+    }
+
+    // Check for hash fragment tokens (implicit flow from magic link)
+    // This handles the case where Supabase redirects with #access_token=...
+    if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
+      // The supabase client with detectSessionInUrl will handle this automatically
+      // Just need to make sure we wait for it
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setSession(session)
+          setUser(session.user)
+          setLoading(false)
+          // Clean the URL
+          window.history.replaceState(null, '', window.location.pathname)
+        }
+      })
     }
 
     // Get initial session
@@ -61,7 +75,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false)
 
         if (event === 'SIGNED_IN') {
-          // Check if user has completed onboarding
           if (session?.user) {
             const { data: profile } = await supabase
               .from('profiles')
@@ -87,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Redirect unauthenticated users
   useEffect(() => {
     if (!loading && !user) {
-      const publicPaths = ['/login', '/auth/callback']
+      const publicPaths = ['/login', '/api/auth']
       if (!publicPaths.some((path) => pathname?.startsWith(path))) {
         router.push('/login')
       }
@@ -96,7 +109,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithMagicLink = async (email: string) => {
     if (DEMO_MODE) {
-      // In demo mode, just redirect to dashboard
       router.push('/dashboard')
       return { error: null }
     }
@@ -105,7 +117,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+        // Redirect back to login page - the AuthProvider will detect the
+        // hash fragment token and handle the session automatically
+        emailRedirectTo: `${window.location.origin}/login`,
       },
     })
     return { error }
@@ -113,7 +127,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     if (DEMO_MODE) {
-      // In demo mode, just redirect to login
       setUser(null)
       setSession(null)
       router.push('/login')
