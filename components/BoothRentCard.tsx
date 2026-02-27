@@ -68,7 +68,7 @@ export function BoothRentCard() {
 
           {isDueSoon && (
             <p className="text-sm text-amber-600">
-              Your booth rent is due soon. Make sure you have enough in your Essentials bucket!
+              Your booth rent is due soon. Make sure you have enough in your Essentials jar!
             </p>
           )}
         </div>

@@ -97,7 +97,7 @@ export function OnboardingForm() {
 
       if (bucketsError) throw bucketsError
 
-      toast.success('Welcome to ClipStack!')
+      toast.success('Welcome to TipJars!')
       router.push('/dashboard')
     } catch (error) {
       toast.error('Something went wrong. Please try again.')
@@ -166,7 +166,7 @@ export function OnboardingForm() {
         return (
           <div className="space-y-4">
             <p className="text-muted-foreground">
-              We&apos;ll set up your default buckets based on the 50/25/15/10 rule:
+              We&apos;ll set up your default jars based on the 50/25/15/10 rule:
             </p>
             <div className="space-y-2">
               {BUCKET_TEMPLATES.map((bucket) => (

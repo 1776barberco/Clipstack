@@ -1,6 +1,6 @@
 {
-  "name": "ClipStack",
-  "short_name": "ClipStack",
+  "name": "TipJars",
+  "short_name": "TipJars",
   "description": "Smart budgeting for barbers and beauty professionals",
   "start_url": "/dashboard",
   "display": "standalone",

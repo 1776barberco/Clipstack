@@ -81,7 +81,7 @@ export default function SettingsPage() {
 
   const handleSaveBuckets = async () => {
     if (Object.keys(editedBuckets).length === 0) {
-      toast.info('No bucket changes to save.')
+      toast.info('No jar changes to save.')
       return
     }
 
@@ -92,7 +92,7 @@ export default function SettingsPage() {
     }, 0)
 
     if (Math.abs(totalPercentage - 100) > 0.01) {
-      toast.error(`Bucket percentages must total 100%. Currently: ${totalPercentage}%`)
+      toast.error(`Jar percentages must total 100%. Currently: ${totalPercentage}%`)
       return
     }
 
@@ -106,7 +106,7 @@ export default function SettingsPage() {
 
       const { error } = await updateBucket(id, updates)
       if (error) {
-        toast.error(`Failed to update bucket.`)
+        toast.error(`Failed to update jar.`)
         setSavingBuckets(false)
         return
       }
@@ -114,7 +114,7 @@ export default function SettingsPage() {
 
     setEditedBuckets({})
     setSavingBuckets(false)
-    toast.success('Buckets updated!')
+    toast.success('Jars updated!')
   }
 
   const handleAddBucket = async () => {
@@ -125,7 +125,7 @@ export default function SettingsPage() {
 
     const { error } = await createBucket({
       user_id: user.id,
-      name: 'New Bucket',
+      name: 'New Jar',
       percentage: remaining,
       target_amount: null,
       is_tax_bucket: false,
@@ -134,9 +134,9 @@ export default function SettingsPage() {
     })
 
     if (error) {
-      toast.error('Failed to add bucket.')
+      toast.error('Failed to add jar.')
     } else {
-      toast.success('Bucket added!')
+      toast.success('Jar added!')
     }
   }
 
@@ -297,9 +297,9 @@ export default function SettingsPage() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <DollarSign className="h-5 w-5" />
-                  Buckets
+                  Jars
                 </CardTitle>
-                <CardDescription>Configure how income is split across buckets. Percentages must total 100%.</CardDescription>
+                <CardDescription>Configure how income is split across jars. Percentages must total 100%.</CardDescription>
               </div>
               <Button variant="outline" size="sm" onClick={handleAddBucket}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -352,7 +352,7 @@ export default function SettingsPage() {
                 </span>
                 <Button onClick={handleSaveBuckets} disabled={savingBuckets}>
                   <Save className="mr-2 h-4 w-4" />
-                  {savingBuckets ? 'Saving...' : 'Save Buckets'}
+                  {savingBuckets ? 'Saving...' : 'Save Jars'}
                 </Button>
               </div>
             )}

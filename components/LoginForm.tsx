@@ -108,7 +108,7 @@ export function LoginForm() {
     switch (mode) {
       case 'sign-up': return 'Create Account'
       case 'forgot-password': return 'Reset Password'
-      default: return 'Welcome to ClipStack'
+      default: return 'Welcome to TipJars'
     }
   }
 

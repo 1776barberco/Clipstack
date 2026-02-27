@@ -58,8 +58,8 @@ serve(async (req) => {
         type: 'booth_rent_reminder',
         title: 'Booth Rent Due Tomorrow',
         message: hasEnoughFunds
-          ? `Your booth rent of $${user.booth_rent_amount} is due tomorrow. You have sufficient funds in your Essentials bucket.`
-          : `Your booth rent of $${user.booth_rent_amount} is due tomorrow. You may need to transfer funds to your Essentials bucket.`,
+          ? `Your booth rent of $${user.booth_rent_amount} is due tomorrow. You have sufficient funds in your Essentials jar.`
+          : `Your booth rent of $${user.booth_rent_amount} is due tomorrow. You may need to transfer funds to your Essentials jar.`,
         data: {
           booth_rent_amount: user.booth_rent_amount,
           essentials_balance: essentialsBalance,

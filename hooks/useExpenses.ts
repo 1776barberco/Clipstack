@@ -130,7 +130,7 @@ export function useExpenses(userId: string | undefined) {
         
         const formattedData = (data || []).map((expense: any) => ({
           ...expense,
-          bucket_name: expense.bucket_configs?.name || 'Unknown Bucket'
+          bucket_name: expense.bucket_configs?.name || 'Unknown Jar'
         }))
         
         setExpenses(formattedData)

@@ -30,7 +30,7 @@ export function useRulesEngine(userId: string | undefined) {
     if (!bucket) {
       return {
         canAfford: false,
-        reason: 'Bucket not found',
+        reason: 'Jar not found',
         suggestedMaxAmount: 0,
         currentBalance: 0,
         projectedBalance: 0,
@@ -57,7 +57,7 @@ export function useRulesEngine(userId: string | undefined) {
       const projectedBalance = currentBalance - amount
       return {
         canAfford: true,
-        reason: 'Warning: Withdrawing from tax bucket may affect quarterly tax payments',
+        reason: 'Warning: Withdrawing from tax jar may affect quarterly tax payments',
         suggestedMaxAmount: availableAfterBuffer,
         currentBalance,
         projectedBalance,

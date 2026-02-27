@@ -6,7 +6,7 @@ export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
 // Demo user for demo mode - satisfies User type
 export const DEMO_USER: User = {
   id: 'demo-user-123',
-  email: 'demo@clipstack.app',
+  email: 'demo@tipjars.app',
   user_metadata: { full_name: 'Demo User' },
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),

@@ -15,7 +15,7 @@ export function BucketBalances() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Bucket Balances</CardTitle>
+          <CardTitle>Jar Balances</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -35,7 +35,7 @@ export function BucketBalances() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Wallet className="h-5 w-5" />
-          Bucket Balances
+          Jar Balances
         </CardTitle>
       </CardHeader>
       <CardContent>

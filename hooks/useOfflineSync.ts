@@ -9,8 +9,8 @@ interface QueuedAction {
   retryCount: number
 }
 
-const QUEUE_KEY = 'clipstack_offline_queue'
-const LAST_SYNC_KEY = 'clipstack_last_sync'
+const QUEUE_KEY = 'tipjars_offline_queue'
+const LAST_SYNC_KEY = 'tipjars_last_sync'
 
 export function useOfflineSync(userId: string | undefined) {
   const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true)

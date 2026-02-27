@@ -104,10 +104,10 @@ export function QuickExpenseEntry({ defaultBucketId, onSuccess }: QuickExpenseEn
 
           {!defaultBucketId && (
             <div className="space-y-2">
-              <Label htmlFor="bucket">Bucket</Label>
+              <Label htmlFor="bucket">Jar</Label>
               <Select value={bucketId} onValueChange={setBucketId}>
                 <SelectTrigger id="bucket">
-                  <SelectValue placeholder="Select a bucket" />
+                  <SelectValue placeholder="Select a jar" />
                 </SelectTrigger>
                 <SelectContent>
                   {buckets.map((bucket) => (

@@ -96,17 +96,17 @@ export function WithdrawButton() {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Withdraw from Bucket</DialogTitle>
+          <DialogTitle>Withdraw from Jar</DialogTitle>
           <DialogDescription>
-            Withdraw funds from one of your buckets.
+            Withdraw funds from one of your jars.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>From Bucket</Label>
+            <Label>From Jar</Label>
             <Select value={bucketId} onValueChange={handleBucketChange}>
               <SelectTrigger>
-                <SelectValue placeholder="Select bucket" />
+                <SelectValue placeholder="Select jar" />
               </SelectTrigger>
               <SelectContent>
                 {buckets.map((bucket) => (
