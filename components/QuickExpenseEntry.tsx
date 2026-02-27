@@ -19,7 +19,7 @@ interface QuickExpenseEntryProps {
 }
 
 export function QuickExpenseEntry({ defaultBucketId, onSuccess }: QuickExpenseEntryProps) {
-  const { user } = useAuthContext()
+  const { user, loading: authLoading } = useAuthContext()
   const { addExpense } = useExpenses(user?.id)
   const { buckets } = useBuckets(user?.id)
   const [amount, setAmount] = useState('')
@@ -31,6 +31,7 @@ export function QuickExpenseEntry({ defaultBucketId, onSuccess }: QuickExpenseEn
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!amount || !bucketId) return
+    if (authLoading) return
     if (!user) {
       toast.error('You must be signed in to add an expense.')
       return

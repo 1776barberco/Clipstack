@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 import { format } from 'date-fns'
 
 export function QuickIncomeEntry() {
-  const { user } = useAuthContext()
+  const { user, loading: authLoading } = useAuthContext()
   const { addIncome } = useIncome(user?.id)
   const [amount, setAmount] = useState('')
   const [source, setSource] = useState('')
@@ -21,6 +21,7 @@ export function QuickIncomeEntry() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!amount) return
+    if (authLoading) return
     if (!user) {
       toast.error('You must be signed in to add income.')
       return

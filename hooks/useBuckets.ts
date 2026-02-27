@@ -151,6 +151,13 @@ export function useBuckets(userId: string | undefined) {
       return
     }
 
+    const DEFAULT_BUCKETS = [
+      { name: 'Essentials', percentage: 50, color: '#3b82f6', priority: 1, is_tax_bucket: false },
+      { name: 'Taxes', percentage: 25, color: '#ef4444', priority: 2, is_tax_bucket: true },
+      { name: 'Savings', percentage: 15, color: '#22c55e', priority: 3, is_tax_bucket: false },
+      { name: 'Fun', percentage: 10, color: '#f59e0b', priority: 4, is_tax_bucket: false },
+    ]
+
     const fetchBuckets = async () => {
       try {
         const [configsRes, balancesRes] = await Promise.all([
@@ -168,7 +175,21 @@ export function useBuckets(userId: string | undefined) {
         if (configsRes.error) throw configsRes.error
         if (balancesRes.error) throw balancesRes.error
 
-        setBuckets((configsRes.data as BucketConfig[]) || [])
+        let configs = (configsRes.data as BucketConfig[]) || []
+
+        // Auto-create default jars if none exist
+        if (configs.length === 0) {
+          const inserts = DEFAULT_BUCKETS.map((b) => ({ user_id: userId, ...b }))
+          const { data: created, error: createErr } = await supabase
+            .from('bucket_configs')
+            .insert(inserts)
+            .select()
+          if (!createErr && created) {
+            configs = created as BucketConfig[]
+          }
+        }
+
+        setBuckets(configs)
         setBalances((balancesRes.data as BucketBalance[]) || [])
       } catch (err) {
         setError(err as Error)

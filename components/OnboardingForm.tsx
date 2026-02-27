@@ -71,13 +71,13 @@ export function OnboardingForm() {
 
     try {
       // Create profile
-      const { error: profileError } = await supabase.from('profiles').insert({
+      const { error: profileError } = await supabase.from('profiles').upsert({
         id: user.id,
         email: user.email!,
         full_name: fullName,
         booth_rent_amount: boothRent ? parseFloat(boothRent) : null,
         booth_rent_due_day: dueDay ? parseInt(dueDay) : null,
-      } as any)
+      } as any, { onConflict: 'id' })
 
       if (profileError) throw profileError
 

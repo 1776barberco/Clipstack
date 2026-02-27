@@ -164,6 +164,15 @@ export function useIncome(userId: string | undefined) {
     }
 
     if (!supabase) return { data: null, error: new Error('Supabase not initialized') }
+
+    // Ensure profile exists to satisfy FK constraint
+    await supabase
+      .from('profiles')
+      .upsert(
+        { id: income.user_id, email: '' },
+        { onConflict: 'id', ignoreDuplicates: true }
+      )
+
     const { data, error } = await supabase
       .from('income_entries')
       .insert(income)

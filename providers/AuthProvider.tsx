@@ -48,6 +48,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    const checkOnboarding = async (userId: string) => {
+      const publicPaths = ['/login', '/api/auth', '/onboarding', '/reset-password']
+      if (publicPaths.some((p) => window.location.pathname.startsWith(p))) return
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', userId)
+        .single()
+
+      if (!profile?.full_name) {
+        router.push('/onboarding')
+      }
+    }
+
     // Get initial session - try browser client first, then sync from server cookies
     const initSession = async () => {
       const { data: { session: browserSession } } = await supabase.auth.getSession()
@@ -56,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(browserSession)
         setUser(browserSession.user)
         setLoading(false)
+        await checkOnboarding(browserSession.user.id)
         return
       }
 
@@ -70,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setSession(data.session)
           setUser(data.session.user)
           setLoading(false)
+          await checkOnboarding(data.session.user.id)
           return
         }
       }
@@ -87,6 +104,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (event === 'SIGNED_IN') {
           if (session?.user && !window.location.pathname.startsWith('/reset-password')) {
+            // Ensure a profile row exists (upsert to avoid FK violations on other tables)
+            await supabase
+              .from('profiles')
+              .upsert(
+                {
+                  id: session.user.id,
+                  email: session.user.email ?? '',
+                },
+                { onConflict: 'id', ignoreDuplicates: true }
+              )
+
             const { data: profile } = await supabase
               .from('profiles')
               .select('full_name')
@@ -145,7 +173,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Also sign in on the browser client (for RLS on client-side DB calls)
     if (supabase) {
-      await supabase.auth.signInWithPassword({ email, password })
+      const { data, error: clientError } = await supabase.auth.signInWithPassword({ email, password })
+      if (!clientError && data.session) {
+        setSession(data.session)
+        setUser(data.session.user)
+      }
     }
 
     router.push('/dashboard')
