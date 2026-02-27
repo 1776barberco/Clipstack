@@ -14,10 +14,12 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { User, LogOut, Settings } from 'lucide-react'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 export function UserMenu() {
   const { user, signOut } = useAuthContext()
   const { profile } = useProfile(user?.id)
+  const router = useRouter()
 
   const handleSignOut = async () => {
     const { error } = await signOut()
@@ -49,7 +51,7 @@ export function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled>
+        <DropdownMenuItem onClick={() => router.push('/settings')}>
           <Settings className="mr-2 h-4 w-4" />
           Settings
         </DropdownMenuItem>
