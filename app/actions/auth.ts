@@ -3,6 +3,22 @@
 import { createClient } from '@/lib/supabase/server'
 import { headers } from 'next/headers'
 
+export async function getServerSession() {
+  const supabase = await createClient()
+  const { data: { session }, error } = await supabase.auth.getSession()
+
+  if (error || !session) {
+    return { session: null }
+  }
+
+  return {
+    session: {
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+    },
+  }
+}
+
 export async function signInWithOtp(email: string) {
   const supabase = await createClient()
   const headersList = await headers()

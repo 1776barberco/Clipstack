@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { supabase, DEMO_MODE, DEMO_USER } from '@/lib/supabase/client'
 import { User, Session } from '@supabase/supabase-js'
 import { useRouter, usePathname } from 'next/navigation'
-import { signInWithOtp, signUpWithPassword, signInWithPasswordAction, signOutAction, resetPassword as resetPasswordAction } from '@/app/actions/auth'
+import { signInWithOtp, signUpWithPassword, signInWithPasswordAction, signOutAction, resetPassword as resetPasswordAction, getServerSession } from '@/app/actions/auth'
 
 interface AuthContextType {
   user: User | null
@@ -48,12 +48,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
+    // Get initial session - try browser client first, then sync from server cookies
+    const initSession = async () => {
+      const { data: { session: browserSession } } = await supabase.auth.getSession()
+
+      if (browserSession) {
+        setSession(browserSession)
+        setUser(browserSession.user)
+        setLoading(false)
+        return
+      }
+
+      // Browser client has no session - try syncing from server cookies
+      const serverResult = await getServerSession()
+      if (serverResult.session) {
+        const { data, error } = await supabase.auth.setSession({
+          access_token: serverResult.session.access_token,
+          refresh_token: serverResult.session.refresh_token,
+        })
+        if (!error && data.session) {
+          setSession(data.session)
+          setUser(data.session.user)
+          setLoading(false)
+          return
+        }
+      }
+
       setLoading(false)
-    })
+    }
+    initSession()
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
