@@ -182,11 +182,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: null }
     }
 
-    const result = await signInWithOtp(email)
-    if (result.error) {
-      return { error: new Error(result.error) }
-    }
-    return { error: null }
+    // Use client-side supabase so code_verifier stays in localStorage for PKCE exchange
+    if (!supabase) return { error: new Error('Supabase not initialized') }
+    const origin = window.location.origin
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: `${origin}/api/auth/callback` },
+    })
+    return { error: error ?? null }
   }
 
   const resetPassword = async (email: string) => {

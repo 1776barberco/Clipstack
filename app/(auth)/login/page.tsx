@@ -11,9 +11,12 @@ function LoginContent() {
   const searchParams = useSearchParams()
   const [checking, setChecking] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [statusMsg, setStatusMsg] = useState<string>('Signing you in...')
 
   useEffect(() => {
     const errorParam = searchParams.get('error')
+    const code = searchParams.get('code')
+    const next = searchParams.get('next') || '/dashboard'
 
     if (errorParam) {
       setError(errorParam)
@@ -26,7 +29,28 @@ function LoginContent() {
       return
     }
 
-    // Check if already logged in
+    // If there's a PKCE code, exchange it client-side (code_verifier is in localStorage)
+    if (code) {
+      setStatusMsg('Completing sign in...')
+      supabase.auth.exchangeCodeForSession(code).then(async ({ data, error: exchError }: { data: { session: import('@supabase/supabase-js').Session | null; user: import('@supabase/supabase-js').User | null }, error: import('@supabase/supabase-js').AuthError | null }) => {
+        if (exchError || !data.session) {
+          setError(exchError?.message || 'Sign in failed. Please request a new magic link.')
+          setChecking(false)
+          return
+        }
+        // Exchange succeeded — check onboarding status
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', data.session.user.id)
+          .maybeSingle()
+
+        router.replace(profile?.full_name ? next : '/onboarding')
+      })
+      return
+    }
+
+    // No code — check if already logged in
     supabase.auth.getSession().then(async ({ data: { session } }: { data: { session: Session | null } }) => {
       if (session) {
         const { data: profile } = await supabase
@@ -35,11 +59,7 @@ function LoginContent() {
           .eq('id', session.user.id)
           .maybeSingle()
 
-        if (!profile?.full_name) {
-          router.push('/onboarding')
-        } else {
-          router.push('/dashboard')
-        }
+        router.replace(profile?.full_name ? '/dashboard' : '/onboarding')
         return
       }
       setChecking(false)
@@ -49,7 +69,7 @@ function LoginContent() {
   if (checking) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 p-4 dark:from-zinc-900 dark:to-zinc-800">
-        <p className="text-muted-foreground">Signing you in...</p>
+        <p className="text-muted-foreground">{statusMsg}</p>
       </div>
     )
   }
@@ -58,7 +78,7 @@ function LoginContent() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 p-4 dark:from-zinc-900 dark:to-zinc-800">
       {error && (
         <div className="absolute top-4 mx-auto rounded bg-red-100 px-4 py-2 text-sm text-red-700">
-          {error}
+          {decodeURIComponent(error)}
         </div>
       )}
       <LoginForm />
