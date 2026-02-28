@@ -20,12 +20,9 @@ export default function HomePage() {
           <span className="text-lg font-semibold tracking-tight">TipJars</span>
         </Link>
         <div className="flex items-center gap-6 text-sm">
-          <Link href="/login" className="text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
-            Sign In
-          </Link>
           <Link href="/login">
             <Button className="bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 rounded-full px-5 h-9 text-sm">
-              Get Started
+              Sign In
             </Button>
           </Link>
         </div>
