@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import Image from 'next/image'
 
 export const metadata = {
   title: 'Terms of Service - TipJars',
@@ -11,7 +10,6 @@ export default function TermsPage() {
       <header className="border-b">
         <div className="container mx-auto flex h-16 items-center px-4">
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.jpg" alt="TipJars" width={32} height={32} />
             <span className="text-xl font-bold">TipJars</span>
           </Link>
         </div>

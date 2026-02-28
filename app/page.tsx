@@ -15,7 +15,6 @@ export default function HomePage() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 sm:px-10 py-5 max-w-6xl mx-auto">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/logo.jpg" alt="TipJars" width={32} height={32} />
           <span className="text-lg font-semibold tracking-tight">TipJars</span>
         </Link>
         <div className="flex items-center gap-6 text-sm">

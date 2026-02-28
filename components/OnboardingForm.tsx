@@ -209,7 +209,7 @@ export function OnboardingForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        <Image src="/logo.jpg" alt="TipJars" width={64} height={64} className="mx-auto mb-4" />
+        <Image src="/logo-icon.png" alt="TipJars" width={64} height={64} className="mx-auto mb-4" />
         <CardTitle className="text-2xl">Let&apos;s get you set up</CardTitle>
         <CardDescription>
           Step {step} of {totalSteps}

@@ -1,5 +1,4 @@
 'use client'
-import Image from 'next/image'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -215,7 +214,6 @@ export default function SettingsPage() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-2">
-              <Image src="/logo.jpg" alt="TipJars" width={32} height={32} />
               <span className="text-xl font-bold">Settings</span>
             </div>
           </div>

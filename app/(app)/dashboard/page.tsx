@@ -9,7 +9,6 @@ import { WeeklyChart } from '@/components/WeeklyChart'
 import { RecentTransactions } from '@/components/RecentTransactions'
 import { UserMenu } from '@/components/UserMenu'
 import { WithdrawButton } from '@/components/WithdrawButton'
-import Image from 'next/image'
 
 export default function DashboardPage() {
   return (
@@ -18,7 +17,6 @@ export default function DashboardPage() {
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <Image src="/logo.jpg" alt="TipJars" width={32} height={32} />
             <span className="text-xl font-bold">TipJars</span>
           </div>
           <div className="flex items-center gap-4">

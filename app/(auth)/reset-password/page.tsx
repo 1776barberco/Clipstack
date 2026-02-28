@@ -73,7 +73,7 @@ export default function ResetPasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 p-4 dark:from-zinc-900 dark:to-zinc-800">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <Image src="/logo.jpg" alt="TipJars" width={64} height={64} className="mx-auto mb-4" />
+          <Image src="/logo-icon.png" alt="TipJars" width={64} height={64} className="mx-auto mb-4" />
           <CardTitle className="text-2xl">Set New Password</CardTitle>
           <CardDescription>Enter your new password below.</CardDescription>
         </CardHeader>
