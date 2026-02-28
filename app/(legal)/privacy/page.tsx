@@ -88,7 +88,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="text-xl font-semibold">9. Contact Us</h2>
-            <p>If you have questions about this Privacy Policy, contact us at <a href="mailto:apeltekci@gmail.com" className="text-primary underline">apeltekci@gmail.com</a>.</p>
+            <p>If you have questions about this Privacy Policy, contact us at <a href="mailto:tipjarsapp@gmail.com" className="text-primary underline">tipjarsapp@gmail.com</a>.</p>
           </section>
         </div>
       </main>
