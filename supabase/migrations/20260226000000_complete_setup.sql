@@ -140,6 +140,7 @@ CREATE OR REPLACE FUNCTION allocate_income_to_buckets(
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
   v_bucket record;
@@ -147,6 +148,11 @@ DECLARE
   v_remaining decimal := p_amount;
   v_tax_bucket_id uuid;
 BEGIN
+  -- Authorization check
+  IF auth.uid() != p_user_id THEN
+    RAISE EXCEPTION 'Unauthorized';
+  END IF;
+
   SELECT id INTO v_tax_bucket_id
   FROM bucket_configs
   WHERE user_id = p_user_id AND is_tax_bucket = true
@@ -233,6 +239,7 @@ CREATE OR REPLACE FUNCTION trigger_allocate_income()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 BEGIN
   PERFORM allocate_income_to_buckets(NEW.user_id, NEW.id, NEW.amount);
