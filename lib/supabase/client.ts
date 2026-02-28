@@ -1,4 +1,5 @@
-import { createClient, User } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
+import { User } from '@supabase/supabase-js'
 
 // Demo mode disabled - use real Supabase auth
 export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
@@ -14,7 +15,7 @@ export const DEMO_USER: User = {
   aud: 'authenticated',
 } as User
 
-let supabaseInstance: ReturnType<typeof createClient> | null = null
+let supabaseInstance: ReturnType<typeof createBrowserClient> | null = null
 
 export function getSupabaseClient() {
   if (DEMO_MODE) {
@@ -32,11 +33,10 @@ export function getSupabaseClient() {
     return null as any
   }
 
-  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+  // Use createBrowserClient from @supabase/ssr — stores auth in cookies
+  // so middleware and server actions can read the session
+  supabaseInstance = createBrowserClient(supabaseUrl, supabaseAnonKey, {
     auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
       flowType: 'pkce',
     },
   })
