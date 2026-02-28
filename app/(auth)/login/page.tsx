@@ -11,15 +11,14 @@ function LoginContent() {
   const searchParams = useSearchParams()
   const [checking, setChecking] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [statusMsg, setStatusMsg] = useState<string>('Signing you in...')
 
   useEffect(() => {
     const errorParam = searchParams.get('error')
-    const code = searchParams.get('code')
-    const next = searchParams.get('next') || '/dashboard'
 
     if (errorParam) {
-      setError(errorParam)
+      setError(errorParam === 'auth_failed'
+        ? 'Sign in failed. Please request a new magic link.'
+        : decodeURIComponent(errorParam))
       setChecking(false)
       return
     }
@@ -29,35 +28,9 @@ function LoginContent() {
       return
     }
 
-    // If there's a PKCE code, exchange it client-side (code_verifier is in cookies via @supabase/ssr)
-    if (code) {
-      setStatusMsg('Completing sign in...')
-      supabase.auth.exchangeCodeForSession(code).then(async ({ data, error: exchError }: { data: { session: import('@supabase/supabase-js').Session | null; user: import('@supabase/supabase-js').User | null }, error: import('@supabase/supabase-js').AuthError | null }) => {
-        if (exchError || !data.session) {
-          const isPkceError = exchError?.message?.toLowerCase().includes('code verifier') ||
-            exchError?.message?.toLowerCase().includes('pkce')
-          const friendlyMsg = isPkceError
-            ? 'Your magic link expired or was opened in a different browser. Please request a new one below.'
-            : (exchError?.message || 'Sign in failed. Please request a new magic link.')
-          // Clear the code from URL so user sees the login form clean
-          window.history.replaceState({}, '', '/login')
-          setError(friendlyMsg)
-          setChecking(false)
-          return
-        }
-        // Exchange succeeded — check onboarding status
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('id', data.session.user.id)
-          .maybeSingle()
-
-        router.replace(profile?.full_name ? next : '/onboarding')
-      })
-      return
-    }
-
-    // No code — check if already logged in
+    // The implicit flow puts #access_token in the URL hash.
+    // supabase.auth.onAuthStateChange will detect it automatically.
+    // Just check if we're already logged in.
     supabase.auth.getSession().then(async ({ data: { session } }: { data: { session: Session | null } }) => {
       if (session) {
         const { data: profile } = await supabase
@@ -73,10 +46,31 @@ function LoginContent() {
     })
   }, [router, searchParams])
 
+  // Listen for auth state changes (handles implicit flow hash detection)
+  useEffect(() => {
+    if (!supabase) return
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event: string, session: import("@supabase/supabase-js").Session | null) => {
+        if (event === 'SIGNED_IN' && session) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', session.user.id)
+            .maybeSingle()
+
+          router.replace(profile?.full_name ? '/dashboard' : '/onboarding')
+        }
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [router])
+
   if (checking) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 p-4 dark:from-zinc-900 dark:to-zinc-800">
-        <p className="text-muted-foreground">{statusMsg}</p>
+        <p className="text-muted-foreground">Signing you in...</p>
       </div>
     )
   }
@@ -85,7 +79,7 @@ function LoginContent() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 p-4 dark:from-zinc-900 dark:to-zinc-800">
       {error && (
         <div className="absolute top-4 mx-auto rounded bg-red-100 px-4 py-2 text-sm text-red-700">
-          {decodeURIComponent(error)}
+          {error}
         </div>
       )}
       <LoginForm />

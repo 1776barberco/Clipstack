@@ -173,12 +173,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: null }
     }
 
-    // Use client-side supabase so code_verifier stays in localStorage for PKCE exchange
     if (!supabase) return { error: new Error('Supabase not initialized') }
     const origin = window.location.origin
+    // Redirect to /login — implicit flow adds #access_token to the URL hash
+    // which supabase.auth.onAuthStateChange detects automatically
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${origin}/api/auth/callback` },
+      options: { emailRedirectTo: `${origin}/login` },
     })
     return { error: error ?? null }
   }

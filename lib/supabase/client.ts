@@ -35,11 +35,7 @@ export function getSupabaseClient() {
 
   // Use createBrowserClient from @supabase/ssr — stores auth in cookies
   // so middleware and server actions can read the session
-  supabaseInstance = createBrowserClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      flowType: 'pkce',
-    },
-  })
+  supabaseInstance = createBrowserClient(supabaseUrl, supabaseAnonKey)
 
   return supabaseInstance
 }

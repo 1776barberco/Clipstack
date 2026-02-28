@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
@@ -6,11 +7,17 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get('next') ?? '/dashboard'
 
   if (code) {
-    // Pass the code to the login page for client-side PKCE exchange.
-    // Server-side exchange won't work because the code_verifier lives
-    // in the browser (localStorage), not in server cookies.
-    return NextResponse.redirect(`${origin}/login?code=${code}&next=${encodeURIComponent(next)}`)
+    // Exchange the code server-side (works for email confirmations & password resets)
+    const supabase = await createClient()
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (!error) {
+      return NextResponse.redirect(`${origin}${next}`)
+    }
+
+    console.error('[auth/callback] Code exchange failed:', error.message)
   }
 
+  // Fallback: redirect to login (implicit flow handles #access_token client-side)
   return NextResponse.redirect(`${origin}/login?error=auth_failed`)
 }
