@@ -39,7 +39,7 @@ export default function PrivacyPage() {
             <ul className="list-disc pl-6 space-y-1">
               <li>Provide and maintain the TipJars budgeting service.</li>
               <li>Process and display your income, expenses, and budget allocations.</li>
-              <li>Send you important account notifications (e.g., booth rent reminders).</li>
+              <li>Send you important account notifications (e.g., rent reminders).</li>
               <li>Improve and optimize the app experience.</li>
             </ul>
           </section>

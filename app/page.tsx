@@ -6,7 +6,7 @@ import { Footer } from '@/components/Footer'
 
 export const metadata: Metadata = {
   title: 'TipJars — Budget in Style',
-  description: 'Smart budgeting for barbers and stylists. Split every dollar automatically.',
+  description: 'Smart budgeting for barbers, stylists, and independent professionals. Split every dollar automatically.',
 }
 
 export default function HomePage() {
@@ -38,7 +38,7 @@ export default function HomePage() {
           organized.
         </h1>
         <p className="text-lg sm:text-xl text-zinc-500 dark:text-zinc-400 mb-10 max-w-xl mx-auto">
-          Know exactly where every dollar goes. Built for people who cut hair, not spreadsheets.
+          Know exactly where every dollar goes. Built for barbers, stylists, and independent professionals &mdash; not spreadsheets.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link href="/login">
@@ -84,7 +84,7 @@ export default function HomePage() {
             {[
               { title: 'Income splitting', desc: 'Split every dollar automatically across your jars.' },
               { title: 'Tax jar', desc: 'Set aside taxes as you earn. No more April surprises.' },
-              { title: 'Booth rent tracking', desc: 'Track chair rent and business expenses in one place.' },
+              { title: 'Rent tracking', desc: 'Track booth rent, chair rent, station rent, and business expenses in one place.' },
               { title: 'Stability score', desc: 'See how consistent your income is, week over week.' },
               { title: 'Offline mode', desc: 'Log income between clients, even without Wi-Fi.' },
               { title: 'Simple setup', desc: 'No accounting degree required. Up and running in minutes.' },
@@ -104,12 +104,12 @@ export default function HomePage() {
       {/* Social proof */}
       <section className="px-6 py-24 border-t border-zinc-200 dark:border-zinc-800">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-16 tracking-tight">Trusted by barbers and stylists</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-16 tracking-tight">Trusted by beauty and grooming professionals</h2>
           <div className="grid sm:grid-cols-3 gap-8">
             {[
-              { quote: 'I used to dread tax season. Now I just check my tax jar and I\'m good.', name: 'Marcus T.', city: 'Atlanta' },
-              { quote: 'Finally something that gets how we earn. Not every week is the same.', name: 'Jasmine R.', city: 'Houston' },
-              { quote: 'The jar system just works. I\'ve saved more in three months than all last year.', name: 'Devon K.', city: 'Chicago' },
+              { quote: 'I used to dread tax season. Now I just check my tax jar and I\'m good.', name: 'Marcus T.', city: 'Atlanta, Barber' },
+              { quote: 'Finally something that gets how we earn. Not every week is the same when you\'re behind the chair.', name: 'Jasmine R.', city: 'Houston, Cosmetologist' },
+              { quote: 'Between booth rent and supplies, I never knew where my money went. Now I do.', name: 'Priya M.', city: 'Chicago, Nail Tech' },
             ].map((t) => (
               <div key={t.name} className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-6">
                 <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed mb-4">&ldquo;{t.quote}&rdquo;</p>

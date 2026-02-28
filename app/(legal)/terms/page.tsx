@@ -30,7 +30,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="text-xl font-semibold">2. Description of Service</h2>
-            <p>TipJars is a budgeting application designed for barbers, stylists, and independent professionals. The Service helps you track income, manage expenses, and organize your finances using a jar-based budgeting system.</p>
+            <p>TipJars is a budgeting application designed for barbers, stylists, cosmetologists, nail techs, lash artists, tattoo artists, and other independent professionals. The Service helps you track income, manage expenses, and organize your finances using a jar-based budgeting system.</p>
           </section>
 
           <section>
