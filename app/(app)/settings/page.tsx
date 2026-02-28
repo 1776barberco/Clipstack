@@ -48,7 +48,7 @@ export default function SettingsPage() {
   const displayName = fullName ?? profile?.full_name ?? ''
   const displayBoothRent = boothRent ?? (profile?.booth_rent_amount?.toString() || '')
   const displayDueDay = dueDay ?? (profile?.booth_rent_due_day?.toString() || '')
-  const displayTaxRate = taxRate ?? (profile?.tax_rate?.toString() || '25')
+  const displayTaxRate = taxRate ?? (profile?.tax_rate != null ? (profile.tax_rate * 100).toString() : '25')
 
   const handleSaveProfile = async () => {
     if (!user) return
@@ -58,7 +58,7 @@ export default function SettingsPage() {
     if (fullName !== null) updates.full_name = fullName
     if (boothRent !== null) updates.booth_rent_amount = boothRent ? parseFloat(boothRent) : null
     if (dueDay !== null) updates.booth_rent_due_day = dueDay ? parseInt(dueDay) : null
-    if (taxRate !== null) updates.tax_rate = parseFloat(taxRate) || 25
+    if (taxRate !== null) updates.tax_rate = (parseFloat(taxRate) || 25) / 100
 
     if (Object.keys(updates).length === 0) {
       toast.info('No changes to save.')
@@ -123,7 +123,7 @@ export default function SettingsPage() {
     const result = await fetchBucketsAction()
     if (!result.error) {
       // Force re-render by navigating
-      window.location.reload()
+      router.refresh()
     }
   }
 
