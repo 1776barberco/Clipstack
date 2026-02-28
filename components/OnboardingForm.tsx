@@ -80,8 +80,9 @@ export function OnboardingForm() {
 
       toast.success('Welcome to TipJars!')
       router.push('/dashboard')
-    } catch (error) {
-      toast.error('Something went wrong. Please try again.')
+    } catch (error: any) {
+      const msg = error?.message || 'Something went wrong.'
+      toast.error(msg)
       console.error(error)
     } finally {
       setLoading(false)

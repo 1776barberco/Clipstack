@@ -110,9 +110,13 @@ export async function completeOnboarding(data: {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
 
   if (authError || !user) {
-    return { error: 'Not authenticated' }
+    console.error('[completeOnboarding] Auth error:', authError?.message || 'no user')
+    return { error: 'Not authenticated. Please sign out and sign back in.' }
   }
 
+  console.log('[completeOnboarding] User:', user.id, user.email)
+
+  // Step 1: Upsert profile
   const { error: profileError } = await (supabase as any).from('profiles').upsert({
     id: user.id,
     email: user.email!,
@@ -122,14 +126,23 @@ export async function completeOnboarding(data: {
   }, { onConflict: 'id' })
 
   if (profileError) {
-    return { error: profileError.message }
+    console.error('[completeOnboarding] Profile upsert error:', profileError)
+    return { error: `Profile save failed: ${profileError.message}` }
   }
 
-  const { data: existingBuckets } = await supabase
+  console.log('[completeOnboarding] Profile saved successfully')
+
+  // Step 2: Create default buckets if none exist
+  const { data: existingBuckets, error: fetchError } = await (supabase as any)
     .from('bucket_configs')
     .select('id')
     .eq('user_id', user.id)
     .limit(1)
+
+  if (fetchError) {
+    console.error('[completeOnboarding] Bucket fetch error:', fetchError)
+    // Non-fatal — profile was saved, continue
+  }
 
   if (!existingBuckets || existingBuckets.length === 0) {
     const bucketTemplates = [
@@ -144,8 +157,11 @@ export async function completeOnboarding(data: {
       .insert(bucketTemplates)
 
     if (bucketsError) {
-      return { error: bucketsError.message }
+      console.error('[completeOnboarding] Bucket insert error:', bucketsError)
+      return { error: `Jar setup failed: ${bucketsError.message}` }
     }
+
+    console.log('[completeOnboarding] Default buckets created')
   }
 
   return { error: null }
