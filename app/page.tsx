@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Footer } from '@/components/Footer'
+import { HeroAnimation } from '@/components/HeroAnimation'
 
 export const metadata: Metadata = {
   title: 'TipJars — Budget in Style',
@@ -15,6 +16,7 @@ export default function HomePage() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 sm:px-10 py-5 max-w-6xl mx-auto">
         <Link href="/" className="flex items-center gap-2">
+          <Image src="/logo-icon.png" alt="TipJars" width={28} height={28} />
           <span className="text-lg font-semibold tracking-tight">TipJars</span>
         </Link>
         <div className="flex items-center gap-6 text-sm">
@@ -31,8 +33,7 @@ export default function HomePage() {
 
       {/* Hero */}
       <section className="px-6 pt-28 pb-32 text-center max-w-3xl mx-auto">
-        <Image src="/logo.jpg" alt="TipJars" width={200} height={200} className="mx-auto mb-4" />
-        <h2 className="text-4xl font-bold tracking-tight mb-8">TipJars</h2>
+        <HeroAnimation />
         <h1 className="text-5xl sm:text-7xl font-bold tracking-tight leading-[1.1] mb-6">
           Your money,
           <br />
