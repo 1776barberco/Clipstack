@@ -1,4 +1,5 @@
 'use client'
+import Image from 'next/image'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -14,7 +15,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator'
 import { UserMenu } from '@/components/UserMenu'
 import {
-  Scissors,
   ArrowLeft,
   User,
   DollarSign,
@@ -215,9 +215,7 @@ export default function SettingsPage() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
-                <Scissors className="h-4 w-4 text-primary-foreground" />
-              </div>
+              <Image src="/logo.jpg" alt="TipJars" width={32} height={32} />
               <span className="text-xl font-bold">Settings</span>
             </div>
           </div>

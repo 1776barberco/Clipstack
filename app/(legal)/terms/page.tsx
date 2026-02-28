@@ -1,5 +1,5 @@
-import { Scissors } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export const metadata = {
   title: 'Terms of Service - TipJars',
@@ -11,9 +11,7 @@ export default function TermsPage() {
       <header className="border-b">
         <div className="container mx-auto flex h-16 items-center px-4">
           <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
-              <Scissors className="h-4 w-4 text-primary-foreground" />
-            </div>
+            <Image src="/logo.jpg" alt="TipJars" width={32} height={32} />
             <span className="text-xl font-bold">TipJars</span>
           </Link>
         </div>

@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { Scissors, User, DollarSign, Calendar, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react'
+import { User, DollarSign, Calendar, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react'
+import Image from 'next/image'
 import { toast } from 'sonner'
 
 const BUCKET_TEMPLATES = [
@@ -208,9 +209,7 @@ export function OnboardingForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary">
-          <Scissors className="h-8 w-8 text-primary-foreground" />
-        </div>
+        <Image src="/logo.jpg" alt="TipJars" width={64} height={64} className="mx-auto mb-4" />
         <CardTitle className="text-2xl">Let&apos;s get you set up</CardTitle>
         <CardDescription>
           Step {step} of {totalSteps}

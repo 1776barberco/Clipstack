@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Scissors, Lock, CheckCircle } from 'lucide-react'
+import { Lock, CheckCircle } from 'lucide-react'
+import Image from 'next/image'
 import { toast } from 'sonner'
 
 export default function ResetPasswordPage() {
@@ -72,9 +73,7 @@ export default function ResetPasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 p-4 dark:from-zinc-900 dark:to-zinc-800">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary">
-            <Scissors className="h-8 w-8 text-primary-foreground" />
-          </div>
+          <Image src="/logo.jpg" alt="TipJars" width={64} height={64} className="mx-auto mb-4" />
           <CardTitle className="text-2xl">Set New Password</CardTitle>
           <CardDescription>Enter your new password below.</CardDescription>
         </CardHeader>

@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Scissors, Mail, ArrowRight, CheckCircle, Lock } from 'lucide-react'
+import { Mail, ArrowRight, CheckCircle, Lock } from 'lucide-react'
+import Image from 'next/image'
 import { toast } from 'sonner'
 
 type AuthMode = 'sign-in' | 'sign-up' | 'magic-link' | 'forgot-password'
@@ -135,9 +136,7 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary">
-          <Scissors className="h-8 w-8 text-primary-foreground" />
-        </div>
+        <Image src="/logo.jpg" alt="TipJars" width={64} height={64} className="mx-auto mb-4" />
         <CardTitle className="text-2xl">{getTitle()}</CardTitle>
         <CardDescription>{getDescription()}</CardDescription>
       </CardHeader>
