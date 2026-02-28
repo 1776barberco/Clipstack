@@ -43,6 +43,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       bucket_configs: {
         Row: {
@@ -81,6 +82,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       income_entries: {
         Row: {
@@ -113,6 +115,43 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
+      }
+      expenses: {
+        Row: {
+          id: string
+          user_id: string
+          bucket_id: string
+          amount: number
+          description: string | null
+          category: string | null
+          entry_date: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          bucket_id: string
+          amount: number
+          description?: string | null
+          category?: string | null
+          entry_date?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          bucket_id?: string
+          amount?: number
+          description?: string | null
+          category?: string | null
+          entry_date?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       bucket_transactions: {
         Row: {
@@ -145,6 +184,7 @@ export interface Database {
           description?: string | null
           created_at?: string
         }
+        Relationships: []
       }
       weekly_snapshots: {
         Row: {
@@ -177,6 +217,40 @@ export interface Database {
           stability_score?: number
           created_at?: string
         }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          title: string
+          message: string
+          data: Json
+          read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: string
+          title: string
+          message: string
+          data?: Json
+          read?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: string
+          title?: string
+          message?: string
+          data?: Json
+          read?: boolean
+          created_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -189,6 +263,7 @@ export interface Database {
           total_withdrawals: number
           current_balance: number
         }
+        Relationships: []
       }
     }
     Functions: {

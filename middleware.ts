@@ -5,9 +5,18 @@ export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  // If env vars are missing, skip auth check to avoid crashing
+  // If env vars are missing, return 503 Service Unavailable
   if (!supabaseUrl || !supabaseAnonKey) {
-    return NextResponse.next()
+    return new NextResponse(
+      '<html><body style="font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f5f5"><div style="text-align:center"><h1>🔧 Maintenance</h1><p>TipJars is temporarily unavailable. Please try again shortly.</p></div></body></html>',
+      {
+        status: 503,
+        headers: {
+          'Content-Type': 'text/html',
+          'Retry-After': '60',
+        },
+      }
+    )
   }
 
   let response = NextResponse.next({
@@ -58,8 +67,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // If authenticated and on login page (without hash - server can't see hash),
-  // redirect to dashboard
+  // If authenticated and on login page, redirect to dashboard
   if (user && request.nextUrl.pathname === '/login') {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'

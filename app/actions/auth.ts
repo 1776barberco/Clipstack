@@ -2,30 +2,70 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { headers } from 'next/headers'
+import { z } from 'zod'
 
-export async function getServerSession() {
+// ── Zod Schemas ──────────────────────────────────────────────
+
+const emailSchema = z.string().email('Invalid email address')
+const passwordSchema = z.string().min(6, 'Password must be at least 6 characters')
+
+const onboardingSchema = z.object({
+  fullName: z.string().min(1, 'Name is required').max(100, 'Name too long'),
+  boothRent: z.number().positive('Booth rent must be positive').nullable(),
+  dueDay: z.number().int().min(1).max(31).nullable(),
+})
+
+const profileUpdateSchema = z.object({
+  full_name: z.string().min(1).max(100).optional(),
+  avatar_url: z.string().url().nullable().optional(),
+  booth_rent_amount: z.number().positive().nullable().optional(),
+  booth_rent_due_day: z.number().int().min(1).max(31).nullable().optional(),
+  tax_rate: z.number().min(0).max(1).optional(),
+}).strict()
+
+const bucketSchema = z.object({
+  name: z.string().min(1, 'Bucket name required').max(50),
+  percentage: z.number().min(0).max(100),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Invalid hex color'),
+  priority: z.number().int().min(0),
+  is_tax_bucket: z.boolean(),
+  target_amount: z.number().positive().nullable(),
+})
+
+const bucketUpdateSchema = z.object({
+  name: z.string().min(1).max(50).optional(),
+  percentage: z.number().min(0).max(100).optional(),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  priority: z.number().int().min(0).optional(),
+  is_tax_bucket: z.boolean().optional(),
+  target_amount: z.number().positive().nullable().optional(),
+}).strict()
+
+const uuidSchema = z.string().uuid()
+
+// ── Actions ──────────────────────────────────────────────────
+
+export async function getServerUser() {
   const supabase = await createClient()
-  const { data: { session }, error } = await supabase.auth.getSession()
+  const { data: { user }, error } = await supabase.auth.getUser()
 
-  if (error || !session) {
-    return { session: null }
+  if (error || !user) {
+    return { user: null }
   }
 
-  return {
-    session: {
-      access_token: session.access_token,
-      refresh_token: session.refresh_token,
-    },
-  }
+  return { user: { id: user.id, email: user.email } }
 }
 
 export async function signInWithOtp(email: string) {
+  const parsed = emailSchema.safeParse(email)
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+
   const supabase = await createClient()
   const headersList = await headers()
   const origin = headersList.get('origin') || ''
 
   const { error } = await supabase.auth.signInWithOtp({
-    email,
+    email: parsed.data,
     options: {
       emailRedirectTo: `${origin}/api/auth/callback`,
     },
@@ -39,13 +79,18 @@ export async function signInWithOtp(email: string) {
 }
 
 export async function signUpWithPassword(email: string, password: string) {
+  const parsedEmail = emailSchema.safeParse(email)
+  if (!parsedEmail.success) return { error: parsedEmail.error.issues[0].message }
+  const parsedPassword = passwordSchema.safeParse(password)
+  if (!parsedPassword.success) return { error: parsedPassword.error.issues[0].message }
+
   const supabase = await createClient()
   const headersList = await headers()
   const origin = headersList.get('origin') || ''
 
   const { error } = await supabase.auth.signUp({
-    email,
-    password,
+    email: parsedEmail.data,
+    password: parsedPassword.data,
     options: {
       emailRedirectTo: `${origin}/api/auth/callback`,
     },
@@ -59,11 +104,16 @@ export async function signUpWithPassword(email: string, password: string) {
 }
 
 export async function signInWithPasswordAction(email: string, password: string) {
+  const parsedEmail = emailSchema.safeParse(email)
+  if (!parsedEmail.success) return { error: parsedEmail.error.issues[0].message }
+  const parsedPassword = passwordSchema.safeParse(password)
+  if (!parsedPassword.success) return { error: parsedPassword.error.issues[0].message }
+
   const supabase = await createClient()
 
   const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
+    email: parsedEmail.data,
+    password: parsedPassword.data,
   })
 
   if (error) {
@@ -86,11 +136,14 @@ export async function signOutAction() {
 }
 
 export async function resetPassword(email: string) {
+  const parsed = emailSchema.safeParse(email)
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+
   const supabase = await createClient()
   const headersList = await headers()
   const origin = headersList.get('origin') || ''
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data, {
     redirectTo: `${origin}/api/auth/callback?next=/reset-password`,
   })
 
@@ -106,6 +159,9 @@ export async function completeOnboarding(data: {
   boothRent: number | null
   dueDay: number | null
 }) {
+  const parsed = onboardingSchema.safeParse(data)
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -120,9 +176,9 @@ export async function completeOnboarding(data: {
   const { error: profileError } = await (supabase as any).from('profiles').upsert({
     id: user.id,
     email: user.email!,
-    full_name: data.fullName,
-    booth_rent_amount: data.boothRent,
-    booth_rent_due_day: data.dueDay,
+    full_name: parsed.data.fullName,
+    booth_rent_amount: parsed.data.boothRent,
+    booth_rent_due_day: parsed.data.dueDay,
   }, { onConflict: 'id' })
 
   if (profileError) {
@@ -168,6 +224,9 @@ export async function completeOnboarding(data: {
 }
 
 export async function updateProfileAction(updates: Record<string, unknown>) {
+  const parsed = profileUpdateSchema.safeParse(updates)
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -177,7 +236,7 @@ export async function updateProfileAction(updates: Record<string, unknown>) {
 
   const { error } = await (supabase as any)
     .from('profiles')
-    .update(updates)
+    .update(parsed.data)
     .eq('id', user.id)
 
   if (error) {
@@ -195,6 +254,9 @@ export async function createBucketAction(bucket: {
   is_tax_bucket: boolean
   target_amount: number | null
 }) {
+  const parsed = bucketSchema.safeParse(bucket)
+  if (!parsed.success) return { data: null, error: parsed.error.issues[0].message }
+
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -204,7 +266,7 @@ export async function createBucketAction(bucket: {
 
   const { data, error } = await (supabase as any)
     .from('bucket_configs')
-    .insert({ ...bucket, user_id: user.id })
+    .insert({ ...parsed.data, user_id: user.id })
     .select()
     .single()
 
@@ -216,6 +278,11 @@ export async function createBucketAction(bucket: {
 }
 
 export async function updateBucketAction(id: string, updates: Record<string, unknown>) {
+  const parsedId = uuidSchema.safeParse(id)
+  if (!parsedId.success) return { data: null, error: 'Invalid bucket ID' }
+  const parsed = bucketUpdateSchema.safeParse(updates)
+  if (!parsed.success) return { data: null, error: parsed.error.issues[0].message }
+
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -225,8 +292,8 @@ export async function updateBucketAction(id: string, updates: Record<string, unk
 
   const { data, error } = await (supabase as any)
     .from('bucket_configs')
-    .update(updates)
-    .eq('id', id)
+    .update(parsed.data)
+    .eq('id', parsedId.data)
     .eq('user_id', user.id)
     .select()
     .single()
@@ -239,6 +306,9 @@ export async function updateBucketAction(id: string, updates: Record<string, unk
 }
 
 export async function deleteBucketAction(id: string) {
+  const parsedId = uuidSchema.safeParse(id)
+  if (!parsedId.success) return { error: 'Invalid bucket ID' }
+
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -249,7 +319,7 @@ export async function deleteBucketAction(id: string) {
   const { error } = await (supabase as any)
     .from('bucket_configs')
     .delete()
-    .eq('id', id)
+    .eq('id', parsedId.data)
     .eq('user_id', user.id)
 
   if (error) {
@@ -268,12 +338,12 @@ export async function fetchBucketsAction() {
   }
 
   const [configsRes, balancesRes] = await Promise.all([
-    (supabase as any)
+    supabase
       .from('bucket_configs')
       .select('*')
       .eq('user_id', user.id)
       .order('priority', { ascending: false }),
-    (supabase as any)
+    supabase
       .from('bucket_balances')
       .select('*')
       .eq('user_id', user.id),
