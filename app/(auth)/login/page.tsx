@@ -29,12 +29,19 @@ function LoginContent() {
       return
     }
 
-    // If there's a PKCE code, exchange it client-side (code_verifier is in localStorage)
+    // If there's a PKCE code, exchange it client-side (code_verifier is in cookies via @supabase/ssr)
     if (code) {
       setStatusMsg('Completing sign in...')
       supabase.auth.exchangeCodeForSession(code).then(async ({ data, error: exchError }: { data: { session: import('@supabase/supabase-js').Session | null; user: import('@supabase/supabase-js').User | null }, error: import('@supabase/supabase-js').AuthError | null }) => {
         if (exchError || !data.session) {
-          setError(exchError?.message || 'Sign in failed. Please request a new magic link.')
+          const isPkceError = exchError?.message?.toLowerCase().includes('code verifier') ||
+            exchError?.message?.toLowerCase().includes('pkce')
+          const friendlyMsg = isPkceError
+            ? 'Your magic link expired or was opened in a different browser. Please request a new one below.'
+            : (exchError?.message || 'Sign in failed. Please request a new magic link.')
+          // Clear the code from URL so user sees the login form clean
+          window.history.replaceState({}, '', '/login')
+          setError(friendlyMsg)
           setChecking(false)
           return
         }
