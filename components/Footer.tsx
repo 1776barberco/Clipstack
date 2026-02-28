@@ -34,9 +34,9 @@ export function Footer() {
           <div className="space-y-3">
             <h4 className="text-sm font-semibold">Legal</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><span>Privacy Policy</span></li>
-              <li><span>Terms of Service</span></li>
-              <li><span>Contact</span></li>
+              <li><a href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</a></li>
+              <li><a href="/terms" className="hover:text-foreground transition-colors">Terms of Service</a></li>
+              <li><a href="mailto:apeltekci@gmail.com" className="hover:text-foreground transition-colors">Contact</a></li>
             </ul>
           </div>
 
