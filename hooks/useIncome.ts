@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase, DEMO_MODE, DEMO_USER } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 import { startOfWeek, endOfWeek, format, subWeeks } from 'date-fns'
 
 type IncomeEntry = {
@@ -165,13 +166,18 @@ export function useIncome(userId: string | undefined) {
 
     if (!supabase) return { data: null, error: new Error('Supabase not initialized') }
 
-    // Ensure profile exists to satisfy FK constraint
-    await supabase
+    // Safety net: ensure profile exists before insert (FK constraint)
+    const { data: profile } = await supabase
       .from('profiles')
-      .upsert(
-        { id: income.user_id, email: '' },
-        { onConflict: 'id', ignoreDuplicates: true }
-      )
+      .select('id')
+      .eq('id', income.user_id)
+      .maybeSingle()
+
+    if (!profile) {
+      toast.error('Please complete onboarding first')
+      window.location.href = '/onboarding'
+      return { data: null, error: new Error('Profile not found — redirecting to onboarding') }
+    }
 
     const { data, error } = await supabase
       .from('income_entries')

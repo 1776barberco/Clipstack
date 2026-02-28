@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase/client'
 
 interface QueuedAction {
@@ -17,6 +17,8 @@ export function useOfflineSync(userId: string | undefined) {
   const [queue, setQueue] = useState<QueuedAction[]>([])
   const [isSyncing, setIsSyncing] = useState(false)
   const [lastSync, setLastSync] = useState<number | null>(null)
+  const queueRef = useRef<QueuedAction[]>([])
+  const isSyncingRef = useRef(false)
 
   // Load queue from localStorage on mount
   useEffect(() => {
@@ -25,7 +27,9 @@ export function useOfflineSync(userId: string | undefined) {
     const savedQueue = localStorage.getItem(QUEUE_KEY)
     if (savedQueue) {
       try {
-        setQueue(JSON.parse(savedQueue))
+        const parsed = JSON.parse(savedQueue)
+        setQueue(parsed)
+        queueRef.current = parsed
       } catch {
         localStorage.removeItem(QUEUE_KEY)
       }
@@ -37,56 +41,27 @@ export function useOfflineSync(userId: string | undefined) {
     }
   }, [])
 
-  // Save queue to localStorage whenever it changes
+  // Keep ref in sync with state
   useEffect(() => {
     if (typeof window === 'undefined') return
+    queueRef.current = queue
     localStorage.setItem(QUEUE_KEY, JSON.stringify(queue))
   }, [queue])
 
-  // Listen for online/offline events
+  // Keep isSyncingRef in sync
   useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const handleOnline = () => {
-      setIsOnline(true)
-      syncQueue()
-    }
-    const handleOffline = () => setIsOnline(false)
-
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
-  }, [queue, userId])
-
-  const addToQueue = useCallback((action: Omit<QueuedAction, 'id' | 'timestamp' | 'retryCount'>) => {
-    const newAction: QueuedAction = {
-      ...action,
-      id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: Date.now(),
-      retryCount: 0,
-    }
-
-    setQueue((prev) => [...prev, newAction])
-
-    // Try to sync immediately if online
-    if (isOnline && userId) {
-      syncQueue()
-    }
-
-    return newAction.id
-  }, [isOnline, userId])
+    isSyncingRef.current = isSyncing
+  }, [isSyncing])
 
   const syncQueue = useCallback(async () => {
-    if (!userId || isSyncing || queue.length === 0 || !supabase) return
+    const currentQueue = queueRef.current
+    if (!userId || isSyncingRef.current || currentQueue.length === 0 || !supabase) return
 
     setIsSyncing(true)
+    isSyncingRef.current = true
     const failedActions: QueuedAction[] = []
 
-    for (const action of queue) {
+    for (const action of currentQueue) {
       try {
         let result
 
@@ -117,7 +92,6 @@ export function useOfflineSync(userId: string | undefined) {
           throw result.error
         }
       } catch (error) {
-        // If failed less than 3 times, add back to queue
         if (action.retryCount < 3) {
           failedActions.push({
             ...action,
@@ -128,14 +102,57 @@ export function useOfflineSync(userId: string | undefined) {
     }
 
     setQueue(failedActions)
+    queueRef.current = failedActions
     const now = Date.now()
     setLastSync(now)
     localStorage.setItem(LAST_SYNC_KEY, now.toString())
     setIsSyncing(false)
-  }, [userId, isSyncing, queue])
+    isSyncingRef.current = false
+  }, [userId])
+
+  // Listen for online/offline events
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleOnline = () => {
+      setIsOnline(true)
+      syncQueue()
+    }
+    const handleOffline = () => setIsOnline(false)
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [syncQueue])
+
+  const addToQueue = useCallback((action: Omit<QueuedAction, 'id' | 'timestamp' | 'retryCount'>) => {
+    const newAction: QueuedAction = {
+      ...action,
+      id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: Date.now(),
+      retryCount: 0,
+    }
+
+    setQueue((prev) => {
+      const next = [...prev, newAction]
+      queueRef.current = next  // eagerly update ref before syncQueue reads it
+      return next
+    })
+
+    if (isOnline && userId) {
+      syncQueue()
+    }
+
+    return newAction.id
+  }, [isOnline, userId, syncQueue])
 
   const clearQueue = useCallback(() => {
     setQueue([])
+    queueRef.current = []
     localStorage.removeItem(QUEUE_KEY)
   }, [])
 

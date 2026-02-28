@@ -50,10 +50,22 @@ export async function getServerUser() {
   const { data: { user }, error } = await supabase.auth.getUser()
 
   if (error || !user) {
-    return { user: null }
+
+    return { user: null, session: null }
   }
 
-  return { user: { id: user.id, email: user.email } }
+  // User is validated — now get session tokens
+  const { data: { session } } = await supabase.auth.getSession()
+
+  return {
+    user,
+    session: session
+      ? {
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+        }
+      : null,
+  }
 }
 
 export async function signInWithOtp(email: string) {
@@ -103,25 +115,6 @@ export async function signUpWithPassword(email: string, password: string) {
   return { error: null }
 }
 
-export async function signInWithPasswordAction(email: string, password: string) {
-  const parsedEmail = emailSchema.safeParse(email)
-  if (!parsedEmail.success) return { error: parsedEmail.error.issues[0].message }
-  const parsedPassword = passwordSchema.safeParse(password)
-  if (!parsedPassword.success) return { error: parsedPassword.error.issues[0].message }
-
-  const supabase = await createClient()
-
-  const { error } = await supabase.auth.signInWithPassword({
-    email: parsedEmail.data,
-    password: parsedPassword.data,
-  })
-
-  if (error) {
-    return { error: error.message }
-  }
-
-  return { error: null }
-}
 
 export async function signOutAction() {
   const supabase = await createClient()
