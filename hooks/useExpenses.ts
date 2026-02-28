@@ -182,14 +182,6 @@ export function useExpenses(userId: string | undefined) {
 
     if (!supabase) return { data: null, error: new Error('Supabase not initialized') }
 
-    // Ensure profile exists to satisfy FK constraint
-    await supabase
-      .from('profiles')
-      .upsert(
-        { id: expense.user_id, email: '' },
-        { onConflict: 'id', ignoreDuplicates: true }
-      )
-
     const { data, error } = await supabase
       .from('expenses')
       .insert(expense)

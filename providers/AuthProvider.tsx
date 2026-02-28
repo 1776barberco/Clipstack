@@ -7,10 +7,9 @@ import { useRouter, usePathname } from 'next/navigation'
 import {
   signInWithOtp,
   signUpWithPassword,
-  signInWithPasswordAction,
   signOutAction,
   resetPassword as resetPasswordAction,
-  getServerSession,
+  getServerUser,
   checkOnboardingStatus,
   ensureProfileExists,
 } from '@/app/actions/auth'
@@ -68,29 +67,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const initSession = async () => {
-      const { data: { session: browserSession } } = await supabase.auth.getSession()
+      // Validate the user server-side first
+      const serverResult = await getServerUser()
 
-      if (browserSession) {
-        setSession(browserSession)
-        setUser(browserSession.user)
+      if (serverResult.user) {
+        // Server validated the user — get client session for tokens
+        const { data: { session: browserSession } } = await supabase.auth.getSession()
+        if (browserSession) {
+          setSession(browserSession)
+          setUser(browserSession.user)
+        }
         setLoading(false)
         await handleOnboardingCheck()
         return
-      }
-
-      const serverResult = await getServerSession()
-      if (serverResult.session) {
-        const { data, error } = await supabase.auth.setSession({
-          access_token: serverResult.session.access_token,
-          refresh_token: serverResult.session.refresh_token,
-        })
-        if (!error && data.session) {
-          setSession(data.session)
-          setUser(data.session.user)
-          setLoading(false)
-          await handleOnboardingCheck()
-          return
-        }
       }
 
       setLoading(false)
@@ -151,17 +140,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: null }
     }
 
-    const result = await signInWithPasswordAction(email, password)
-    if (result.error) {
-      return { error: new Error(result.error) }
+    if (!supabase) return { error: new Error('Supabase not initialized') }
+
+    const { data, error: clientError } = await supabase.auth.signInWithPassword({ email, password })
+    if (clientError) {
+      return { error: clientError }
     }
 
-    if (supabase) {
-      const { data, error: clientError } = await supabase.auth.signInWithPassword({ email, password })
-      if (!clientError && data.session) {
-        setSession(data.session)
-        setUser(data.session.user)
-      }
+    if (data.session) {
+      setSession(data.session)
+      setUser(data.session.user)
     }
 
     // Check onboarding status before deciding where to redirect
