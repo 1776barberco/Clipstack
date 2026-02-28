@@ -21,6 +21,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>
   signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>
   signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>
+  signInWithGoogle: () => Promise<{ error: Error | null }>
   resetPassword: (email: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<{ error: Error | null }>
 }
@@ -184,6 +185,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error ?? null }
   }
 
+  const signInWithGoogle = async () => {
+    if (DEMO_MODE) {
+      router.push('/dashboard')
+      return { error: null }
+    }
+
+    if (!supabase) return { error: new Error('Supabase not initialized') }
+    const origin = window.location.origin
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${origin}/api/auth/callback`,
+      },
+    })
+    return { error: error ?? null }
+  }
+
   const resetPassword = async (email: string) => {
     if (DEMO_MODE) {
       return { error: null }
@@ -226,6 +244,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signUp,
         signInWithPassword,
         signInWithMagicLink,
+        signInWithGoogle,
         resetPassword,
         signOut,
       }}
