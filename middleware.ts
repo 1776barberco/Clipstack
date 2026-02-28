@@ -67,11 +67,33 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // If authenticated and on login page, redirect to dashboard
+  // If authenticated and on login page, check onboarding before redirecting
   if (user && request.nextUrl.pathname === '/login') {
+    // Check if user has completed onboarding
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .maybeSingle()
+
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    url.pathname = profile?.full_name ? '/dashboard' : '/onboarding'
     return NextResponse.redirect(url)
+  }
+
+  // If authenticated but no profile, redirect to onboarding (except if already there)
+  if (user && !isPublicPath) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (!profile?.full_name && request.nextUrl.pathname !== '/onboarding') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/onboarding'
+      return NextResponse.redirect(url)
+    }
   }
 
   return response
