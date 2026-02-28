@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthContext } from '@/providers/AuthProvider'
-import { completeOnboarding } from '@/app/actions/auth'
+import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -65,18 +65,43 @@ export function OnboardingForm() {
   }
 
   const handleComplete = async () => {
-    if (!user) return
+    if (!user || !supabase) return
 
     setLoading(true)
 
     try {
-      const result = await completeOnboarding({
-        fullName: fullName,
-        boothRent: boothRent ? parseFloat(boothRent) : null,
-        dueDay: dueDay ? parseInt(dueDay) : null,
-      })
+      // Use client-side Supabase (has the auth session from PKCE/localStorage)
+      const { error: profileError } = await supabase.from('profiles').upsert({
+        id: user.id,
+        email: user.email!,
+        full_name: fullName,
+        booth_rent_amount: boothRent ? parseFloat(boothRent) : null,
+        booth_rent_due_day: dueDay ? parseInt(dueDay) : null,
+      }, { onConflict: 'id' })
 
-      if (result.error) throw new Error(result.error)
+      if (profileError) throw new Error(`Profile save failed: ${profileError.message}`)
+
+      // Check if buckets already exist
+      const { data: existingBuckets } = await supabase
+        .from('bucket_configs')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1)
+
+      if (!existingBuckets || existingBuckets.length === 0) {
+        const bucketTemplates = [
+          { user_id: user.id, name: 'Essentials', percentage: 50, color: '#3b82f6', priority: 1, is_tax_bucket: false },
+          { user_id: user.id, name: 'Taxes', percentage: 25, color: '#ef4444', priority: 2, is_tax_bucket: true },
+          { user_id: user.id, name: 'Savings', percentage: 15, color: '#22c55e', priority: 3, is_tax_bucket: false },
+          { user_id: user.id, name: 'Fun', percentage: 10, color: '#f59e0b', priority: 4, is_tax_bucket: false },
+        ]
+
+        const { error: bucketsError } = await supabase
+          .from('bucket_configs')
+          .insert(bucketTemplates)
+
+        if (bucketsError) throw new Error(`Jar setup failed: ${bucketsError.message}`)
+      }
 
       toast.success('Welcome to TipJars!')
       router.push('/dashboard')
