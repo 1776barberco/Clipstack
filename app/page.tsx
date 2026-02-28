@@ -31,7 +31,8 @@ export default function HomePage() {
 
       {/* Hero */}
       <section className="px-6 pt-28 pb-32 text-center max-w-3xl mx-auto">
-        <Image src="/logo.jpg" alt="TipJars" width={200} height={200} className="mx-auto mb-8" />
+        <Image src="/logo.jpg" alt="TipJars" width={200} height={200} className="mx-auto mb-4" />
+        <h2 className="text-4xl font-bold tracking-tight mb-8">TipJars</h2>
         <h1 className="text-5xl sm:text-7xl font-bold tracking-tight leading-[1.1] mb-6">
           Your money,
           <br />
