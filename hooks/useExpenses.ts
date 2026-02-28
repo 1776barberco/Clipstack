@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase, DEMO_MODE, DEMO_USER } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 import { startOfWeek, endOfWeek, format, subWeeks } from 'date-fns'
 
 type Expense = {
@@ -181,6 +182,19 @@ export function useExpenses(userId: string | undefined) {
     }
 
     if (!supabase) return { data: null, error: new Error('Supabase not initialized') }
+
+    // Safety net: ensure profile exists before insert (FK constraint)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', expense.user_id)
+      .maybeSingle()
+
+    if (!profile) {
+      toast.error('Please complete onboarding first')
+      window.location.href = '/onboarding'
+      return { data: null, error: new Error('Profile not found — redirecting to onboarding') }
+    }
 
     const { data, error } = await supabase
       .from('expenses')

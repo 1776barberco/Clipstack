@@ -76,9 +76,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (browserSession) {
           setSession(browserSession)
           setUser(browserSession.user)
+          setLoading(false)
+          await handleOnboardingCheck()
+        } else {
+          // Browser has no session (e.g. localStorage cleared) — treat as unauthenticated
+          setLoading(false)
         }
-        setLoading(false)
-        await handleOnboardingCheck()
         return
       }
 

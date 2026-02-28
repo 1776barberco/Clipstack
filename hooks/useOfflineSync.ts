@@ -137,7 +137,11 @@ export function useOfflineSync(userId: string | undefined) {
       retryCount: 0,
     }
 
-    setQueue((prev) => [...prev, newAction])
+    setQueue((prev) => {
+      const next = [...prev, newAction]
+      queueRef.current = next  // eagerly update ref before syncQueue reads it
+      return next
+    })
 
     if (isOnline && userId) {
       syncQueue()
