@@ -35,7 +35,7 @@ export default function ResetPasswordPage() {
     )
 
     // Check if there's already a session
-    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+    supabase.auth.getSession().then((res: any) => { const existingSession = res?.data?.session;
       if (existingSession) {
         setSession(existingSession)
         setReady(true)
@@ -70,7 +70,7 @@ export default function ResetPasswordPage() {
     }
 
     // Double-check we have a session before attempting update
-    const { data: { session: currentSession } } = await supabase.auth.getSession()
+    const sessionRes: any = await supabase.auth.getSession(); const currentSession = sessionRes?.data?.session
     if (!currentSession) {
       toast.error('Your reset link has expired. Please request a new one.')
       return
