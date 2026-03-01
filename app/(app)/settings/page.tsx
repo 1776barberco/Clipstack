@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useProfile } from '@/hooks/useProfile'
 import { useBuckets } from '@/hooks/useBuckets'
-import { updateProfileAction, createBucketAction, updateBucketAction, deleteBucketAction, fetchBucketsAction } from '@/app/actions/auth'
+import { updateProfileAction, updateBucketAction } from '@/app/actions/auth'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -37,12 +37,23 @@ export default function SettingsPage() {
   const [taxRate, setTaxRate] = useState<string | null>(null)
   const [savingProfile, setSavingProfile] = useState(false)
 
-  const [editedBuckets, setEditedBuckets] = useState<Record<string, { name?: string; percentage?: string; color?: string }>>({})
+  const [editedBuckets, setEditedBuckets] = useState<Record<string, { name?: string; percentage?: string; color?: string; target_amount?: string }>>({})
   const [savingBuckets, setSavingBuckets] = useState(false)
+  const [newBucketId, setNewBucketId] = useState<string | null>(null)
+  const newBucketNameRef = useRef<HTMLInputElement>(null)
 
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [savingPassword, setSavingPassword] = useState(false)
+
+  // Auto-focus newly created jar name input
+  useEffect(() => {
+    if (newBucketId && newBucketNameRef.current) {
+      newBucketNameRef.current.focus()
+      newBucketNameRef.current.select()
+      setNewBucketId(null)
+    }
+  }, [newBucketId, buckets])
 
   const displayName = fullName ?? profile?.full_name ?? ''
   const displayBoothRent = boothRent ?? (profile?.booth_rent_amount?.toString() || '')
@@ -79,20 +90,44 @@ export default function SettingsPage() {
     }
   }
 
+  // Determine if a bucket uses fixed dollar amount
+  const isFixedAmount = (bucketId: string) => {
+    const edited = editedBuckets[bucketId]
+    if (edited?.target_amount !== undefined) {
+      return parseFloat(edited.target_amount) > 0
+    }
+    const bucket = buckets.find(b => b.id === bucketId)
+    return bucket?.target_amount != null && bucket.target_amount > 0
+  }
+
+  const toggleAllocationType = (bucketId: string) => {
+    const fixed = isFixedAmount(bucketId)
+    if (fixed) {
+      // Switch to percentage: clear target_amount, set percentage to 0
+      setBucketField(bucketId, 'target_amount', '0')
+    } else {
+      // Switch to fixed: set target_amount to some default, clear percentage
+      setBucketField(bucketId, 'target_amount', '100')
+      setBucketField(bucketId, 'percentage', '0')
+    }
+  }
+
   const handleSaveBuckets = async () => {
     if (Object.keys(editedBuckets).length === 0) {
       toast.info('No jar changes to save.')
       return
     }
 
-    const totalPercentage = buckets.reduce((sum, b) => {
+    // Only validate percentage total for percentage-based jars
+    const percentageBuckets = buckets.filter(b => !isFixedAmount(b.id))
+    const totalPercentage = percentageBuckets.reduce((sum, b) => {
       const edited = editedBuckets[b.id]
       const pct = edited?.percentage !== undefined ? parseFloat(edited.percentage) : b.percentage
       return sum + (pct || 0)
     }, 0)
 
-    if (Math.abs(totalPercentage - 100) > 0.01) {
-      toast.error(`Jar percentages must total 100%. Currently: ${totalPercentage}%`)
+    if (percentageBuckets.length > 0 && Math.abs(totalPercentage - 100) > 0.01) {
+      toast.error(`Percentage-based jar allocations must total 100%. Currently: ${totalPercentage.toFixed(1)}%`)
       return
     }
 
@@ -103,6 +138,10 @@ export default function SettingsPage() {
       if (changes.name !== undefined) updates.name = changes.name
       if (changes.percentage !== undefined) updates.percentage = parseFloat(changes.percentage)
       if (changes.color !== undefined) updates.color = changes.color
+      if (changes.target_amount !== undefined) {
+        const amt = parseFloat(changes.target_amount)
+        updates.target_amount = amt > 0 ? amt : null
+      }
 
       const result = await updateBucketAction(id, updates)
       if (result.error) {
@@ -115,15 +154,6 @@ export default function SettingsPage() {
     setEditedBuckets({})
     setSavingBuckets(false)
     toast.success('Jars updated!')
-    refreshBuckets()
-  }
-
-  const refreshBuckets = async () => {
-    const result = await fetchBucketsAction()
-    if (!result.error) {
-      // Force re-render by navigating
-      router.refresh()
-    }
   }
 
   const handleAddBucket = async () => {
@@ -132,7 +162,8 @@ export default function SettingsPage() {
     const currentTotal = buckets.reduce((sum, b) => sum + b.percentage, 0)
     const remaining = Math.max(0, 100 - currentTotal)
 
-    const result = await createBucketAction({
+    const { data, error } = await createBucket({
+      user_id: user.id,
       name: 'New Jar',
       percentage: remaining,
       target_amount: null,
@@ -141,24 +172,28 @@ export default function SettingsPage() {
       color: '#6b7280',
     })
 
-    if (result.error) {
+    if (error) {
       toast.error('Failed to add jar.')
-    } else {
+    } else if (data) {
       toast.success('Jar added!')
-      refreshBuckets()
+      // Pre-populate edited state so the name is immediately editable
+      setEditedBuckets(prev => ({
+        ...prev,
+        [data.id]: { name: 'New Jar' },
+      }))
+      setNewBucketId(data.id)
     }
   }
 
   const handleDeleteBucket = async (id: string, name: string) => {
-    const result = await deleteBucketAction(id)
-    if (result.error) {
+    const { error } = await deleteBucket(id)
+    if (error) {
       toast.error(`Failed to delete ${name}.`)
     } else {
       const updated = { ...editedBuckets }
       delete updated[id]
       setEditedBuckets(updated)
       toast.success(`${name} deleted.`)
-      refreshBuckets()
     }
   }
 
@@ -186,11 +221,11 @@ export default function SettingsPage() {
     }
   }
 
-  const getBucketField = (id: string, field: 'name' | 'percentage' | 'color', fallback: string) => {
+  const getBucketField = (id: string, field: 'name' | 'percentage' | 'color' | 'target_amount', fallback: string) => {
     return editedBuckets[id]?.[field] ?? fallback
   }
 
-  const setBucketField = (id: string, field: 'name' | 'percentage' | 'color', value: string) => {
+  const setBucketField = (id: string, field: 'name' | 'percentage' | 'color' | 'target_amount', value: string) => {
     setEditedBuckets((prev) => ({
       ...prev,
       [id]: { ...prev[id], [field]: value },
@@ -204,6 +239,20 @@ export default function SettingsPage() {
       </div>
     )
   }
+
+  // Calculate totals for display
+  const percentageBuckets = buckets.filter(b => !isFixedAmount(b.id))
+  const fixedBuckets = buckets.filter(b => isFixedAmount(b.id))
+  const totalPercentage = percentageBuckets.reduce((sum, b) => {
+    const edited = editedBuckets[b.id]
+    const pct = edited?.percentage !== undefined ? parseFloat(edited.percentage) : b.percentage
+    return sum + (pct || 0)
+  }, 0)
+  const totalFixed = fixedBuckets.reduce((sum, b) => {
+    const edited = editedBuckets[b.id]
+    const amt = edited?.target_amount !== undefined ? parseFloat(edited.target_amount) : (b.target_amount || 0)
+    return sum + (amt || 0)
+  }, 0)
 
   return (
     <div className="min-h-screen bg-background">
@@ -306,7 +355,7 @@ export default function SettingsPage() {
                   <DollarSign className="h-5 w-5" />
                   Jars
                 </CardTitle>
-                <CardDescription>Configure how income is split across jars. Percentages must total 100%.</CardDescription>
+                <CardDescription>Configure how income is split. Use % for percentage-based or $ for fixed dollar amounts.</CardDescription>
               </div>
               <Button variant="outline" size="sm" onClick={handleAddBucket}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -315,48 +364,77 @@ export default function SettingsPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {buckets.map((bucket) => (
-              <div key={bucket.id} className="flex items-center gap-3 rounded-lg border p-3">
-                <input
-                  type="color"
-                  value={getBucketField(bucket.id, 'color', bucket.color)}
-                  onChange={(e) => setBucketField(bucket.id, 'color', e.target.value)}
-                  className="h-8 w-8 cursor-pointer rounded border-0 p-0"
-                />
-                <Input
-                  value={getBucketField(bucket.id, 'name', bucket.name)}
-                  onChange={(e) => setBucketField(bucket.id, 'name', e.target.value)}
-                  className="flex-1"
-                />
-                <div className="flex items-center gap-1">
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={getBucketField(bucket.id, 'percentage', bucket.percentage.toString())}
-                    onChange={(e) => setBucketField(bucket.id, 'percentage', e.target.value)}
-                    className="w-20 text-center"
+            {buckets.map((bucket) => {
+              const fixed = isFixedAmount(bucket.id)
+              const isNewBucket = bucket.id === newBucketId
+              return (
+                <div key={bucket.id} className="flex items-center gap-3 rounded-lg border p-3">
+                  <input
+                    type="color"
+                    value={getBucketField(bucket.id, 'color', bucket.color)}
+                    onChange={(e) => setBucketField(bucket.id, 'color', e.target.value)}
+                    className="h-8 w-8 cursor-pointer rounded border-0 p-0"
                   />
-                  <span className="text-sm text-muted-foreground">%</span>
+                  <Input
+                    ref={isNewBucket ? newBucketNameRef : undefined}
+                    value={getBucketField(bucket.id, 'name', bucket.name)}
+                    onChange={(e) => setBucketField(bucket.id, 'name', e.target.value)}
+                    className="flex-1"
+                  />
+                  <button
+                    onClick={() => toggleAllocationType(bucket.id)}
+                    className="text-xs font-medium px-2 py-1 rounded border hover:bg-accent transition-colors"
+                    title={fixed ? 'Switch to percentage' : 'Switch to fixed dollar amount'}
+                  >
+                    {fixed ? '$' : '%'}
+                  </button>
+                  <div className="flex items-center gap-1">
+                    {fixed ? (
+                      <>
+                        <span className="text-sm text-muted-foreground">$</span>
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={getBucketField(bucket.id, 'target_amount', (bucket.target_amount || 0).toString())}
+                          onChange={(e) => setBucketField(bucket.id, 'target_amount', e.target.value)}
+                          className="w-24 text-center"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={100}
+                          value={getBucketField(bucket.id, 'percentage', bucket.percentage.toString())}
+                          onChange={(e) => setBucketField(bucket.id, 'percentage', e.target.value)}
+                          className="w-20 text-center"
+                        />
+                        <span className="text-sm text-muted-foreground">%</span>
+                      </>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteBucket(bucket.id, bucket.name)}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDeleteBucket(bucket.id, bucket.name)}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              </div>
-            ))}
+              )
+            })}
             {buckets.length > 0 && (
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  Total: {buckets.reduce((sum, b) => {
-                    const edited = editedBuckets[b.id]
-                    const pct = edited?.percentage !== undefined ? parseFloat(edited.percentage) : b.percentage
-                    return sum + (pct || 0)
-                  }, 0)}%
-                </span>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  {percentageBuckets.length > 0 && (
+                    <div>Percentage jars: {totalPercentage.toFixed(1)}%</div>
+                  )}
+                  {fixedBuckets.length > 0 && (
+                    <div>Fixed jars: ${totalFixed.toFixed(2)}</div>
+                  )}
+                </div>
                 <Button onClick={handleSaveBuckets} disabled={savingBuckets}>
                   <Save className="mr-2 h-4 w-4" />
                   {savingBuckets ? 'Saving...' : 'Save Jars'}
