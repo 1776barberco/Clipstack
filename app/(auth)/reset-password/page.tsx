@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Lock, CheckCircle, Loader2 } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
+import type { Session } from '@supabase/supabase-js'
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('')
@@ -17,28 +18,32 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [ready, setReady] = useState(false)
+  const [session, setSession] = useState<Session | null>(null)
   const router = useRouter()
 
   useEffect(() => {
     if (!supabase) return
 
-    // Listen for PASSWORD_RECOVERY event from the URL hash token
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setReady(true)
-      } else if (event === 'SIGNED_IN') {
-        // Also handle SIGNED_IN which sometimes fires instead
+    // Listen for auth events — PASSWORD_RECOVERY fires when the reset token is processed
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event: string, currentSession: Session | null) => {
+        if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+          setSession(currentSession)
+          setReady(true)
+        }
+      }
+    )
+
+    // Check if there's already a session
+    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+      if (existingSession) {
+        setSession(existingSession)
         setReady(true)
       }
     })
 
-    // Also check if there's already a session (user may have clicked link in same browser)
-    supabase.auth.getUser().then(({ data: { user } }: { data: { user: any } }) => {
-      if (user) setReady(true)
-    })
-
-    // Give it a moment then show the form anyway (fallback)
-    const timer = setTimeout(() => setReady(true), 2000)
+    // Fallback timeout — show form after 3s even if no event fires
+    const timer = setTimeout(() => setReady(true), 3000)
 
     return () => {
       subscription.unsubscribe()
@@ -64,12 +69,23 @@ export default function ResetPasswordPage() {
       return
     }
 
+    // Double-check we have a session before attempting update
+    const { data: { session: currentSession } } = await supabase.auth.getSession()
+    if (!currentSession) {
+      toast.error('Your reset link has expired. Please request a new one.')
+      return
+    }
+
     setLoading(true)
     const { error } = await supabase.auth.updateUser({ password })
     setLoading(false)
 
     if (error) {
-      toast.error(error.message || 'Failed to update password.')
+      if (error.message.includes('session')) {
+        toast.error('Your reset link has expired. Please request a new one.')
+      } else {
+        toast.error(error.message || 'Failed to update password.')
+      }
     } else {
       setSuccess(true)
       toast.success('Password updated!')
