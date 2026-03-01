@@ -33,7 +33,7 @@ export default function ResetPasswordPage() {
     })
 
     // Also check if there's already a session (user may have clicked link in same browser)
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(({ data: { user } }: { data: { user: any } }) => {
       if (user) setReady(true)
     })
 
