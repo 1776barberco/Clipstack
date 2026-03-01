@@ -237,6 +237,10 @@ export function useBuckets(userId: string | undefined) {
       .select()
       .single()
 
+    if (data && !error) {
+      setBuckets(prev => [...prev, data as BucketConfig])
+    }
+
     return { data: data as BucketConfig, error }
   }
 
@@ -256,6 +260,10 @@ export function useBuckets(userId: string | undefined) {
       .select()
       .single()
 
+    if (data && !error) {
+      setBuckets(prev => prev.map(b => b.id === id ? (data as BucketConfig) : b))
+    }
+
     return { data: data as BucketConfig, error }
   }
 
@@ -271,6 +279,11 @@ export function useBuckets(userId: string | undefined) {
       .from('bucket_configs')
       .delete()
       .eq('id', id)
+
+    if (!error) {
+      setBuckets(prev => prev.filter(b => b.id !== id))
+      setBalances(prev => prev.filter(b => b.bucket_id !== id))
+    }
 
     return { error }
   }
