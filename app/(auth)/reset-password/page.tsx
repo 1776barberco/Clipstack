@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Lock, CheckCircle } from 'lucide-react'
+import { Lock, CheckCircle, Loader2 } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 
@@ -16,7 +16,35 @@ export default function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [ready, setReady] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    if (!supabase) return
+
+    // Listen for PASSWORD_RECOVERY event from the URL hash token
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setReady(true)
+      } else if (event === 'SIGNED_IN') {
+        // Also handle SIGNED_IN which sometimes fires instead
+        setReady(true)
+      }
+    })
+
+    // Also check if there's already a session (user may have clicked link in same browser)
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setReady(true)
+    })
+
+    // Give it a moment then show the form anyway (fallback)
+    const timer = setTimeout(() => setReady(true), 2000)
+
+    return () => {
+      subscription.unsubscribe()
+      clearTimeout(timer)
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,6 +92,20 @@ export default function ResetPasswordPage() {
               Go to Dashboard
             </Button>
           </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (!ready) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 p-4 dark:from-zinc-900 dark:to-zinc-800">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
+            <CardTitle className="text-2xl">Verifying...</CardTitle>
+            <CardDescription>Please wait while we verify your reset link.</CardDescription>
+          </CardHeader>
         </Card>
       </div>
     )
