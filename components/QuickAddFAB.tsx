@@ -48,6 +48,13 @@ export function QuickAddFAB() {
     setQuickAmounts(getQuickAmounts())
   }, [])
 
+  // Listen for bottom nav "Log" tap
+  useEffect(() => {
+    const handler = () => setOpen(true)
+    window.addEventListener('open-quick-log', handler)
+    return () => window.removeEventListener('open-quick-log', handler)
+  }, [])
+
   // Auto-select first bucket for expenses
   useEffect(() => {
     if (mode === 'expense' && !selectedBucket && buckets.length > 0) {
