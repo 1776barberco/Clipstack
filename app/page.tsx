@@ -6,8 +6,20 @@ import { Footer } from '@/components/Footer'
 import { HeroAnimation } from '@/components/HeroAnimation'
 
 export const metadata: Metadata = {
-  title: 'TipJars — Budget in Style',
-  description: 'Smart budgeting for barbers, stylists, and independent professionals. Split every dollar automatically.',
+  title: 'TipJars — Smart Money Management for Barbers & Stylists',
+  description: 'Split your tips, track expenses, and build savings — all in one app built for beauty professionals.',
+  openGraph: {
+    title: 'TipJars — Smart Money Management for Barbers & Stylists',
+    description: 'Split your tips, track expenses, and build savings — all in one app built for beauty professionals.',
+    url: 'https://www.tipjars.co',
+    siteName: 'TipJars',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'TipJars — Smart Money Management for Barbers & Stylists',
+    description: 'Split your tips, track expenses, and build savings — all in one app built for beauty professionals.',
+  },
 }
 
 export default function HomePage() {

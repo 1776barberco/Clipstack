@@ -8,8 +8,8 @@ import { OfflineProvider } from '@/providers/OfflineProvider'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'TipJars - Budget in Style',
-  description: 'Smart budgeting for barbers and beauty professionals',
+  title: 'TipJars — Smart Money Management for Barbers & Stylists',
+  description: 'Split your tips, track expenses, and build savings — all in one app built for beauty professionals.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
