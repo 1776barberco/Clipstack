@@ -38,9 +38,12 @@ export function useCoach(userId: string | undefined) {
   const generateInsights = useCallback(async () => {
     setGenerating(true)
     try {
-      const res = await fetch('/api/coach/generate', { method: 'POST' })
+      const res = await fetch('/api/coach/generate', { method: 'POST', credentials: 'include' })
       if (res.ok) {
         await fetchInsights()
+      } else {
+        const data = await res.json().catch(() => ({}))
+        console.error('Coach generate failed:', res.status, data)
       }
     } finally {
       setGenerating(false)
