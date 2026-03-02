@@ -43,7 +43,7 @@ function SuggestedChanges({ data }: { data: Record<string, unknown> }) {
 
 export function CoachCard() {
   const { user } = useAuthContext()
-  const { insights, loading, generating, generateInsights, markRead, unreadCount } = useCoach(user?.id)
+  const { insights, loading, generating, error, generateInsights, markRead, unreadCount } = useCoach(user?.id)
   const [expanded, setExpanded] = useState<string | null>(null)
 
   const latestInsights = insights.slice(0, 4)
@@ -99,6 +99,11 @@ export function CoachCard() {
         </div>
       </CardHeader>
       <CardContent>
+        {error && (
+          <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
         {latestInsights.length === 0 ? (
           <div className="text-center py-8">
             <Brain className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
