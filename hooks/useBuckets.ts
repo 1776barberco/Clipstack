@@ -8,6 +8,7 @@ type BucketConfig = {
   name: string
   percentage: number
   target_amount: number | null
+  due_date: string | null
   is_tax_bucket: boolean
   priority: number
   color: string
@@ -35,6 +36,7 @@ const DEMO_BUCKETS: BucketConfig[] = [
     name: 'Tax Reserve',
     percentage: 25,
     target_amount: 10000,
+    due_date: null,
     is_tax_bucket: true,
     priority: 100,
     color: '#ef4444',
@@ -47,6 +49,7 @@ const DEMO_BUCKETS: BucketConfig[] = [
     name: 'Savings',
     percentage: 30,
     target_amount: 50000,
+    due_date: null,
     is_tax_bucket: false,
     priority: 90,
     color: '#22c55e',
@@ -59,6 +62,7 @@ const DEMO_BUCKETS: BucketConfig[] = [
     name: 'Investments',
     percentage: 20,
     target_amount: 25000,
+    due_date: null,
     is_tax_bucket: false,
     priority: 80,
     color: '#3b82f6',
@@ -71,6 +75,7 @@ const DEMO_BUCKETS: BucketConfig[] = [
     name: 'Spending',
     percentage: 25,
     target_amount: null,
+    due_date: null,
     is_tax_bucket: false,
     priority: 70,
     color: '#a855f7',

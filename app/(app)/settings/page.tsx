@@ -37,7 +37,7 @@ export default function SettingsPage() {
   const [taxRate, setTaxRate] = useState<string | null>(null)
   const [savingProfile, setSavingProfile] = useState(false)
 
-  const [editedBuckets, setEditedBuckets] = useState<Record<string, { name?: string; percentage?: string; color?: string; target_amount?: string }>>({})
+  const [editedBuckets, setEditedBuckets] = useState<Record<string, { name?: string; percentage?: string; color?: string; target_amount?: string; due_date?: string }>>({})
   const [savingBuckets, setSavingBuckets] = useState(false)
   const [newBucketId, setNewBucketId] = useState<string | null>(null)
   const newBucketNameRef = useRef<HTMLInputElement>(null)
@@ -189,6 +189,9 @@ export default function SettingsPage() {
         const amt = parseFloat(changes.target_amount)
         updates.target_amount = amt > 0 ? amt : null
       }
+      if (changes.due_date !== undefined) {
+        updates.due_date = changes.due_date || null
+      }
 
       const result = await updateBucket(id, updates)
       if (result.error) {
@@ -211,6 +214,7 @@ export default function SettingsPage() {
       name: 'New Jar',
       percentage: 0,
       target_amount: null,
+      due_date: null,
       is_tax_bucket: false,
       priority: 0,
       color: '#6b7280',
@@ -261,11 +265,11 @@ export default function SettingsPage() {
     }
   }
 
-  const getBucketField = (id: string, field: 'name' | 'percentage' | 'color' | 'target_amount', fallback: string) => {
+  const getBucketField = (id: string, field: 'name' | 'percentage' | 'color' | 'target_amount' | 'due_date', fallback: string) => {
     return editedBuckets[id]?.[field] ?? fallback
   }
 
-  const setBucketField = (id: string, field: 'name' | 'percentage' | 'color' | 'target_amount', value: string) => {
+  const setBucketField = (id: string, field: 'name' | 'percentage' | 'color' | 'target_amount' | 'due_date', value: string) => {
     // Direct edit — user controls their own splits
     setEditedBuckets((prev) => ({
       ...prev,
@@ -457,6 +461,13 @@ export default function SettingsPage() {
                       </>
                     )}
                   </div>
+                  <Input
+                    type="date"
+                    value={getBucketField(bucket.id, 'due_date', bucket.due_date ?? '')}
+                    onChange={(e) => setBucketField(bucket.id, 'due_date', e.target.value)}
+                    className="w-36 text-sm"
+                    title="Due date for this jar goal"
+                  />
                   <Button
                     variant="ghost"
                     size="icon"
