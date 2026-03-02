@@ -102,14 +102,16 @@ export default function SettingsPage() {
 
   const toggleAllocationType = (bucketId: string) => {
     const fixed = isFixedAmount(bucketId)
+    const bucket = buckets.find(b => b.id === bucketId)
     if (fixed) {
-      // Switch to percentage: clear target_amount, restore percentage
+      // Switch to percentage: clear target_amount, restore to even split
+      const otherPctCount = buckets.filter(b => b.id !== bucketId && !isFixedAmount(b.id)).length
       setEditedBuckets(prev => ({
         ...prev,
         [bucketId]: { ...prev[bucketId], target_amount: '0', percentage: '0' },
       }))
     } else {
-      // Switch to fixed: set target_amount, zero out percentage
+      // Switch to fixed: keep name, start at $0 for user to fill in
       setEditedBuckets(prev => ({
         ...prev,
         [bucketId]: { ...prev[bucketId], target_amount: '100', percentage: '0' },
@@ -451,6 +453,7 @@ export default function SettingsPage() {
                           step="0.01"
                           value={getBucketField(bucket.id, 'target_amount', (bucket.target_amount || 0).toString())}
                           onChange={(e) => setBucketField(bucket.id, 'target_amount', e.target.value)}
+                          placeholder="0"
                           className="w-24 text-center"
                         />
                       </>
