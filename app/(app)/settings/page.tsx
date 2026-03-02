@@ -103,19 +103,59 @@ export default function SettingsPage() {
   const toggleAllocationType = (bucketId: string) => {
     const fixed = isFixedAmount(bucketId)
     const bucket = buckets.find(b => b.id === bucketId)
+
     if (fixed) {
-      // Switch to percentage: clear target_amount, restore to even split
-      const otherPctCount = buckets.filter(b => b.id !== bucketId && !isFixedAmount(b.id)).length
-      setEditedBuckets(prev => ({
-        ...prev,
-        [bucketId]: { ...prev[bucketId], target_amount: '0', percentage: '0' },
-      }))
+      // Switching FROM fixed TO percentage
+      // Give this jar an equal share with the other percentage jars
+      const otherPctBuckets = buckets.filter(b => b.id !== bucketId && !isFixedAmount(b.id))
+      const otherTotal = otherPctBuckets.reduce((sum, b) => {
+        const edited = editedBuckets[b.id]
+        const pct = edited?.percentage !== undefined ? parseFloat(edited.percentage) : b.percentage
+        return sum + (pct || 0)
+      }, 0)
+      // This jar gets an equal share: if others total 80% across 4 jars, this one gets ~20%
+      const evenShare = otherPctBuckets.length > 0
+        ? Math.round((otherTotal / otherPctBuckets.length) * 10) / 10
+        : 100
+      const newTotal = otherTotal + evenShare
+      // Scale everything so it totals 100%
+      const scale = newTotal > 0 ? 100 / newTotal : 1
+      setEditedBuckets(prev => {
+        const next = {
+          ...prev,
+          [bucketId]: { ...prev[bucketId], target_amount: '0', percentage: String(Math.round(evenShare * scale * 10) / 10) },
+        }
+        for (const b of otherPctBuckets) {
+          const pct = prev[b.id]?.percentage !== undefined ? parseFloat(prev[b.id]!.percentage!) : b.percentage
+          next[b.id] = { ...next[b.id], percentage: String(Math.round(pct * scale * 10) / 10) }
+        }
+        return next
+      })
     } else {
-      // Switch to fixed: keep name, start at $0 for user to fill in
-      setEditedBuckets(prev => ({
-        ...prev,
-        [bucketId]: { ...prev[bucketId], target_amount: '100', percentage: '0' },
-      }))
+      // Switching FROM percentage TO fixed
+      // Remove this jar's percentage and redistribute to remaining % jars
+      const thisPct = editedBuckets[bucketId]?.percentage !== undefined
+        ? parseFloat(editedBuckets[bucketId]!.percentage!)
+        : (bucket?.percentage || 0)
+      const otherPctBuckets = buckets.filter(b => b.id !== bucketId && !isFixedAmount(b.id))
+      const otherTotal = otherPctBuckets.reduce((sum, b) => {
+        const edited = editedBuckets[b.id]
+        const pct = edited?.percentage !== undefined ? parseFloat(edited.percentage) : b.percentage
+        return sum + (pct || 0)
+      }, 0)
+      const scale = otherTotal > 0 ? 100 / otherTotal : 1
+      setEditedBuckets(prev => {
+        const next = {
+          ...prev,
+          [bucketId]: { ...prev[bucketId], target_amount: '100', percentage: '0' },
+        }
+        // Scale remaining % jars up to total 100%
+        for (const b of otherPctBuckets) {
+          const pct = prev[b.id]?.percentage !== undefined ? parseFloat(prev[b.id]!.percentage!) : b.percentage
+          next[b.id] = { ...next[b.id], percentage: String(Math.round(pct * scale * 10) / 10) }
+        }
+        return next
+      })
     }
   }
 
