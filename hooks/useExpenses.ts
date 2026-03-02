@@ -129,7 +129,7 @@ export function useExpenses(userId: string | undefined) {
 
         if (error) throw error
         
-        const formattedData = (data || []).map((expense: any) => ({
+        const formattedData = (data || []).map((expense: Record<string, unknown> & { bucket_configs?: { name?: string } }) => ({
           ...expense,
           bucket_name: expense.bucket_configs?.name || 'Unknown Jar'
         }))

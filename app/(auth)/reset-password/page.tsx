@@ -18,7 +18,6 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [ready, setReady] = useState(false)
-  const [session, setSession] = useState<Session | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -26,18 +25,16 @@ export default function ResetPasswordPage() {
 
     // Listen for auth events — PASSWORD_RECOVERY fires when the reset token is processed
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event: string, currentSession: Session | null) => {
+      (event: string, _currentSession: Session | null) => {
         if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
-          setSession(currentSession)
           setReady(true)
         }
       }
     )
 
     // Check if there's already a session
-    supabase.auth.getSession().then((res: any) => { const existingSession = res?.data?.session;
+    supabase.auth.getSession().then(({ data: { session: existingSession } }: { data: { session: Session | null } }) => {
       if (existingSession) {
-        setSession(existingSession)
         setReady(true)
       }
     })
@@ -70,8 +67,8 @@ export default function ResetPasswordPage() {
     }
 
     // Double-check we have a session before attempting update
-    const sessionRes: any = await supabase.auth.getSession(); const currentSession = sessionRes?.data?.session
-    if (!currentSession) {
+    const { data: { session: activeSession } } = await supabase.auth.getSession()
+    if (!activeSession) {
       toast.error('Your reset link has expired. Please request a new one.')
       return
     }

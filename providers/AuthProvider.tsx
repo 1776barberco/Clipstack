@@ -5,7 +5,6 @@ import { supabase, DEMO_MODE, DEMO_USER } from '@/lib/supabase/client'
 import { User, Session } from '@supabase/supabase-js'
 import { useRouter, usePathname } from 'next/navigation'
 import {
-  signInWithOtp,
   signUpWithPassword,
   signOutAction,
   resetPassword as resetPasswordAction,
@@ -46,14 +45,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (DEMO_MODE) {
-      setUser(DEMO_USER as User)
-      setSession(DEMO_SESSION)
-      setLoading(false)
+      queueMicrotask(() => setUser(DEMO_USER as User))
+      queueMicrotask(() => setSession(DEMO_SESSION))
+      queueMicrotask(() => setLoading(false))
       return
     }
 
     if (!supabase) {
-      setLoading(false)
+      queueMicrotask(() => setLoading(false))
       return
     }
 

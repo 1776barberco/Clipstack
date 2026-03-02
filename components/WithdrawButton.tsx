@@ -71,7 +71,7 @@ export function WithdrawButton() {
       amount: parseFloat(amount),
       type: 'withdrawal',
       description: description || 'Withdrawal',
-    } as any)
+    })
     setLoading(false)
 
     if (error) {

@@ -19,8 +19,7 @@ let supabaseInstance: ReturnType<typeof createBrowserClient> | null = null
 
 export function getSupabaseClient() {
   if (DEMO_MODE) {
-    console.log('DEMO_MODE is active, returning null client')
-    return null as any
+    return null as unknown as ReturnType<typeof createBrowserClient>
   }
 
   if (supabaseInstance) return supabaseInstance
@@ -30,7 +29,7 @@ export function getSupabaseClient() {
 
   if (!supabaseUrl || !supabaseAnonKey) {
     console.error('Missing Supabase credentials')
-    return null as any
+    return null as unknown as ReturnType<typeof createBrowserClient>
   }
 
   // Use createBrowserClient from @supabase/ssr — stores auth in cookies

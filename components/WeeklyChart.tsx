@@ -3,7 +3,7 @@
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useIncome } from '@/hooks/useIncome'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { TrendingUp, DollarSign } from 'lucide-react'
+import { TrendingUp } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { format, parseISO } from 'date-fns'
 import {

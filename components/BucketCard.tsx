@@ -16,7 +16,7 @@ import {
   DialogTrigger 
 } from '@/components/ui/dialog'
 import { formatCurrency } from '@/lib/utils'
-import { MinusCircle, PlusCircle, Loader2, Receipt } from 'lucide-react'
+import { MinusCircle, Loader2, Receipt } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 

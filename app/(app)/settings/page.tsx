@@ -28,8 +28,8 @@ import { toast } from 'sonner'
 export default function SettingsPage() {
   const router = useRouter()
   const { user } = useAuthContext()
-  const { profile, loading: profileLoading, updateProfile } = useProfile(user?.id)
-  const { buckets, loading: bucketsLoading, updateBucket, createBucket, deleteBucket } = useBuckets(user?.id)
+  const { profile, loading: profileLoading } = useProfile(user?.id)
+  const { buckets, loading: bucketsLoading, createBucket, deleteBucket } = useBuckets(user?.id)
 
   const [fullName, setFullName] = useState<string | null>(null)
   const [boothRent, setBoothRent] = useState<string | null>(null)
@@ -51,7 +51,7 @@ export default function SettingsPage() {
     if (newBucketId && newBucketNameRef.current) {
       newBucketNameRef.current.focus()
       newBucketNameRef.current.select()
-      setNewBucketId(null)
+      queueMicrotask(() => setNewBucketId(null))
     }
   }, [newBucketId, buckets])
 

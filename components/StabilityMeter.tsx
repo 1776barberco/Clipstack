@@ -4,7 +4,7 @@ import { useAuthContext } from '@/providers/AuthProvider'
 import { useRulesEngine } from '@/hooks/useRulesEngine'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { Activity, TrendingUp, TrendingDown, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Activity, TrendingDown, AlertTriangle, CheckCircle } from 'lucide-react'
 
 export function StabilityMeter() {
   const { user } = useAuthContext()
@@ -50,7 +50,8 @@ export function StabilityMeter() {
     }
   }
 
-  const getProgressColor = () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _getProgressColor = () => {
     switch (status) {
       case 'high':
         return 'bg-green-500'

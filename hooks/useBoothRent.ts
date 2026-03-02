@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase/client'
-import { differenceInDays, format } from 'date-fns'
+import { differenceInDays } from 'date-fns'
 
 interface BoothRentStatus {
   amount: number | null

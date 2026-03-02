@@ -5,7 +5,7 @@ import { useTaxEstimate } from '@/hooks/useTaxEstimate'
 import { useProfile } from '@/hooks/useProfile'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Calculator, TrendingUp, AlertCircle } from 'lucide-react'
+import { Calculator, AlertCircle } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 
 export function TaxEstimateCard() {

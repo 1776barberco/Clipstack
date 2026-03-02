@@ -159,14 +159,11 @@ export async function completeOnboarding(data: {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
 
   if (authError || !user) {
-    console.error('[completeOnboarding] Auth error:', authError?.message || 'no user')
     return { error: 'Not authenticated. Please sign out and sign back in.' }
   }
 
-  console.log('[completeOnboarding] User:', user.id, user.email)
-
   // Step 1: Upsert profile
-  const { error: profileError } = await (supabase as any).from('profiles').upsert({
+  const { error: profileError } = await supabase.from('profiles').upsert({
     id: user.id,
     email: user.email!,
     full_name: parsed.data.fullName,
@@ -175,21 +172,17 @@ export async function completeOnboarding(data: {
   }, { onConflict: 'id' })
 
   if (profileError) {
-    console.error('[completeOnboarding] Profile upsert error:', profileError)
     return { error: `Profile save failed: ${profileError.message}` }
   }
 
-  console.log('[completeOnboarding] Profile saved successfully')
-
   // Step 2: Create default buckets if none exist
-  const { data: existingBuckets, error: fetchError } = await (supabase as any)
+  const { data: existingBuckets, error: fetchError } = await supabase
     .from('bucket_configs')
     .select('id')
     .eq('user_id', user.id)
     .limit(1)
 
   if (fetchError) {
-    console.error('[completeOnboarding] Bucket fetch error:', fetchError)
     // Non-fatal — profile was saved, continue
   }
 
@@ -201,16 +194,13 @@ export async function completeOnboarding(data: {
       { user_id: user.id, name: 'Fun', percentage: 10, color: '#f59e0b', priority: 4, is_tax_bucket: false },
     ]
 
-    const { error: bucketsError } = await (supabase as any)
+    const { error: bucketsError } = await supabase
       .from('bucket_configs')
       .insert(bucketTemplates)
 
     if (bucketsError) {
-      console.error('[completeOnboarding] Bucket insert error:', bucketsError)
       return { error: `Jar setup failed: ${bucketsError.message}` }
     }
-
-    console.log('[completeOnboarding] Default buckets created')
   }
 
   return { error: null }
@@ -227,7 +217,7 @@ export async function updateProfileAction(updates: Record<string, unknown>) {
     return { error: 'Not authenticated' }
   }
 
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('profiles')
     .update(parsed.data)
     .eq('id', user.id)
@@ -257,7 +247,7 @@ export async function createBucketAction(bucket: {
     return { data: null, error: 'Not authenticated' }
   }
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('bucket_configs')
     .insert({ ...parsed.data, user_id: user.id })
     .select()
@@ -283,7 +273,7 @@ export async function updateBucketAction(id: string, updates: Record<string, unk
     return { data: null, error: 'Not authenticated' }
   }
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('bucket_configs')
     .update(parsed.data)
     .eq('id', parsedId.data)
@@ -309,7 +299,7 @@ export async function deleteBucketAction(id: string) {
     return { error: 'Not authenticated' }
   }
 
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('bucket_configs')
     .delete()
     .eq('id', parsedId.data)
@@ -357,7 +347,7 @@ export async function checkOnboardingStatus() {
     return { needsOnboarding: false, authenticated: false }
   }
 
-  const { data: profile } = await (supabase as any)
+  const { data: profile } = await supabase
     .from('profiles')
     .select('full_name')
     .eq('id', user.id)
@@ -377,7 +367,7 @@ export async function ensureProfileExists() {
     return { error: 'Not authenticated' }
   }
 
-  await (supabase as any)
+  await supabase
     .from('profiles')
     .upsert(
       { id: user.id, email: user.email ?? '' },

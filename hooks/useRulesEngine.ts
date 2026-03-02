@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { useBuckets } from '@/hooks/useBuckets'
 import { useIncome } from '@/hooks/useIncome'
 

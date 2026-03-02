@@ -16,15 +16,15 @@ function LoginContent() {
     const errorParam = searchParams.get('error')
 
     if (errorParam) {
-      setError(errorParam === 'auth_failed'
+      queueMicrotask(() => setError(errorParam === 'auth_failed'
         ? 'Sign in failed. Please request a new magic link.'
-        : decodeURIComponent(errorParam))
-      setChecking(false)
+        : decodeURIComponent(errorParam)))
+      queueMicrotask(() => setChecking(false))
       return
     }
 
     if (!supabase) {
-      setChecking(false)
+      queueMicrotask(() => setChecking(false))
       return
     }
 

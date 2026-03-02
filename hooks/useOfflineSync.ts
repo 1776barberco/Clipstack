@@ -91,7 +91,7 @@ export function useOfflineSync(userId: string | undefined) {
         if (result?.error) {
           throw result.error
         }
-      } catch (error) {
+      } catch (_error) {
         if (action.retryCount < 3) {
           failedActions.push({
             ...action,

@@ -12,7 +12,7 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
   const [showStatus, setShowStatus] = useState(false)
 
   useEffect(() => {
-    setShowStatus(true)
+    queueMicrotask(() => setShowStatus(true))
     const timer = setTimeout(() => setShowStatus(false), 3000)
     return () => clearTimeout(timer)
   }, [isOnline])

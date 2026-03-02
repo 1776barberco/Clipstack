@@ -9,7 +9,7 @@ import { BucketCard } from './BucketCard'
 
 export function BucketBalances() {
   const { user } = useAuthContext()
-  const { buckets, balances, loading, getBucketBalance, getTotalBalance } = useBuckets(user?.id)
+  const { buckets, loading, getBucketBalance, getTotalBalance } = useBuckets(user?.id)
 
   if (loading) {
     return (
