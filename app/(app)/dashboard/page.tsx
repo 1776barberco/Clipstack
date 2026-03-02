@@ -35,8 +35,8 @@ export default function DashboardPage() {
         {/* Weekly Summary — Hero position */}
         <WeeklySummaryCard />
 
-        {/* Desktop: Quick Income + Expense side by side (hidden on mobile — FAB handles it) */}
-        <div className="hidden md:grid md:grid-cols-2 gap-6">
+        {/* Desktop: Quick Income + Expense side by side (hidden on mobile/tablet — FAB handles it) */}
+        <div className="hidden lg:grid lg:grid-cols-2 gap-6">
           <QuickIncomeEntry />
           <QuickExpenseEntry />
         </div>

@@ -19,7 +19,7 @@ export function BottomNav() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
       <div className="mx-2 mb-2 flex items-center justify-around rounded-2xl border border-white/10 bg-background/80 backdrop-blur-2xl py-2 shadow-2xl">
         {/* Dashboard */}
         <Link

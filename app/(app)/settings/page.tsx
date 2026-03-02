@@ -413,68 +413,79 @@ export default function SettingsPage() {
               const fixed = isFixedAmount(bucket.id)
               const isNewBucket = bucket.id === newBucketId
               return (
-                <div key={bucket.id} className="flex items-center gap-3 rounded-lg border p-3">
-                  <input
-                    type="color"
-                    value={getBucketField(bucket.id, 'color', bucket.color)}
-                    onChange={(e) => setBucketField(bucket.id, 'color', e.target.value)}
-                    className="h-8 w-8 cursor-pointer rounded border-0 p-0"
-                  />
-                  <Input
-                    ref={isNewBucket ? newBucketNameRef : undefined}
-                    value={getBucketField(bucket.id, 'name', bucket.name)}
-                    onChange={(e) => setBucketField(bucket.id, 'name', e.target.value)}
-                    className="flex-1"
-                  />
-                  <button
-                    onClick={() => toggleAllocationType(bucket.id)}
-                    className="text-xs font-medium px-2 py-1 rounded border hover:bg-accent transition-colors"
-                    title={fixed ? 'Switch to percentage' : 'Switch to fixed dollar amount'}
-                  >
-                    {fixed ? '$' : '%'}
-                  </button>
-                  <div className="flex items-center gap-1">
-                    {fixed ? (
-                      <>
-                        <span className="text-sm text-muted-foreground">$</span>
-                        <Input
-                          type="number"
-                          min={0}
-                          step="0.01"
-                          value={getBucketField(bucket.id, 'target_amount', (bucket.target_amount || 0).toString())}
-                          onChange={(e) => setBucketField(bucket.id, 'target_amount', e.target.value)}
-                          placeholder="0"
-                          className="w-24 text-center"
-                        />
-                      </>
-                    ) : (
-                      <>
-                        <Input
-                          type="number"
-                          min={0}
-                          max={100}
-                          value={getBucketField(bucket.id, 'percentage', bucket.percentage.toString())}
-                          onChange={(e) => setBucketField(bucket.id, 'percentage', e.target.value)}
-                          className="w-20 text-center"
-                        />
-                        <span className="text-sm text-muted-foreground">%</span>
-                      </>
-                    )}
+                <div key={bucket.id} className="rounded-lg border p-3 space-y-3">
+                  {/* Row 1: Color + Name + Delete */}
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={getBucketField(bucket.id, 'color', bucket.color)}
+                      onChange={(e) => setBucketField(bucket.id, 'color', e.target.value)}
+                      className="h-8 w-8 cursor-pointer rounded border-0 p-0 shrink-0"
+                    />
+                    <Input
+                      ref={isNewBucket ? newBucketNameRef : undefined}
+                      value={getBucketField(bucket.id, 'name', bucket.name)}
+                      onChange={(e) => setBucketField(bucket.id, 'name', e.target.value)}
+                      placeholder="Jar name"
+                      className="flex-1 font-medium"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="shrink-0"
+                      onClick={() => handleDeleteBucket(bucket.id, bucket.name)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
                   </div>
-                  <Input
-                    type="date"
-                    value={getBucketField(bucket.id, 'due_date', bucket.due_date ?? '')}
-                    onChange={(e) => setBucketField(bucket.id, 'due_date', e.target.value)}
-                    className="w-36 text-sm"
-                    title="Due date for this jar goal"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteBucket(bucket.id, bucket.name)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+
+                  {/* Row 2: Allocation + Due Date */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => toggleAllocationType(bucket.id)}
+                        className="text-xs font-medium px-2 py-1 rounded border hover:bg-accent transition-colors shrink-0"
+                        title={fixed ? 'Switch to percentage' : 'Switch to fixed dollar amount'}
+                      >
+                        {fixed ? '$' : '%'}
+                      </button>
+                      {fixed ? (
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm text-muted-foreground">$</span>
+                          <Input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={getBucketField(bucket.id, 'target_amount', (bucket.target_amount || 0).toString())}
+                            onChange={(e) => setBucketField(bucket.id, 'target_amount', e.target.value)}
+                            placeholder="0"
+                            className="w-24 text-center"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <Input
+                            type="number"
+                            min={0}
+                            max={100}
+                            value={getBucketField(bucket.id, 'percentage', bucket.percentage.toString())}
+                            onChange={(e) => setBucketField(bucket.id, 'percentage', e.target.value)}
+                            className="w-20 text-center"
+                          />
+                          <span className="text-sm text-muted-foreground">%</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-muted-foreground whitespace-nowrap">Due</Label>
+                      <Input
+                        type="date"
+                        value={getBucketField(bucket.id, 'due_date', bucket.due_date ?? '')}
+                        onChange={(e) => setBucketField(bucket.id, 'due_date', e.target.value)}
+                        className="w-36 text-sm"
+                      />
+                    </div>
+                  </div>
                 </div>
               )
             })}
