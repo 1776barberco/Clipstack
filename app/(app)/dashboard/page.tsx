@@ -1,5 +1,7 @@
 import { Footer } from '@/components/Footer'
 import { CoachCard } from '@/components/CoachCard'
+import { QuickIncomeEntry } from '@/components/QuickIncomeEntry'
+import { QuickExpenseEntry } from '@/components/QuickExpenseEntry'
 import { BucketBalances } from '@/components/BucketBalances'
 import { StabilityMeter } from '@/components/StabilityMeter'
 import { BoothRentCard } from '@/components/BoothRentCard'
@@ -32,6 +34,12 @@ export default function DashboardPage() {
       <main className="container mx-auto p-4 space-y-6 pb-24 md:pb-6">
         {/* Weekly Summary — Hero position */}
         <WeeklySummaryCard />
+
+        {/* Desktop: Quick Income + Expense side by side (hidden on mobile — FAB handles it) */}
+        <div className="hidden md:grid md:grid-cols-2 gap-6">
+          <QuickIncomeEntry />
+          <QuickExpenseEntry />
+        </div>
 
         {/* Stability + Chart */}
         <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
