@@ -27,6 +27,7 @@ interface BucketCardProps {
     color: string
     percentage: number
     is_tax_bucket?: boolean
+    target_amount?: number | null
   }
   balance: number
   totalBalance: number
@@ -108,7 +109,7 @@ export function BucketCard({ bucket, balance, totalBalance, onExpenseAdded }: Bu
               />
 
               <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>{bucket.percentage}% allocation</span>
+                <span>{bucket.target_amount && bucket.target_amount > 0 ? `$${bucket.target_amount} fixed` : `${bucket.percentage}% allocation`}</span>
                 <span>{percentage.toFixed(1)}% of total</span>
               </div>
 
