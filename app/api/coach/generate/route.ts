@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text()
       console.error('Coach AI error:', aiResponse.status, errorText)
-      return NextResponse.json({ error: 'Coach is temporarily unavailable' }, { status: 502 })
+      return NextResponse.json({ error: 'Coach is temporarily unavailable', status: aiResponse.status, details: errorText.slice(0, 500) }, { status: 502 })
     }
 
     const aiData = await aiResponse.json()
