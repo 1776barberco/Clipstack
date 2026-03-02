@@ -17,8 +17,9 @@ export interface AffordabilityOptions {
 }
 
 export function useRulesEngine(userId: string | undefined) {
-  const { buckets, getBucketBalance, getTotalBalance } = useBuckets(userId)
-  const { weeklyIncome } = useIncome(userId)
+  const { buckets, loading: bucketsLoading, getBucketBalance, getTotalBalance } = useBuckets(userId)
+  const { weeklyIncome, loading: incomeLoading } = useIncome(userId)
+  const loading = bucketsLoading || incomeLoading
 
   const checkAffordability = (options: AffordabilityOptions): AffordabilityCheck => {
     const { fromBucketId, amount, safetyBuffer = 0.1 } = options
@@ -162,6 +163,7 @@ export function useRulesEngine(userId: string | undefined) {
   }
 
   return {
+    loading,
     checkAffordability,
     checkStability,
     suggestBucketAllocation,

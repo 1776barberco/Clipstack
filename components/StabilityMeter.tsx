@@ -8,8 +8,24 @@ import { Activity, TrendingDown, AlertTriangle, CheckCircle } from 'lucide-react
 
 export function StabilityMeter() {
   const { user } = useAuthContext()
-  const { checkStability } = useRulesEngine(user?.id)
+  const { checkStability, loading } = useRulesEngine(user?.id)
   const { score, status } = checkStability()
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Stability Score
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-20 animate-pulse rounded-lg bg-muted" />
+        </CardContent>
+      </Card>
+    )
+  }
 
   const getStatusColor = () => {
     switch (status) {

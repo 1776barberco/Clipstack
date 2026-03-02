@@ -79,8 +79,12 @@ export function BucketCard({ bucket, balance, totalBalance, onExpenseAdded }: Bu
         <Card className="cursor-pointer transition-all hover:shadow-md active:scale-[0.98] group">
           <CardContent className="p-4">
             <div className="flex items-center gap-4">
-              <ProgressRing value={percentage} size={56} strokeWidth={4} color={bucket.color}>
-                <span className="text-xs font-bold">{percentage.toFixed(0)}%</span>
+              <ProgressRing value={bucket.target_amount && bucket.target_amount > 0 ? (totalBalance > 0 ? Math.min(100, (balance / bucket.target_amount) * 100) : 0) : percentage} size={56} strokeWidth={4} color={bucket.color}>
+                <span className="text-xs font-bold">
+                  {bucket.target_amount && bucket.target_amount > 0
+                    ? `${totalBalance > 0 ? Math.min(100, Math.round((balance / bucket.target_amount) * 100)) : 0}%`
+                    : `${bucket.percentage}%`}
+                </span>
               </ProgressRing>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
