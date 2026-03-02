@@ -9,7 +9,7 @@ import { useMemo } from 'react'
 
 export function WeeklySummaryCard() {
   const { user } = useAuthContext()
-  const { incomes, loading } = useIncome(user?.id)
+  const { entries: incomes, loading } = useIncome(user?.id)
 
   const { thisWeek, fourWeekAvg, trend } = useMemo(() => {
     if (!incomes || incomes.length === 0) return { thisWeek: 0, fourWeekAvg: 0, trend: 0 }
