@@ -32,6 +32,15 @@ export default function HomePage() {
           <span className="text-lg font-semibold tracking-tight">TipJars</span>
         </Link>
         <div className="flex items-center gap-6 text-sm">
+          <a href="#features" className="hidden sm:block text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
+            Features
+          </a>
+          <a href="#pricing" className="hidden sm:block text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
+            Pricing
+          </a>
+          <Link href="/blog" className="hidden sm:block text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
+            Blog
+          </Link>
           <Link href="/login">
             <Button className="bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 rounded-full px-5 h-9 text-sm">
               Sign In
@@ -133,30 +142,83 @@ export default function HomePage() {
       </section>
 
       {/* Pricing */}
-      <section className="px-6 py-24 border-t border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-md mx-auto text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-3 tracking-tight">Free. No catch.</h2>
-          <p className="text-zinc-500 dark:text-zinc-400 mb-10">Everything you need, nothing you don&apos;t.</p>
-          <ul className="text-sm text-zinc-600 dark:text-zinc-300 space-y-3 text-left max-w-xs mx-auto mb-10">
-            {[
-              'Unlimited income tracking',
-              'Custom jar splits',
-              'Tax set-asides',
-              'Weekly stability score',
-              'Offline mode',
-              'All future features',
-            ].map((item) => (
-              <li key={item} className="flex items-center gap-3">
-                <span className="text-zinc-400">&mdash;</span>
-                {item}
-              </li>
-            ))}
-          </ul>
-          <Link href="/login">
-            <Button className="bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 rounded-full px-8 h-12 text-base">
-              Get Started
-            </Button>
-          </Link>
+      <section id="pricing" className="px-6 py-24 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-3 tracking-tight">Simple pricing</h2>
+          <p className="text-zinc-500 dark:text-zinc-400 text-center mb-12 max-w-lg mx-auto">
+            Start free. Upgrade when you&apos;re ready for personalized coaching.
+          </p>
+
+          <div className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            {/* Free Tier */}
+            <div className="border border-zinc-200 dark:border-zinc-800 rounded-2xl p-8">
+              <h3 className="font-bold text-lg mb-1">Free</h3>
+              <p className="text-zinc-500 dark:text-zinc-400 text-sm mb-6">Everything you need to get organized.</p>
+              <div className="mb-6">
+                <span className="text-4xl font-bold">$0</span>
+                <span className="text-zinc-400 text-sm"> / forever</span>
+              </div>
+              <ul className="text-sm text-zinc-600 dark:text-zinc-300 space-y-3 mb-8">
+                {[
+                  'Unlimited income tracking',
+                  'Custom jar splits',
+                  'Tax set-asides',
+                  'Booth rent tracking',
+                  'Weekly stability score',
+                  'Offline mode',
+                  '2 AI insights per refresh',
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-3">
+                    <span className="text-green-500 text-xs">✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/login">
+                <Button variant="outline" className="w-full rounded-full h-11 border-zinc-300 dark:border-zinc-700">
+                  Get Started
+                </Button>
+              </Link>
+            </div>
+
+            {/* AI Coach Pro Tier */}
+            <div className="relative border-2 border-primary rounded-2xl p-8 bg-gradient-to-b from-primary/5 to-transparent">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <span className="bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
+                  Most Popular
+                </span>
+              </div>
+              <h3 className="font-bold text-lg mb-1">AI Coach Pro</h3>
+              <p className="text-zinc-500 dark:text-zinc-400 text-sm mb-6">Your personal financial coach.</p>
+              <div className="mb-6">
+                <span className="text-4xl font-bold">$9.99</span>
+                <span className="text-zinc-400 text-sm"> / month</span>
+              </div>
+              <ul className="text-sm text-zinc-600 dark:text-zinc-300 space-y-3 mb-8">
+                {[
+                  'Everything in Free',
+                  'Unlimited AI insights',
+                  '1-on-1 AI Coach chat',
+                  'Choose your coach personality',
+                  'Personalized savings goals',
+                  'Spending habit analysis',
+                  'Seasonal income forecasts',
+                  'Priority support',
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-3">
+                    <span className="text-primary text-xs">✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/login">
+                <Button className="w-full rounded-full h-11 bg-primary hover:bg-primary/90">
+                  Start 7-Day Free Trial
+                </Button>
+              </Link>
+              <p className="text-[11px] text-zinc-400 text-center mt-3">Cancel anytime. No commitment.</p>
+            </div>
+          </div>
         </div>
       </section>
 

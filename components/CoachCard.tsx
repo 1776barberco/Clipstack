@@ -5,9 +5,11 @@ import { useCoach } from '@/hooks/useCoach'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Brain, Sparkles, TrendingUp, Calendar, Lightbulb, RefreshCw, ChevronRight } from 'lucide-react'
+import { Brain, Sparkles, TrendingUp, Calendar, Lightbulb, RefreshCw, ChevronRight, Lock } from 'lucide-react'
 import { useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
+import { LockedInsightCard } from './LockedInsightCard'
+import Link from 'next/link'
 
 type SuggestedChange = { jar: string; current: string; suggested: string; reason: string }
 
@@ -24,6 +26,18 @@ const insightColors: Record<string, string> = {
   seasonal_forecast: 'bg-amber-500/10 text-amber-600 border-amber-200',
   money_tip: 'bg-green-500/10 text-green-600 border-green-200',
 }
+
+// The locked cards always show these two types as teasers
+const LOCKED_INSIGHTS = [
+  {
+    title: 'Seasonal Income Forecast',
+    type: 'seasonal_forecast',
+  },
+  {
+    title: 'Smart Savings Tip',
+    type: 'money_tip',
+  },
+]
 
 function SuggestedChanges({ data }: { data: Record<string, unknown> }) {
   const changes = data?.suggested_changes as SuggestedChange[] | undefined
@@ -46,7 +60,14 @@ export function CoachCard() {
   const { insights, loading, generating, error, generateInsights, markRead, unreadCount } = useCoach(user?.id)
   const [expanded, setExpanded] = useState<string | null>(null)
 
-  const latestInsights = insights.slice(0, 4)
+  // TODO: Replace with real subscription check from useSubscription hook
+  const isSubscribed = false
+
+  // Free users see only 2 insights; subscribers see all
+  const FREE_LIMIT = 2
+  const visibleInsights = isSubscribed ? insights.slice(0, 4) : insights.slice(0, FREE_LIMIT)
+  const hasMoreInsights = !isSubscribed && insights.length > FREE_LIMIT
+  const extraCount = insights.length - FREE_LIMIT
 
   if (loading) {
     return (
@@ -104,7 +125,7 @@ export function CoachCard() {
             {error}
           </div>
         )}
-        {latestInsights.length === 0 ? (
+        {insights.length === 0 ? (
           <div className="text-center py-8">
             <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-white/10 mb-4">
               <Brain className="h-8 w-8 text-purple-400" />
@@ -124,7 +145,8 @@ export function CoachCard() {
           </div>
         ) : (
           <div className="space-y-3">
-            {latestInsights.map((insight) => (
+            {/* Visible (free) insights */}
+            {visibleInsights.map((insight) => (
               <div
                 key={insight.id}
                 className={`rounded-lg border p-3 cursor-pointer transition-all hover:shadow-sm ${
@@ -157,6 +179,41 @@ export function CoachCard() {
                 )}
               </div>
             ))}
+
+            {/* Locked insights for free users */}
+            {!isSubscribed && (
+              <>
+                {LOCKED_INSIGHTS.map((locked) => (
+                  <LockedInsightCard
+                    key={locked.type}
+                    title={locked.title}
+                    colorClass={insightColors[locked.type] || 'bg-muted'}
+                    icon={insightIcons[locked.type]}
+                  />
+                ))}
+
+                {/* FOMO CTA */}
+                <Link href="/coach" className="block">
+                  <div className="rounded-xl bg-gradient-to-r from-primary/10 via-purple-500/10 to-primary/10 border border-primary/20 p-4 text-center transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <Lock className="h-4 w-4 text-primary" />
+                      <span className="font-semibold text-sm">
+                        {hasMoreInsights
+                          ? `Your coach has ${extraCount} more insight${extraCount > 1 ? 's' : ''}`
+                          : 'Unlock your full AI Coach'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Personalized chat, unlimited insights, and smarter money moves
+                    </p>
+                    <div className="mt-3 inline-flex items-center gap-1.5 bg-primary text-primary-foreground rounded-full px-4 py-1.5 text-xs font-medium">
+                      <Sparkles className="h-3 w-3" />
+                      Start 7-Day Free Trial
+                    </div>
+                  </div>
+                </Link>
+              </>
+            )}
           </div>
         )}
       </CardContent>
