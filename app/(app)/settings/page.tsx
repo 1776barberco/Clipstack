@@ -159,13 +159,14 @@ export default function SettingsPage() {
   const handleAddBucket = async () => {
     if (!user) return
 
-    const currentTotal = buckets.reduce((sum, b) => sum + b.percentage, 0)
-    const remaining = Math.max(0, 100 - currentTotal)
+    // New jar starts at 10%, existing jars rebalance to make room
+    const newJarPct = 10
+    const remaining = 100 - newJarPct
 
     const { data, error } = await createBucket({
       user_id: user.id,
       name: 'New Jar',
-      percentage: remaining,
+      percentage: newJarPct,
       target_amount: null,
       is_tax_bucket: false,
       priority: 0,
@@ -176,11 +177,24 @@ export default function SettingsPage() {
       toast.error('Failed to add jar.')
     } else if (data) {
       toast.success('Jar added!')
-      // Pre-populate edited state so the name is immediately editable
-      setEditedBuckets(prev => ({
-        ...prev,
-        [data.id]: { name: 'New Jar' },
-      }))
+      // Rebalance existing percentage jars to make room for the new one
+      const pctBuckets = buckets.filter(b => !isFixedAmount(b.id))
+      const currentTotal = pctBuckets.reduce((sum, b) => {
+        const edited = editedBuckets[b.id]
+        const pct = edited?.percentage !== undefined ? parseFloat(edited.percentage) : b.percentage
+        return sum + (pct || 0)
+      }, 0)
+      const scale = currentTotal > 0 ? remaining / currentTotal : 1
+      setEditedBuckets(prev => {
+        const next: typeof prev = { ...prev, [data.id]: { name: 'New Jar' } }
+        for (const b of pctBuckets) {
+          const pct = prev[b.id]?.percentage !== undefined
+            ? parseFloat(prev[b.id]!.percentage!)
+            : b.percentage
+          next[b.id] = { ...next[b.id], percentage: String(Math.round(pct * scale * 10) / 10) }
+        }
+        return next
+      })
       setNewBucketId(data.id)
     }
   }
@@ -226,10 +240,44 @@ export default function SettingsPage() {
   }
 
   const setBucketField = (id: string, field: 'name' | 'percentage' | 'color' | 'target_amount', value: string) => {
-    setEditedBuckets((prev) => ({
-      ...prev,
-      [id]: { ...prev[id], [field]: value },
-    }))
+    if (field === 'percentage' && !isFixedAmount(id)) {
+      // Auto-rebalance other percentage jars to keep total at 100%
+      const newPct = parseFloat(value) || 0
+      const otherPctBuckets = buckets.filter(b => b.id !== id && !isFixedAmount(b.id))
+      const otherTotal = otherPctBuckets.reduce((sum, b) => {
+        const edited = editedBuckets[b.id]
+        const pct = edited?.percentage !== undefined ? parseFloat(edited.percentage) : b.percentage
+        return sum + (pct || 0)
+      }, 0)
+      const remaining = Math.max(0, 100 - newPct)
+
+      setEditedBuckets((prev) => {
+        const next = { ...prev, [id]: { ...prev[id], percentage: value } }
+        // Proportionally distribute the remaining percentage
+        if (otherPctBuckets.length > 0 && otherTotal > 0) {
+          const scale = remaining / otherTotal
+          for (const b of otherPctBuckets) {
+            const currentPct = prev[b.id]?.percentage !== undefined
+              ? parseFloat(prev[b.id]!.percentage!)
+              : b.percentage
+            const adjusted = Math.round((currentPct * scale) * 10) / 10
+            next[b.id] = { ...next[b.id], percentage: String(adjusted) }
+          }
+        } else if (otherPctBuckets.length > 0) {
+          // All others are 0, split evenly
+          const even = Math.round((remaining / otherPctBuckets.length) * 10) / 10
+          for (const b of otherPctBuckets) {
+            next[b.id] = { ...next[b.id], percentage: String(even) }
+          }
+        }
+        return next
+      })
+    } else {
+      setEditedBuckets((prev) => ({
+        ...prev,
+        [id]: { ...prev[id], [field]: value },
+      }))
+    }
   }
 
   if (profileLoading || bucketsLoading) {
