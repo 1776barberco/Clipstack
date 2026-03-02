@@ -16,6 +16,7 @@ import {
   DialogTrigger 
 } from '@/components/ui/dialog'
 import { formatCurrency } from '@/lib/utils'
+import { ProgressRing } from './ProgressRing'
 import { MinusCircle, Loader2, Receipt } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
@@ -77,44 +78,23 @@ export function BucketCard({ bucket, balance, totalBalance, onExpenseAdded }: Bu
       <DialogTrigger asChild>
         <Card className="cursor-pointer transition-all hover:shadow-md active:scale-[0.98] group">
           <CardContent className="p-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div
-                    className="h-3 w-3 rounded-full"
-                    style={{ backgroundColor: bucket.color }}
-                  />
-                  <span className="font-medium">{bucket.name}</span>
-                  {bucket.is_tax_bucket && (
-                    <span className="text-xs text-muted-foreground">(Tax)</span>
-                  )}
+            <div className="flex items-center gap-4">
+              <ProgressRing value={percentage} size={56} strokeWidth={4} color={bucket.color}>
+                <span className="text-xs font-bold">{percentage.toFixed(0)}%</span>
+              </ProgressRing>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: bucket.color }} />
+                  <span className="font-semibold truncate">{bucket.name}</span>
+                  {bucket.is_tax_bucket && <span className="text-[10px] text-muted-foreground">(Tax)</span>}
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold">{formatCurrency(balance)}</span>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <MinusCircle className="h-4 w-4 text-red-500" />
-                  </div>
-                </div>
+                <p className="text-xl font-bold">{formatCurrency(balance)}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {bucket.target_amount && bucket.target_amount > 0 ? `$${bucket.target_amount} fixed` : `${bucket.percentage}% allocation`}
+                </p>
               </div>
-
-              <Progress
-                value={percentage}
-                className="h-2"
-                style={
-                  {
-                    backgroundColor: `${bucket.color}20`,
-                    '--progress-background': bucket.color,
-                  } as React.CSSProperties
-                }
-              />
-
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>{bucket.target_amount && bucket.target_amount > 0 ? `$${bucket.target_amount} fixed` : `${bucket.percentage}% allocation`}</span>
-                <span>{percentage.toFixed(1)}% of total</span>
-              </div>
-
-              <div className="pt-2 text-xs text-muted-foreground text-center opacity-0 group-hover:opacity-100 transition-opacity">
-                Click to add expense
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                <MinusCircle className="h-5 w-5 text-red-400" />
               </div>
             </div>
           </CardContent>

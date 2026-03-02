@@ -124,3 +124,40 @@
     @apply bg-background text-foreground;
   }
 }
+/* Glassmorphism utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-hover:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Smooth transitions for all interactive elements */
+button, a, input, [role="button"] {
+  transition: all 0.2s ease;
+}
+
+/* Glow effect for active states */
+.glow-primary {
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+}
+
+/* Animate-in for modals/sheets */
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Hide scrollbar on bottom nav area */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
