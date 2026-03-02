@@ -19,17 +19,23 @@ export function WeeklySummaryCard() {
     weekStart.setDate(weekStart.getDate() - weekStart.getDay())
     weekStart.setHours(0, 0, 0, 0)
 
+    // Parse date-only strings as local time (not UTC)
+    const parseLocal = (dateStr: string) => {
+      const [y, m, d] = dateStr.split('-').map(Number)
+      return new Date(y, m - 1, d)
+    }
+
     const thisWeekTotal = incomes
-      .filter((i: { entry_date: string }) => new Date(i.entry_date) >= weekStart)
+      .filter((i: { entry_date: string }) => parseLocal(i.entry_date) >= weekStart)
       .reduce((sum: number, i: { amount: number }) => sum + Number(i.amount), 0)
 
     // Group by week for 4-week avg
     const fourWeeksAgo = new Date(now)
     fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28)
-    const recentIncomes = incomes.filter((i: { entry_date: string }) => new Date(i.entry_date) >= fourWeeksAgo)
+    const recentIncomes = incomes.filter((i: { entry_date: string }) => parseLocal(i.entry_date) >= fourWeeksAgo)
     const weekTotals: Record<string, number> = {}
     for (const i of recentIncomes) {
-      const d = new Date(i.entry_date)
+      const d = parseLocal(i.entry_date)
       const ws = new Date(d); ws.setDate(ws.getDate() - ws.getDay())
       const key = ws.toISOString().split('T')[0]
       weekTotals[key] = (weekTotals[key] || 0) + Number(i.amount)
