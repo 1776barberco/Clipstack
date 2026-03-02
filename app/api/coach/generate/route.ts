@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const COACH_API_URL = process.env.COACH_API_URL || 'https://api.kainotomic.com/v1/chat/completions'
 const COACH_API_KEY = process.env.COACH_API_KEY || ''
-const COACH_MODEL = process.env.COACH_MODEL || 'ag/gemini-3-flash'
+const COACH_MODEL = process.env.COACH_MODEL || 'gh/gpt-4o-mini'
 
 export async function POST(request: NextRequest) {
   try {
