@@ -10,17 +10,20 @@ import { WeeklyChart } from '@/components/WeeklyChart'
 import { RecentTransactions } from '@/components/RecentTransactions'
 import { UserMenu } from '@/components/UserMenu'
 import { WithdrawButton } from '@/components/WithdrawButton'
+import { BottomNav } from '@/components/BottomNav'
+import { QuickAddFAB } from '@/components/QuickAddFAB'
+import { WeeklySummaryCard } from '@/components/WeeklySummaryCard'
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-background/95">
+      {/* Header — Glass Nav */}
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-background/60 backdrop-blur-2xl">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <span className="text-xl font-bold">TipJars</span>
+            <span className="text-xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">TipJars</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <WithdrawButton />
             <UserMenu />
           </div>
@@ -28,34 +31,43 @@ export default function DashboardPage() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto p-4 space-y-6">
-        {/* Top Row: Quick actions + Stats */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          <QuickIncomeEntry />
+      <main className="container mx-auto p-4 space-y-6 pb-24 md:pb-6">
+        {/* Weekly Summary — Hero position */}
+        <WeeklySummaryCard />
+
+        {/* Quick Actions Row */}
+        <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
+          <div className="hidden md:block"><QuickIncomeEntry /></div>
           <QuickExpenseEntry />
           <StabilityMeter />
         </div>
 
-        {/* Middle Row: Charts + Financial info */}
-        <div className="grid gap-6 lg:grid-cols-2">
+        {/* Charts + Transactions */}
+        <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
           <WeeklyChart />
           <RecentTransactions />
         </div>
 
-        {/* Bottom Row: Jars + Rent/Tax details */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <CoachCard />
-            <BucketBalances />
-          </div>
-          <div className="space-y-6">
-            <BoothRentCard />
-            <TaxEstimateCard />
-          </div>
+        {/* Jars — The Core */}
+        <section id="jars">
+          <BucketBalances />
+        </section>
+
+        {/* AI Coach */}
+        <section>
+          <CoachCard />
+        </section>
+
+        {/* Rent + Tax Details */}
+        <div className="grid gap-4 md:gap-6 sm:grid-cols-2">
+          <BoothRentCard />
+          <TaxEstimateCard />
         </div>
       </main>
 
       <Footer />
+      <BottomNav />
+      <QuickAddFAB />
     </div>
   )
 }

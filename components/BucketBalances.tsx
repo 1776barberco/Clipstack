@@ -39,21 +39,30 @@ export function BucketBalances() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="mb-4 text-center">
-          <p className="text-sm text-muted-foreground">Total Balance</p>
-          <p className="text-3xl font-bold">{formatCurrency(totalBalance)}</p>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          {buckets.map((bucket) => (
-            <BucketCard
-              key={bucket.id}
-              bucket={bucket}
-              balance={getBucketBalance(bucket.id)}
-              totalBalance={totalBalance}
-            />
-          ))}
-        </div>
+        {buckets.length === 0 ? (
+          <div className="text-center py-8">
+            <div className="text-4xl mb-3">🫙</div>
+            <p className="font-medium mb-1">No jars yet</p>
+            <p className="text-sm text-muted-foreground mb-3">Head to Settings to create your first jar and start splitting your income.</p>
+          </div>
+        ) : (
+          <>
+            <div className="mb-4 text-center">
+              <p className="text-sm text-muted-foreground">Total Balance</p>
+              <p className="text-3xl font-bold">{formatCurrency(totalBalance)}</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {buckets.map((bucket) => (
+                <BucketCard
+                  key={bucket.id}
+                  bucket={bucket}
+                  balance={getBucketBalance(bucket.id)}
+                  totalBalance={totalBalance}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   )

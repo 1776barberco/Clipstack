@@ -106,9 +106,12 @@ export function CoachCard() {
         )}
         {latestInsights.length === 0 ? (
           <div className="text-center py-8">
-            <Brain className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-            <p className="text-sm text-muted-foreground mb-3">
-              Your AI coach analyzes your income and spending patterns to give personalized advice.
+            <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-white/10 mb-4">
+              <Brain className="h-8 w-8 text-purple-400" />
+            </div>
+            <p className="font-medium mb-1">Meet Your AI Coach</p>
+            <p className="text-sm text-muted-foreground mb-4 max-w-xs mx-auto">
+              Get personalized tips, seasonal forecasts, and jar recommendations based on your income patterns.
             </p>
             <Button onClick={generateInsights} disabled={generating}>
               {generating ? (
