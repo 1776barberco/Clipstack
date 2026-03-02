@@ -25,7 +25,7 @@ export default function ResetPasswordPage() {
 
     // Listen for auth events — PASSWORD_RECOVERY fires when the reset token is processed
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event: string, _currentSession: Session | null) => {
+      (event: string) => {
         if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
           setReady(true)
         }
