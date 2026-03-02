@@ -1,4 +1,5 @@
 import { Footer } from '@/components/Footer'
+import { CoachCard } from '@/components/CoachCard'
 import { QuickIncomeEntry } from '@/components/QuickIncomeEntry'
 import { QuickExpenseEntry } from '@/components/QuickExpenseEntry'
 import { BucketBalances } from '@/components/BucketBalances'
@@ -44,6 +45,7 @@ export default function DashboardPage() {
         {/* Bottom Row: Jars + Rent/Tax details */}
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
+            <CoachCard />
             <BucketBalances />
           </div>
           <div className="space-y-6">
