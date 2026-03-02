@@ -1,7 +1,5 @@
 import { Footer } from '@/components/Footer'
 import { CoachCard } from '@/components/CoachCard'
-import { QuickIncomeEntry } from '@/components/QuickIncomeEntry'
-import { QuickExpenseEntry } from '@/components/QuickExpenseEntry'
 import { BucketBalances } from '@/components/BucketBalances'
 import { StabilityMeter } from '@/components/StabilityMeter'
 import { BoothRentCard } from '@/components/BoothRentCard'
@@ -35,28 +33,20 @@ export default function DashboardPage() {
         {/* Weekly Summary — Hero position */}
         <WeeklySummaryCard />
 
-        {/* Quick Actions Row */}
-        <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
-          <div className="hidden md:block"><QuickIncomeEntry /></div>
-          <QuickExpenseEntry />
-          <StabilityMeter />
-        </div>
-
-        {/* Charts + Transactions */}
+        {/* Stability + Chart */}
         <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
+          <StabilityMeter />
           <WeeklyChart />
-          <RecentTransactions />
         </div>
 
         {/* Jars — The Core */}
-        <section id="jars">
-          <BucketBalances />
-        </section>
+        <BucketBalances />
+
+        {/* Recent Activity */}
+        <RecentTransactions />
 
         {/* AI Coach */}
-        <section>
-          <CoachCard />
-        </section>
+        <CoachCard />
 
         {/* Rent + Tax Details */}
         <div className="grid gap-4 md:gap-6 sm:grid-cols-2">
