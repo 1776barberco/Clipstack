@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useProfile } from '@/hooks/useProfile'
 import { useBuckets } from '@/hooks/useBuckets'
-import { updateProfileAction, updateBucketAction } from '@/app/actions/auth'
+import { updateProfileAction } from '@/app/actions/auth'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -29,7 +29,7 @@ export default function SettingsPage() {
   const router = useRouter()
   const { user } = useAuthContext()
   const { profile, loading: profileLoading } = useProfile(user?.id)
-  const { buckets, loading: bucketsLoading, createBucket, deleteBucket } = useBuckets(user?.id)
+  const { buckets, loading: bucketsLoading, createBucket, updateBucket, deleteBucket } = useBuckets(user?.id)
 
   const [fullName, setFullName] = useState<string | null>(null)
   const [boothRent, setBoothRent] = useState<string | null>(null)
@@ -103,12 +103,17 @@ export default function SettingsPage() {
   const toggleAllocationType = (bucketId: string) => {
     const fixed = isFixedAmount(bucketId)
     if (fixed) {
-      // Switch to percentage: clear target_amount, set percentage to 0
-      setBucketField(bucketId, 'target_amount', '0')
+      // Switch to percentage: clear target_amount, restore percentage
+      setEditedBuckets(prev => ({
+        ...prev,
+        [bucketId]: { ...prev[bucketId], target_amount: '0', percentage: '0' },
+      }))
     } else {
-      // Switch to fixed: set target_amount to some default, clear percentage
-      setBucketField(bucketId, 'target_amount', '100')
-      setBucketField(bucketId, 'percentage', '0')
+      // Switch to fixed: set target_amount, zero out percentage
+      setEditedBuckets(prev => ({
+        ...prev,
+        [bucketId]: { ...prev[bucketId], target_amount: '100', percentage: '0' },
+      }))
     }
   }
 
@@ -143,7 +148,7 @@ export default function SettingsPage() {
         updates.target_amount = amt > 0 ? amt : null
       }
 
-      const result = await updateBucketAction(id, updates)
+      const result = await updateBucket(id, updates)
       if (result.error) {
         toast.error(`Failed to update jar.`)
         setSavingBuckets(false)
