@@ -96,7 +96,7 @@ export function useCoach(userId: string | undefined) {
       const now = new Date()
       const weekStart = new Date(now); weekStart.setDate(weekStart.getDate() - weekStart.getDay()); weekStart.setHours(0,0,0,0)
       const currentWeekIncome = (incomeRes.data || [])
-        .filter(e => new Date(e.entry_date) >= weekStart)
+        .filter((e: { entry_date: string; amount: number }) => new Date(e.entry_date) >= weekStart)
         .reduce((sum: number, e: { amount: number }) => sum + Number(e.amount), 0)
       const recentWeeks = weeklyIncome.slice(0, 4)
       const fourWeekAvgIncome = recentWeeks.length > 0
