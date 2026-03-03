@@ -70,6 +70,33 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Gate /coach and /api/coach/chat behind active subscription (server-side enforcement)
+  const coachProtectedPaths = ['/coach', '/api/coach/chat']
+  const isCoachPath = coachProtectedPaths.some((p) => request.nextUrl.pathname.startsWith(p))
+
+  if (user && isCoachPath) {
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('status')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    const activeStatuses = ['active', 'trialing']
+    const hasAccess = subscription && activeStatuses.includes(subscription.status)
+
+    if (!hasAccess) {
+      // API routes get a 403; page routes show the paywall (let the page render its own paywall UI)
+      if (request.nextUrl.pathname.startsWith('/api/')) {
+        return NextResponse.json(
+          { error: 'AI Coach Pro subscription required', code: 'SUBSCRIPTION_REQUIRED' },
+          { status: 403 }
+        )
+      }
+      // For the /coach page, let it through — the page itself renders the paywall UI
+      // This way free users can see the paywall and sign up
+    }
+  }
+
   // If authenticated and on login page, check onboarding before redirecting
   if (user && request.nextUrl.pathname === '/login') {
     const { data: profile } = await supabase

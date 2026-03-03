@@ -2,21 +2,22 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Home, PlusCircle, Settings, Brain } from 'lucide-react'
+import { Home, Settings, Brain, Lock } from 'lucide-react'
+import { useAuthContext } from '@/providers/AuthProvider'
+import { useSubscription } from '@/hooks/useSubscription'
 
 export function BottomNav() {
   const pathname = usePathname()
   const router = useRouter()
+  const { user } = useAuthContext()
+  const { isSubscribed } = useSubscription(user?.id)
 
-  // TODO: Replace with real useSubscription() hook once Stripe is wired up
-  const isSubscribed = false
-
-  const handleLogTap = () => {
-    if (pathname !== '/dashboard') {
-      router.push('/dashboard')
-      setTimeout(() => window.dispatchEvent(new CustomEvent('open-quick-log')), 300)
+  const handleCoachTap = () => {
+    if (isSubscribed) {
+      router.push('/coach')
     } else {
-      window.dispatchEvent(new CustomEvent('open-quick-log'))
+      // Push to coach page which will show the paywall
+      router.push('/coach')
     }
   }
 
@@ -36,32 +37,42 @@ export function BottomNav() {
           <span className="text-[10px] font-medium">Dashboard</span>
         </Link>
 
-        {/* Center button: Coach (subscribed) or Log (free) */}
-        {isSubscribed ? (
-          <Link
-            href="/coach"
-            className={`flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-all duration-300 ${
-              pathname === '/coach'
+        {/* Coach — always visible, locked for free users */}
+        <button
+          onClick={handleCoachTap}
+          className={`relative flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-all duration-300 ${
+            isSubscribed
+              ? pathname === '/coach'
                 ? 'text-primary bg-primary/10 shadow-[0_0_20px_rgba(99,102,241,0.3)]'
                 : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <div className="flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-primary/30">
-              <Brain className={`h-5 w-5 text-primary transition-transform duration-300 ${pathname === '/coach' ? 'scale-110' : ''}`} />
-            </div>
-            <span className="text-[10px] font-medium">Coach</span>
-          </Link>
-        ) : (
-          <button
-            onClick={handleLogTap}
-            className="flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-all duration-300 text-muted-foreground hover:text-foreground active:scale-95"
-          >
-            <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary/20 border border-primary/30">
-              <PlusCircle className="h-5 w-5 text-primary" />
-            </div>
-            <span className="text-[10px] font-medium">Log</span>
-          </button>
-        )}
+              : 'text-muted-foreground/50'
+          }`}
+        >
+          <div className={`relative flex items-center justify-center h-8 w-8 rounded-full border ${
+            isSubscribed
+              ? 'bg-gradient-to-br from-purple-500/20 to-blue-500/20 border-primary/30'
+              : 'bg-muted/50 border-muted-foreground/20'
+          }`}>
+            <Brain className={`h-5 w-5 transition-transform duration-300 ${
+              isSubscribed ? 'text-primary' : 'text-muted-foreground/40'
+            } ${pathname === '/coach' && isSubscribed ? 'scale-110' : ''}`} />
+            {/* Lock badge for free users */}
+            {!isSubscribed && (
+              <div className="absolute -top-1 -right-1 flex items-center justify-center h-4 w-4 rounded-full bg-primary shadow-sm">
+                <Lock className="h-2.5 w-2.5 text-primary-foreground" />
+              </div>
+            )}
+          </div>
+          <span className={`text-[10px] font-medium ${!isSubscribed ? 'text-muted-foreground/50' : ''}`}>
+            Coach
+          </span>
+          {/* Pro badge */}
+          {!isSubscribed && (
+            <span className="absolute -top-0.5 right-1 text-[8px] font-bold text-primary bg-primary/10 rounded-full px-1.5 py-0.5 border border-primary/20">
+              PRO
+            </span>
+          )}
+        </button>
 
         {/* Settings */}
         <Link

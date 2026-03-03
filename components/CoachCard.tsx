@@ -9,6 +9,7 @@ import { Brain, Sparkles, TrendingUp, Calendar, Lightbulb, RefreshCw, ChevronRig
 import { useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import { LockedInsightCard } from './LockedInsightCard'
+import { useSubscription } from '@/hooks/useSubscription'
 import Link from 'next/link'
 
 type SuggestedChange = { jar: string; current: string; suggested: string; reason: string }
@@ -58,10 +59,8 @@ function SuggestedChanges({ data }: { data: Record<string, unknown> }) {
 export function CoachCard() {
   const { user } = useAuthContext()
   const { insights, loading, generating, error, generateInsights, markRead, unreadCount } = useCoach(user?.id)
+  const { isSubscribed } = useSubscription(user?.id)
   const [expanded, setExpanded] = useState<string | null>(null)
-
-  // TODO: Replace with real subscription check from useSubscription hook
-  const isSubscribed = false
 
   // Free users see only 2 insights; subscribers see all
   const FREE_LIMIT = 2
