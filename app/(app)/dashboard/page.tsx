@@ -11,7 +11,6 @@ import { RecentTransactions } from '@/components/RecentTransactions'
 import { UserMenu } from '@/components/UserMenu'
 import { WithdrawButton } from '@/components/WithdrawButton'
 import { BottomNav } from '@/components/BottomNav'
-import { CoachNavButton } from '@/components/CoachNavButton'
 import { QuickAddFAB } from '@/components/QuickAddFAB'
 import { WeeklySummaryCard } from '@/components/WeeklySummaryCard'
 
@@ -25,7 +24,6 @@ export default function DashboardPage() {
             <span className="text-xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">TipJars</span>
           </div>
           <div className="flex items-center gap-3">
-            <CoachNavButton />
             <WithdrawButton />
             <UserMenu />
           </div>
