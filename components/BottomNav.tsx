@@ -2,16 +2,18 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Home, PlusCircle, Settings } from 'lucide-react'
+import { Home, PlusCircle, Settings, Brain } from 'lucide-react'
 
 export function BottomNav() {
   const pathname = usePathname()
   const router = useRouter()
 
+  // TODO: Replace with real useSubscription() hook once Stripe is wired up
+  const isSubscribed = false
+
   const handleLogTap = () => {
     if (pathname !== '/dashboard') {
       router.push('/dashboard')
-      // Small delay to let the page load, then open FAB
       setTimeout(() => window.dispatchEvent(new CustomEvent('open-quick-log')), 300)
     } else {
       window.dispatchEvent(new CustomEvent('open-quick-log'))
@@ -34,16 +36,32 @@ export function BottomNav() {
           <span className="text-[10px] font-medium">Dashboard</span>
         </Link>
 
-        {/* Log — opens FAB */}
-        <button
-          onClick={handleLogTap}
-          className="flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-all duration-300 text-muted-foreground hover:text-foreground active:scale-95"
-        >
-          <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary/20 border border-primary/30">
-            <PlusCircle className="h-5 w-5 text-primary" />
-          </div>
-          <span className="text-[10px] font-medium">Log</span>
-        </button>
+        {/* Center button: Coach (subscribed) or Log (free) */}
+        {isSubscribed ? (
+          <Link
+            href="/coach"
+            className={`flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-all duration-300 ${
+              pathname === '/coach'
+                ? 'text-primary bg-primary/10 shadow-[0_0_20px_rgba(99,102,241,0.3)]'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <div className="flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-primary/30">
+              <Brain className={`h-5 w-5 text-primary transition-transform duration-300 ${pathname === '/coach' ? 'scale-110' : ''}`} />
+            </div>
+            <span className="text-[10px] font-medium">Coach</span>
+          </Link>
+        ) : (
+          <button
+            onClick={handleLogTap}
+            className="flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-all duration-300 text-muted-foreground hover:text-foreground active:scale-95"
+          >
+            <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary/20 border border-primary/30">
+              <PlusCircle className="h-5 w-5 text-primary" />
+            </div>
+            <span className="text-[10px] font-medium">Log</span>
+          </button>
+        )}
 
         {/* Settings */}
         <Link
