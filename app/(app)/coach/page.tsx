@@ -184,7 +184,7 @@ export default function CoachPage() {
 
             {/* Social proof */}
             <p className="text-xs text-muted-foreground text-center mt-6">
-              Join barbers & stylists already leveling up their finances
+              Join barbers, stylists, and independent contractors already leveling up their finances
             </p>
           </div>
         </div>
