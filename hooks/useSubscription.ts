@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
 
+const ADMIN_EMAILS = ['apeltekci@gmail.com', 'vhugo9021@icloud.com']
+
 export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled' | 'inactive'
 
 interface Subscription {
@@ -22,11 +24,18 @@ interface Subscription {
 export function useSubscription(userId: string | undefined) {
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   const fetchSubscription = useCallback(async () => {
     if (!userId || !supabase) {
       setLoading(false)
       return
+    }
+
+    // Check if user is admin
+    const { data: authData } = await supabase.auth.getUser()
+    if (authData.user?.email && ADMIN_EMAILS.includes(authData.user.email.toLowerCase())) {
+      setIsAdmin(true)
     }
 
     const { data } = await supabase
@@ -43,7 +52,8 @@ export function useSubscription(userId: string | undefined) {
     fetchSubscription()
   }, [fetchSubscription])
 
-  const isSubscribed = subscription?.status === 'active' || subscription?.status === 'trialing'
+  const hasActiveSubscription = subscription?.status === 'active' || subscription?.status === 'trialing'
+  const isSubscribed = hasActiveSubscription || isAdmin
   const isTrialing = subscription?.status === 'trialing'
   const isPastDue = subscription?.status === 'past_due'
   const trialDaysLeft = subscription?.trial_end
@@ -54,6 +64,7 @@ export function useSubscription(userId: string | undefined) {
     subscription,
     loading,
     isSubscribed,
+    isAdmin,
     isTrialing,
     isPastDue,
     trialDaysLeft,

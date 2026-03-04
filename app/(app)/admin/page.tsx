@@ -25,7 +25,7 @@ interface Stats {
 }
 
 interface Subscriber {
-  id: string
+  id: string | null
   user_id: string
   full_name: string
   email: string
@@ -34,6 +34,7 @@ interface Subscriber {
   trial_end: string | null
   cancel_at_period_end: boolean
   created_at: string
+  is_admin: boolean
 }
 
 const statusColors: Record<string, string> = {
@@ -42,6 +43,7 @@ const statusColors: Record<string, string> = {
   past_due: 'bg-red-500/10 text-red-600 border-red-200',
   canceled: 'bg-zinc-500/10 text-zinc-500 border-zinc-200',
   inactive: 'bg-zinc-500/10 text-zinc-400 border-zinc-200',
+  free: 'bg-zinc-500/10 text-zinc-400 border-zinc-200',
 }
 
 export default function AdminPage() {
@@ -195,7 +197,7 @@ export default function AdminPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Subscribers
+                All Users
               </CardTitle>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -213,21 +215,28 @@ export default function AdminPage() {
               <div className="text-center py-8">
                 <Users className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">
-                  {search ? 'No subscribers match your search' : 'No subscribers yet'}
+                  {search ? 'No users match your search' : 'No users yet'}
                 </p>
               </div>
             ) : (
               <div className="space-y-3">
                 {subscribers.map((sub) => (
-                  <div key={sub.id} className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border p-4">
+                  <div key={sub.user_id} className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border p-4">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className="font-medium truncate">{sub.full_name}</span>
-                        <Badge variant="outline" className={statusColors[sub.status] || statusColors.inactive}>
+                        <Badge variant="outline" className={statusColors[sub.status] || statusColors.free}>
                           {sub.status}
                         </Badge>
+                        {sub.is_admin && (
+                          <Badge variant="outline" className="bg-purple-500/10 text-purple-600 border-purple-200">
+                            <Shield className="h-3 w-3 mr-0.5" />
+                            Admin
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground truncate">{sub.email}</p>
+                      <p className="text-[10px] text-muted-foreground/70 font-mono mt-0.5 select-all">{sub.user_id}</p>
                       <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                         <span>Joined {new Date(sub.created_at).toLocaleDateString()}</span>
                         {sub.trial_end && (

@@ -72,25 +72,31 @@ export async function middleware(request: NextRequest) {
   }
 
   // Gate /coach and /api/coach/chat behind active subscription (server-side enforcement)
+  // Admins bypass this gate automatically
   const coachProtectedPaths = ['/coach', '/api/coach/chat']
   const isCoachPath = coachProtectedPaths.some((p) => request.nextUrl.pathname.startsWith(p))
 
   if (user && isCoachPath) {
-    const { data: subscription } = await supabase
-      .from('subscriptions')
-      .select('status')
-      .eq('user_id', user.id)
-      .maybeSingle()
+    // Admins always have access
+    const isAdmin = user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())
 
-    const activeStatuses = ['active', 'trialing']
-    const hasAccess = subscription && activeStatuses.includes(subscription.status)
+    if (!isAdmin) {
+      const { data: subscription } = await supabase
+        .from('subscriptions')
+        .select('status')
+        .eq('user_id', user.id)
+        .maybeSingle()
 
-    if (!hasAccess) {
-      if (request.nextUrl.pathname.startsWith('/api/')) {
-        return NextResponse.json(
-          { error: 'AI Coach Pro subscription required', code: 'SUBSCRIPTION_REQUIRED' },
-          { status: 403 }
-        )
+      const activeStatuses = ['active', 'trialing']
+      const hasAccess = subscription && activeStatuses.includes(subscription.status)
+
+      if (!hasAccess) {
+        if (request.nextUrl.pathname.startsWith('/api/')) {
+          return NextResponse.json(
+            { error: 'AI Coach Pro subscription required', code: 'SUBSCRIPTION_REQUIRED' },
+            { status: 403 }
+          )
+        }
       }
     }
   }

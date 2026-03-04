@@ -26,8 +26,14 @@ export async function GET(request: NextRequest) {
     const adminSupabase = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY!)
     const search = request.nextUrl.searchParams.get('q') || ''
 
-    // Get all subscribers with profile info
-    let query = adminSupabase
+    // Get ALL profiles
+    const { data: profiles } = await adminSupabase
+      .from('profiles')
+      .select('id, full_name')
+      .order('created_at', { ascending: false })
+
+    // Get all subscriptions
+    const { data: subs } = await adminSupabase
       .from('subscriptions')
       .select(`
         id,
@@ -35,42 +41,44 @@ export async function GET(request: NextRequest) {
         status,
         stripe_customer_id,
         stripe_subscription_id,
-        current_period_start,
-        current_period_end,
         trial_end,
         cancel_at_period_end,
         created_at
       `)
-      .order('created_at', { ascending: false })
 
-    const { data: subs } = await query
-
-    // Get profiles for all subscriber user_ids
-    const userIds = (subs || []).map(s => s.user_id)
-    const { data: profiles } = await adminSupabase
-      .from('profiles')
-      .select('id, full_name')
-      .in('id', userIds.length > 0 ? userIds : ['none'])
-
-    // Get emails from auth.users via admin API
+    // Get emails from auth.users
     const { data: { users: authUsers } } = await adminSupabase.auth.admin.listUsers({ perPage: 1000 })
 
-    const profileMap = new Map((profiles || []).map(p => [p.id, p]))
+    const subMap = new Map((subs || []).map(s => [s.user_id, s]))
     const emailMap = new Map((authUsers || []).map(u => [u.id, u.email]))
+    const createdMap = new Map((authUsers || []).map(u => [u.id, u.created_at]))
 
-    const subscribers = (subs || []).map(sub => ({
-      ...sub,
-      full_name: profileMap.get(sub.user_id)?.full_name || 'Unknown',
-      email: emailMap.get(sub.user_id) || 'Unknown',
-    }))
+    // Build combined user list
+    const allUsers = (profiles || []).map(profile => {
+      const sub = subMap.get(profile.id)
+      const email = emailMap.get(profile.id) || 'Unknown'
+      return {
+        id: sub?.id || null,
+        user_id: profile.id,
+        full_name: profile.full_name || 'Unknown',
+        email,
+        status: sub?.status || 'free',
+        stripe_customer_id: sub?.stripe_customer_id || null,
+        trial_end: sub?.trial_end || null,
+        cancel_at_period_end: sub?.cancel_at_period_end || false,
+        created_at: createdMap.get(profile.id) || new Date().toISOString(),
+        is_admin: isAdminEmail(email),
+      }
+    })
 
     // Filter by search
     const filtered = search
-      ? subscribers.filter(s =>
-          s.full_name.toLowerCase().includes(search.toLowerCase()) ||
-          s.email.toLowerCase().includes(search.toLowerCase())
+      ? allUsers.filter(u =>
+          u.full_name.toLowerCase().includes(search.toLowerCase()) ||
+          u.email.toLowerCase().includes(search.toLowerCase()) ||
+          u.user_id.toLowerCase().includes(search.toLowerCase())
         )
-      : subscribers
+      : allUsers
 
     return NextResponse.json(filtered)
   } catch (error) {
