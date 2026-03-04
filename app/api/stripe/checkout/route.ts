@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 
 export const dynamic = 'force-dynamic'
 
@@ -8,6 +8,8 @@ const PRICE_LOOKUP_KEY = 'ai_coach_pro_monthly'
 
 async function getOrCreatePrice(): Promise<string> {
   if (process.env.STRIPE_PRICE_ID) return process.env.STRIPE_PRICE_ID
+
+  const stripe = await getStripe()
   if (!stripe) throw new Error('Stripe not initialized')
 
   // Check if price already exists
@@ -35,6 +37,7 @@ async function getOrCreatePrice(): Promise<string> {
 
 export async function POST(request: NextRequest) {
   try {
+    const stripe = await getStripe()
     if (!stripe) {
       return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 })
     }

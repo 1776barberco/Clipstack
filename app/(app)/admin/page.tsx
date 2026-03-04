@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import {
   Users, DollarSign, TrendingUp, AlertTriangle,
   Search, Shield, ShieldCheck, ShieldX, ArrowLeft,
-  UserPlus, UserMinus, RefreshCw, Zap
+  UserPlus, UserMinus, RefreshCw, Zap, Loader2
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -54,13 +54,18 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [grantEmail, setGrantEmail] = useState('')
   const [granting, setGranting] = useState(false)
+  const [stripeMode, setStripeMode] = useState<'test' | 'live'>('test')
+  const [hasTestKeys, setHasTestKeys] = useState(false)
+  const [hasLiveKeys, setHasLiveKeys] = useState(false)
+  const [togglingMode, setTogglingMode] = useState(false)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const [statsRes, subsRes] = await Promise.all([
+      const [statsRes, subsRes, modeRes] = await Promise.all([
         fetch('/api/admin/stats'),
         fetch(`/api/admin/subscribers${search ? `?q=${encodeURIComponent(search)}` : ''}`),
+        fetch('/api/admin/stripe-mode'),
       ])
 
       if (statsRes.status === 403 || subsRes.status === 403) {
@@ -73,6 +78,13 @@ export default function AdminPage() {
 
       setStats(await statsRes.json())
       setSubscribers(await subsRes.json())
+
+      if (modeRes.ok) {
+        const modeData = await modeRes.json()
+        setStripeMode(modeData.mode)
+        setHasTestKeys(modeData.hasTestKeys)
+        setHasLiveKeys(modeData.hasLiveKeys)
+      }
     } catch {
       toast.error('Failed to load admin data')
     } finally {
@@ -114,6 +126,24 @@ export default function AdminPage() {
     }
   }
 
+  const handleToggleStripeMode = async (newMode: 'test' | 'live') => {
+    setTogglingMode(true)
+    const res = await fetch('/api/admin/stripe-mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: newMode }),
+    })
+    setTogglingMode(false)
+
+    if (res.ok) {
+      setStripeMode(newMode)
+      toast.success(`Switched to ${newMode} mode`)
+    } else {
+      const data = await res.json().catch(() => ({}))
+      toast.error(data.error || 'Failed to switch mode')
+    }
+  }
+
   if (loading && !stats) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -134,14 +164,6 @@ export default function AdminPage() {
             <span className="font-bold">Admin</span>
           </div>
           <div className="flex items-center gap-2">
-            {/* Environment indicator */}
-            <Badge variant="outline" className={stats?.isTestMode
-              ? 'bg-amber-500/10 text-amber-600 border-amber-300'
-              : 'bg-green-500/10 text-green-600 border-green-300'
-            }>
-              <Zap className="h-3 w-3 mr-1" />
-              {stats?.isTestMode ? 'Test Mode' : 'Live Mode'}
-            </Badge>
             <Button variant="outline" size="sm" onClick={fetchData}>
               <RefreshCw className="h-4 w-4" />
             </Button>
@@ -191,7 +213,51 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Subscribers */}
+        {/* Stripe Mode Toggle */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <Zap className={`h-5 w-5 ${stripeMode === 'test' ? 'text-amber-500' : 'text-green-500'}`} />
+                <div>
+                  <p className="font-medium text-sm">Stripe Mode</p>
+                  <p className="text-xs text-muted-foreground">
+                    {stripeMode === 'test'
+                      ? 'Using test keys — no real charges'
+                      : 'Using live keys — real money'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={stripeMode === 'test' ? 'default' : 'outline'}
+                  size="sm"
+                  disabled={!hasTestKeys || togglingMode}
+                  onClick={() => handleToggleStripeMode('test')}
+                  className={stripeMode === 'test' ? 'bg-amber-500 hover:bg-amber-600' : ''}
+                >
+                  {togglingMode && stripeMode !== 'test' ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                  Test
+                </Button>
+                <Button
+                  variant={stripeMode === 'live' ? 'default' : 'outline'}
+                  size="sm"
+                  disabled={!hasLiveKeys || togglingMode}
+                  onClick={() => handleToggleStripeMode('live')}
+                  className={stripeMode === 'live' ? 'bg-green-500 hover:bg-green-600' : ''}
+                >
+                  {togglingMode && stripeMode !== 'live' ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                  Live
+                </Button>
+              </div>
+            </div>
+            {!hasTestKeys && (
+              <p className="text-xs text-amber-500 mt-2">⚠️ Test keys not configured in Vercel env vars</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* All Users */}
         <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

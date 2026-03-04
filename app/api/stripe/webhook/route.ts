@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 
@@ -47,11 +47,12 @@ async function upsertSubscription(
 
 export async function POST(request: NextRequest) {
   try {
+    const body = await request.text()
+    const stripe = await getStripe()
     if (!stripe) {
       return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 })
     }
 
-    const body = await request.text()
     const sig = request.headers.get('stripe-signature')
 
     if (!sig) {
