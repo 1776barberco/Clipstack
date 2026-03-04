@@ -56,7 +56,7 @@ export async function getStripe(): Promise<Stripe | null> {
   if (!secretKey) return null
 
   return new Stripe(secretKey, {
-    apiVersion: '2025-12-18.acacia' as Stripe.LatestApiVersion,
+    apiVersion: '2026-02-25.clover' as Stripe.LatestApiVersion,
   })
 }
 
@@ -75,5 +75,5 @@ export async function isTestMode(): Promise<boolean> {
 // Legacy sync export for non-async contexts (uses default fallback)
 const defaultKey = process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY
 export const stripe = defaultKey
-  ? new Stripe(defaultKey, { apiVersion: '2025-12-18.acacia' as Stripe.LatestApiVersion })
+  ? new Stripe(defaultKey, { apiVersion: '2026-02-25.clover' as Stripe.LatestApiVersion })
   : null
