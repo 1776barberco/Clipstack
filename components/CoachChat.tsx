@@ -192,8 +192,8 @@ export function CoachChat({ tone, userName }: CoachChatProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area — pb-20 keeps it above BottomNav on mobile, lg:pb-4 resets on desktop */}
-      <div className="border-t p-4 pb-20 lg:pb-4 bg-background">
+      {/* Input Area — pb-32 keeps it above BottomNav + iPhone safe area on mobile */}
+      <div className="border-t p-4 pb-32 lg:pb-4 bg-background">
         <form onSubmit={handleSubmit} className="flex gap-2">
           <Input
             ref={inputRef}
