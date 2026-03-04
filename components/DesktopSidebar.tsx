@@ -2,9 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Brain, Settings, Lock } from 'lucide-react'
+import { Home, Brain, Settings, Lock, Shield } from 'lucide-react'
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useSubscription } from '@/hooks/useSubscription'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase/client'
+
+const ADMIN_EMAILS = ['apeltekci@gmail.com', 'vhugo9021@icloud.com']
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
@@ -16,6 +20,16 @@ export function DesktopSidebar() {
   const pathname = usePathname()
   const { user } = useAuthContext()
   const { isSubscribed } = useSubscription(user?.id)
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    if (!user) return
+    supabase.auth.getUser().then(({ data }: { data: { user: { email?: string } | null } }) => {
+      if (data.user?.email && ADMIN_EMAILS.includes(data.user.email.toLowerCase())) {
+        setIsAdmin(true)
+      }
+    })
+  }, [user])
 
   return (
     <aside className="hidden lg:flex lg:flex-col lg:w-56 lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 border-r bg-background/95 backdrop-blur">
@@ -58,6 +72,24 @@ export function DesktopSidebar() {
             </Link>
           )
         })}
+
+        {/* Admin link — only visible to admin users */}
+        {isAdmin && (
+          <>
+            <div className="my-3 border-t" />
+            <Link
+              href="/admin"
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                pathname === '/admin'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+              }`}
+            >
+              <Shield className="h-5 w-5" />
+              <span className="flex-1">Admin</span>
+            </Link>
+          </>
+        )}
       </nav>
     </aside>
   )
