@@ -119,8 +119,11 @@ export async function POST(request: NextRequest) {
     // Use OpenAI API directly for streaming
     const openaiKey = process.env.OPENAI_API_KEY
     if (!openaiKey) {
-      return new Response(JSON.stringify({ error: 'AI not configured' }), { status: 503 })
+      return new Response(JSON.stringify({ error: 'AI not configured. Add OPENAI_API_KEY to Vercel env vars.' }), { status: 503 })
     }
+
+    const baseUrl = process.env.OPENAI_API_BASE_URL || 'https://api.openai.com/v1'
+    const model = process.env.COACH_MODEL || 'gpt-4o-mini'
 
     const apiMessages = [
       { role: 'system', content: systemMessage },
@@ -130,14 +133,14 @@ export async function POST(request: NextRequest) {
       })),
     ]
 
-    const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+    const openaiRes = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${openaiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model,
         messages: apiMessages,
         stream: true,
         max_tokens: 1000,
