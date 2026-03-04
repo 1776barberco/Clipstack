@@ -1,13 +1,16 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
-import { getStripe } from '@/lib/stripe'
+import { getStripe, isTestMode } from '@/lib/stripe'
 
 export const dynamic = 'force-dynamic'
 
 const PRICE_LOOKUP_KEY = 'ai_coach_pro_monthly'
 
 async function getOrCreatePrice(): Promise<string> {
-  if (process.env.STRIPE_PRICE_ID) return process.env.STRIPE_PRICE_ID
+  if (process.env.STRIPE_PRICE_ID) {
+    console.log('[Checkout] Using STRIPE_PRICE_ID from env:', process.env.STRIPE_PRICE_ID)
+    return process.env.STRIPE_PRICE_ID
+  }
 
   const stripe = await getStripe()
   if (!stripe) throw new Error('Stripe not initialized')
@@ -77,10 +80,12 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({ url: session.url })
-  } catch (error) {
-    console.error('Checkout error:', error)
+  } catch (error: unknown) {
+    const testMode = await isTestMode()
+    const errMsg = error instanceof Error ? error.message : String(error)
+    console.error('[Checkout] ERROR — mode:', testMode ? 'TEST' : 'LIVE', '| priceIdEnv:', process.env.STRIPE_PRICE_ID || 'NOT SET', '| error:', errMsg)
     return NextResponse.json(
-      { error: 'Failed to create checkout session' },
+      { error: `Failed to create checkout session: ${errMsg}` },
       { status: 500 }
     )
   }
