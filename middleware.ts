@@ -57,17 +57,18 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const publicPaths = ['/', '/login', '/api/auth', '/api/coach', '/onboarding', '/reset-password', '/privacy', '/terms', '/blog']
+  const publicPaths = ['/', '/login', '/api/auth', '/api/coach', '/api/stripe/webhook', '/onboarding', '/reset-password', '/privacy', '/terms', '/blog']
   const isPublicPath = publicPaths.some((path) => {
     if (path === '/') return request.nextUrl.pathname === '/'
     return request.nextUrl.pathname.startsWith(path)
   })
 
-  // If not authenticated and not on a public path, redirect to login
-  if (!user && !isPublicPath) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+  // Gate /admin routes behind admin email allowlist
+  const ADMIN_EMAILS = ['apeltekci@gmail.com', 'vhugo9021@icloud.com']
+  if (user && request.nextUrl.pathname.startsWith('/admin')) {
+    if (!user.email || !ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
   }
 
   // Gate /coach and /api/coach/chat behind active subscription (server-side enforcement)
@@ -85,16 +86,20 @@ export async function middleware(request: NextRequest) {
     const hasAccess = subscription && activeStatuses.includes(subscription.status)
 
     if (!hasAccess) {
-      // API routes get a 403; page routes show the paywall (let the page render its own paywall UI)
       if (request.nextUrl.pathname.startsWith('/api/')) {
         return NextResponse.json(
           { error: 'AI Coach Pro subscription required', code: 'SUBSCRIPTION_REQUIRED' },
           { status: 403 }
         )
       }
-      // For the /coach page, let it through — the page itself renders the paywall UI
-      // This way free users can see the paywall and sign up
     }
+  }
+
+  // If not authenticated and not on a public path, redirect to login
+  if (!user && !isPublicPath) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
   }
 
   // If authenticated and on login page, check onboarding before redirecting
