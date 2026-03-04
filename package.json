@@ -13,9 +13,11 @@
     "supabase:gen:types": "supabase gen types typescript --project-id qilhkhvfpfrkeeafaobj --schema public > types/supabase.ts"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.39",
     "@ducanh2912/next-pwa": "^10.2.9",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.97.0",
+    "ai": "^6.0.111",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
