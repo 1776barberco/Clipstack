@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, X, Loader2, DollarSign, ArrowDownLeft, ArrowUpRight, Settings2 } from 'lucide-react'
+import { Plus, X, Loader2, DollarSign, ArrowDownLeft, ArrowUpRight, Settings2, ArrowLeft } from 'lucide-react'
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useIncome } from '@/hooks/useIncome'
 import { useExpenses } from '@/hooks/useExpenses'
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
+import { supabase } from '@/lib/supabase/client'
 
 const DEFAULT_QUICK_AMOUNTS = [20, 40, 60, 100]
 const STORAGE_KEY = 'tipjars-quick-amounts'
@@ -28,6 +29,7 @@ function saveQuickAmounts(amounts: number[]) {
 }
 
 type Mode = 'income' | 'expense'
+type Step = 'entry' | 'split'
 
 export function QuickAddFAB() {
   const { user } = useAuthContext()
@@ -36,6 +38,7 @@ export function QuickAddFAB() {
   const { buckets } = useBuckets(user?.id)
   const [open, setOpen] = useState(false)
   const [mode, setMode] = useState<Mode>('income')
+  const [step, setStep] = useState<Step>('entry')
   const [amount, setAmount] = useState('')
   const [note, setNote] = useState('')
   const [selectedBucket, setSelectedBucket] = useState('')
@@ -43,6 +46,12 @@ export function QuickAddFAB() {
   const [quickAmounts, setQuickAmounts] = useState(DEFAULT_QUICK_AMOUNTS)
   const [editingAmounts, setEditingAmounts] = useState(false)
   const [amountInput, setAmountInput] = useState('')
+  const [fixedAllocations, setFixedAllocations] = useState<Record<string, string>>({})
+
+  // Separate fixed vs percentage jars
+  const fixedJars = buckets.filter((b) => b.target_amount && b.target_amount > 0)
+  const percentageJars = buckets.filter((b) => !b.target_amount || b.target_amount === 0).filter((b) => b.percentage > 0)
+  const hasFixedJars = fixedJars.length > 0
 
   useEffect(() => {
     setQuickAmounts(getQuickAmounts())
@@ -62,7 +71,22 @@ export function QuickAddFAB() {
     }
   }, [mode, selectedBucket, buckets])
 
-  const handleSubmit = async () => {
+  const handleNext = () => {
+    if (!amount) return
+    if (mode === 'income' && hasFixedJars) {
+      // Initialize allocations with jar target amounts as defaults
+      const defaults: Record<string, string> = {}
+      fixedJars.forEach((b) => {
+        defaults[b.id] = (b.target_amount || 0).toString()
+      })
+      setFixedAllocations(defaults)
+      setStep('split')
+    } else {
+      handleSubmitDirect()
+    }
+  }
+
+  const handleSubmitDirect = async () => {
     if (!amount || !user) return
     setLoading(true)
 
@@ -93,9 +117,72 @@ export function QuickAddFAB() {
       toast.success(`-$${amount} from ${jar?.name || 'jar'}`)
     }
 
+    resetAndClose()
+  }
+
+  const handleSplitConfirm = async () => {
+    if (!user || !amount) return
+    setLoading(true)
+
+    try {
+      // 1. Insert income entry
+      const { data: income, error: incomeError } = await addIncome({
+        user_id: user.id,
+        amount: parseFloat(amount),
+        source: note || null,
+        notes: null,
+        entry_date: format(new Date(), 'yyyy-MM-dd'),
+      })
+
+      if (incomeError || !income) {
+        toast.error(`Failed to add income: ${incomeError?.message || 'Unknown error'}`)
+        setLoading(false)
+        return
+      }
+
+      // 2. Delete auto-allocated transactions and re-allocate with manual splits
+      const allocations: Record<string, number> = {}
+      Object.entries(fixedAllocations).forEach(([id, val]) => {
+        const num = parseFloat(val)
+        if (num > 0) allocations[id] = num
+      })
+
+      if (Object.keys(allocations).length > 0 && supabase) {
+        await supabase
+          .from('bucket_transactions')
+          .delete()
+          .eq('income_entry_id', income.id)
+          .eq('user_id', user.id)
+
+        await supabase.rpc('allocate_income_to_buckets', {
+          p_user_id: user.id,
+          p_income_entry_id: income.id,
+          p_amount: parseFloat(amount),
+          p_fixed_allocations: allocations,
+        })
+      }
+
+      toast.success('Income added and split!')
+      resetAndClose()
+    } catch (err) {
+      console.error('Split error:', err)
+      toast.error('Failed to split income')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const resetAndClose = () => {
     setAmount('')
     setNote('')
+    setStep('entry')
+    setFixedAllocations({})
     setOpen(false)
+    setEditingAmounts(false)
+  }
+
+  const handleSubmit = async () => {
+    handleNext()
   }
 
   const addQuickAmount = () => {
@@ -119,31 +206,119 @@ export function QuickAddFAB() {
       {open && (
         <div
           className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
-          onClick={() => { setOpen(false); setEditingAmounts(false) }}
+          onClick={resetAndClose}
         />
       )}
 
       {/* Quick Add Sheet */}
       {open && (
         <div className="fixed bottom-20 left-3 right-3 z-50 md:hidden animate-in slide-in-from-bottom-5 duration-300">
-          <div className="rounded-2xl border border-white/15 bg-background/95 backdrop-blur-2xl p-5 shadow-2xl space-y-4">
+          <div className="rounded-2xl border border-white/15 bg-background/95 backdrop-blur-2xl p-5 shadow-2xl space-y-4 max-h-[70vh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-lg">Quick Log</h3>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setEditingAmounts(!editingAmounts)}
-                  className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  <Settings2 className="h-4 w-4" />
-                </button>
-                <button onClick={() => { setOpen(false); setEditingAmounts(false) }} className="text-muted-foreground hover:text-foreground">
+                {step === 'split' && (
+                  <button onClick={() => setStep('entry')} className="text-muted-foreground hover:text-foreground p-1">
+                    <ArrowLeft className="h-4 w-4" />
+                  </button>
+                )}
+                <h3 className="font-semibold text-lg">{step === 'split' ? 'Split Income' : 'Quick Log'}</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                {step === 'entry' && (
+                  <button
+                    onClick={() => setEditingAmounts(!editingAmounts)}
+                    className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-white/10 transition-colors"
+                  >
+                    <Settings2 className="h-4 w-4" />
+                  </button>
+                )}
+                <button onClick={resetAndClose} className="text-muted-foreground hover:text-foreground">
                   <X className="h-5 w-5" />
                 </button>
               </div>
             </div>
 
-            {/* Income / Expense Toggle */}
+            {step === 'split' ? (
+              <>
+                {/* Split Step */}
+                <div className="text-sm text-muted-foreground">
+                  Splitting <span className="font-semibold text-foreground">${parseFloat(amount).toFixed(2)}</span>
+                  {note ? <span> from {note}</span> : ''}
+                </div>
+
+                {/* Fixed Jars */}
+                <div className="space-y-3">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Fixed Jars</p>
+                  {fixedJars.map((b) => {
+                    const allocated = parseFloat(fixedAllocations[b.id] || '0') || 0
+                    return (
+                      <div key={b.id} className="flex items-center gap-3">
+                        <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: b.color }} />
+                        <span className="text-sm flex-1 truncate">{b.name}</span>
+                        <div className="relative w-24">
+                          <DollarSign className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={fixedAllocations[b.id] || ''}
+                            onChange={(e) => setFixedAllocations(prev => ({ ...prev, [b.id]: e.target.value }))}
+                            className="pl-6 h-9 text-sm bg-white/5 border-white/10"
+                            placeholder="0.00"
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Remainder preview for percentage jars */}
+                {percentageJars.length > 0 && (() => {
+                  const totalFixed = Object.values(fixedAllocations).reduce((sum, v) => sum + (parseFloat(v) || 0), 0)
+                  const remainder = Math.max(0, parseFloat(amount) - totalFixed)
+                  const totalPct = percentageJars.reduce((sum, b) => sum + b.percentage, 0)
+                  return (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Percentage Jars — <span className="text-foreground">${remainder.toFixed(2)}</span> remaining
+                      </p>
+                      {percentageJars.map((b) => {
+                        const share = totalPct > 0 ? (remainder * b.percentage / totalPct) : 0
+                        return (
+                          <div key={b.id} className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: b.color }} />
+                            <span className="flex-1 truncate">{b.name} ({b.percentage}%)</span>
+                            <span className="font-mono text-xs">${share.toFixed(2)}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })()}
+
+                {/* Over-budget warning */}
+                {(() => {
+                  const totalFixed = Object.values(fixedAllocations).reduce((sum, v) => sum + (parseFloat(v) || 0), 0)
+                  const over = totalFixed > parseFloat(amount)
+                  return over ? (
+                    <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-2 text-center">
+                      ⚠️ Fixed jar allocations (${totalFixed.toFixed(2)}) exceed income (${parseFloat(amount).toFixed(2)})
+                    </div>
+                  ) : null
+                })()}
+
+                <Button
+                  onClick={handleSplitConfirm}
+                  className="w-full h-12 text-base rounded-xl"
+                  disabled={loading || Object.values(fixedAllocations).reduce((sum, v) => sum + (parseFloat(v) || 0), 0) > parseFloat(amount)}
+                >
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Confirm Split'}
+                </Button>
+              </>
+            ) : (
+              <>
+                {/* Entry Step (original) */}
             <div className="flex rounded-xl bg-white/5 border border-white/10 p-1">
               <button
                 onClick={() => setMode('income')}
@@ -263,15 +438,17 @@ export function QuickAddFAB() {
               }`}
               disabled={!amount || loading}
             >
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : mode === 'income' ? 'Log Income' : 'Log Expense'}
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : mode === 'income' ? (hasFixedJars ? 'Next: Split Income' : 'Log Income') : 'Log Expense'}
             </Button>
+              </>
+            )}
           </div>
         </div>
       )}
 
       {/* FAB Button */}
       <button
-        onClick={() => { setOpen(!open); setEditingAmounts(false) }}
+        onClick={() => { setOpen(!open); setEditingAmounts(false); setStep('entry') }}
         className={`fixed bottom-20 right-4 z-50 md:hidden h-14 w-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 active:scale-90 ${
           open
             ? 'bg-destructive text-destructive-foreground rotate-45'
