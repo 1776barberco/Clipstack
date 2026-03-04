@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const COACH_API_URL = (process.env.COACH_API_URL || 'https://api.kainotomic.com/v1/chat/completions').trim()
-const COACH_API_KEY = (process.env.COACH_API_KEY || '').trim()
-const COACH_MODEL = (process.env.COACH_MODEL || 'gh/gpt-4o').trim()
+const getConfig = () => ({
+  apiUrl: `${(process.env.OPENAI_API_BASE_URL || 'https://api.openai.com/v1').trim()}/chat/completions`,
+  apiKey: (process.env.OPENAI_API_KEY || '').trim(),
+  model: (process.env.COACH_MODEL || 'gpt-4o-mini').trim(),
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,18 +15,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No prompt provided' }, { status: 400 })
     }
 
-    if (!COACH_API_KEY) {
-      return NextResponse.json({ error: 'Coach API key not configured' }, { status: 500 })
+    const { apiUrl, apiKey, model } = getConfig()
+
+    if (!apiKey) {
+      return NextResponse.json({ error: 'AI not configured. Add OPENAI_API_KEY to Vercel env vars.' }, { status: 500 })
     }
 
-    const aiResponse = await fetch(COACH_API_URL, {
+    const aiResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${COACH_API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: COACH_MODEL,
+        model,
         messages: [
           { role: 'system', content: 'You are a financial coach for barbers and stylists. Return only valid JSON.' },
           { role: 'user', content: prompt },
