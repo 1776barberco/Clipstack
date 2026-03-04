@@ -62,6 +62,9 @@ export default function AdminPage() {
       ])
 
       if (statsRes.status === 403 || subsRes.status === 403) {
+        const errData = await statsRes.json().catch(() => ({}))
+        console.error('Admin access denied:', errData)
+        toast.error(`Access denied: ${errData?.debug?.email || 'unknown email'}`)
         router.push('/dashboard')
         return
       }

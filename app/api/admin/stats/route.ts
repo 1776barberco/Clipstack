@@ -18,9 +18,10 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    console.log('Admin stats auth:', { userId: user?.id, email: user?.email, authError: authError?.message })
     if (!user || !isAdminEmail(user.email)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      return NextResponse.json({ error: 'Forbidden', debug: { hasUser: !!user, email: user?.email } }, { status: 403 })
     }
 
     const adminSupabase = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY!)
