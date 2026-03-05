@@ -77,19 +77,32 @@ export async function POST(request: NextRequest) {
       case 'checkout.session.completed': {
         const session = event.data.object as any
         const userId = session.metadata?.user_id
+        console.log('[Webhook] checkout.session.completed — userId:', userId, 'subscription:', session.subscription)
         if (!userId) break
 
         if (session.subscription) {
-          const sub = await stripe.subscriptions.retrieve(session.subscription as string) as any
-          await upsertSubscription(userId, {
-            stripe_customer_id: session.customer as string,
-            stripe_subscription_id: sub.id,
-            status: sub.status === 'trialing' ? 'trialing' : 'active',
-            current_period_start: new Date(sub.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
-            trial_end: sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
-            cancel_at_period_end: sub.cancel_at_period_end,
-          })
+          try {
+            const sub = await stripe.subscriptions.retrieve(session.subscription as string) as any
+            console.log('[Webhook] Retrieved subscription:', sub.id, 'status:', sub.status)
+            
+            // Handle both old and new Stripe API shapes for period fields
+            const periodStart = sub.current_period_start || sub.items?.data?.[0]?.current_period_start
+            const periodEnd = sub.current_period_end || sub.items?.data?.[0]?.current_period_end
+            
+            await upsertSubscription(userId, {
+              stripe_customer_id: session.customer as string,
+              stripe_subscription_id: sub.id,
+              status: sub.status === 'trialing' ? 'trialing' : 'active',
+              current_period_start: periodStart ? new Date(periodStart * 1000).toISOString() : new Date().toISOString(),
+              current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+              trial_end: sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
+              cancel_at_period_end: sub.cancel_at_period_end ?? false,
+            })
+            console.log('[Webhook] Subscription upserted for user:', userId)
+          } catch (subErr) {
+            console.error('[Webhook] Error processing checkout subscription:', subErr)
+            throw subErr
+          }
         }
         break
       }
@@ -103,12 +116,15 @@ export async function POST(request: NextRequest) {
         const userId = sub.metadata?.user_id
         if (!userId) break
 
+        const periodStart = sub.current_period_start || sub.items?.data?.[0]?.current_period_start
+        const periodEnd = sub.current_period_end || sub.items?.data?.[0]?.current_period_end
+
         await upsertSubscription(userId, {
           status: 'active',
-          current_period_start: new Date(sub.current_period_start * 1000).toISOString(),
-          current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
+          current_period_start: periodStart ? new Date(periodStart * 1000).toISOString() : new Date().toISOString(),
+          current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
           trial_end: sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
-          cancel_at_period_end: sub.cancel_at_period_end,
+          cancel_at_period_end: sub.cancel_at_period_end ?? false,
         })
         break
       }
@@ -147,20 +163,24 @@ export async function POST(request: NextRequest) {
         else if (status === 'canceled' || status === 'unpaid') status = 'canceled'
         else status = 'inactive'
 
+        const periodStart = sub.current_period_start || sub.items?.data?.[0]?.current_period_start
+        const periodEnd = sub.current_period_end || sub.items?.data?.[0]?.current_period_end
+
         await upsertSubscription(userId, {
           status,
-          current_period_start: new Date(sub.current_period_start * 1000).toISOString(),
-          current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
+          current_period_start: periodStart ? new Date(periodStart * 1000).toISOString() : new Date().toISOString(),
+          current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
           trial_end: sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
-          cancel_at_period_end: sub.cancel_at_period_end,
+          cancel_at_period_end: sub.cancel_at_period_end ?? false,
         })
         break
       }
     }
 
     return NextResponse.json({ received: true })
-  } catch (error) {
-    console.error('Webhook error:', error)
-    return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 })
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error)
+    console.error('[Webhook] Handler error:', errMsg)
+    return NextResponse.json({ error: `Webhook handler failed: ${errMsg}` }, { status: 500 })
   }
 }
