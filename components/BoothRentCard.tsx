@@ -30,7 +30,7 @@ export function BoothRentCard() {
           Booth Rent
           {isDueSoon && (
             <Badge variant="destructive" className="ml-auto">
-              Due Soon
+              Coming Up
             </Badge>
           )}
         </CardTitle>
@@ -68,7 +68,7 @@ export function BoothRentCard() {
 
           {isDueSoon && (
             <p className="text-sm text-amber-600">
-              Your booth rent is due soon. Make sure you have enough in your Essentials jar!
+              Booth rent is coming up — check your Essentials jar to stay ahead! 💡
             </p>
           )}
         </div>

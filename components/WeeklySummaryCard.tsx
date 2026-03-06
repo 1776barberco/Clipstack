@@ -54,6 +54,11 @@ export function WeeklySummaryCard() {
 
   const TrendIcon = trend > 5 ? TrendingUp : trend < -5 ? TrendingDown : Minus
   const trendColor = trend > 5 ? 'text-green-400' : trend < -5 ? 'text-red-400' : 'text-yellow-400'
+  const trendContext = trend > 5
+    ? 'Crushing it this week! 🔥'
+    : trend < -5
+      ? 'Slower week — totally normal with irregular income 💪'
+      : 'Staying consistent — that\'s the key 👊'
 
   return (
     <Card className="bg-gradient-to-br from-primary/20 via-white/5 to-transparent border-primary/20">
@@ -74,6 +79,7 @@ export function WeeklySummaryCard() {
                   {Math.abs(trend).toFixed(0)}% vs 4-week avg
                 </span>
               </div>
+              <p className="text-xs text-muted-foreground mt-1">{trendContext}</p>
               <StreakBadge />
             </div>
             <div className="text-right">

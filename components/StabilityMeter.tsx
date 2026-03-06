@@ -56,11 +56,11 @@ export function StabilityMeter() {
   const getStatusText = () => {
     switch (status) {
       case 'high':
-        return 'Great! You have a solid financial cushion.'
+        return 'Rock solid! You\'ve built a real safety net. 🎯'
       case 'medium':
-        return 'Good progress. Keep building your savings.'
+        return 'You\'re on a roll — your cushion is growing! 📈'
       case 'low':
-        return 'Consider saving more to build stability.'
+        return 'You\'re building momentum — every deposit counts! 💪'
       default:
         return 'Start tracking to see your stability score.'
     }
@@ -114,7 +114,7 @@ export function StabilityMeter() {
             <p className="font-medium">What this means:</p>
             <p className="text-muted-foreground">
               Your stability score shows how many weeks of average income you have saved. 
-              Aim for 4+ weeks to reach a high stability rating.
+              You're working toward 4+ weeks of coverage — that's financial freedom territory.
             </p>
           </div>
         </div>

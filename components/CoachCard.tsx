@@ -112,7 +112,7 @@ export function CoachCard() {
             ) : (
               <>
                 <Sparkles className="h-4 w-4 mr-1" />
-                Get Insights
+                Get My Insights
               </>
             )}
           </Button>

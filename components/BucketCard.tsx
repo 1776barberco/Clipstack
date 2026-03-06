@@ -72,8 +72,8 @@ const RISK_ICON: Record<'green' | 'yellow' | 'red', string> = {
 
 const RISK_LABEL: Record<'green' | 'yellow' | 'red', string> = {
   green: 'On track',
-  yellow: 'At risk',
-  red: 'Critical',
+  yellow: 'Heads up',
+  red: 'Needs attention',
 }
 
 export function BucketCard({ bucket, balance, totalBalance, onExpenseAdded }: BucketCardProps) {
