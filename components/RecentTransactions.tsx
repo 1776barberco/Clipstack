@@ -1,10 +1,14 @@
 'use client'
 
+import { useState } from 'react'
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useIncome } from '@/hooks/useIncome'
 import { useExpenses } from '@/hooks/useExpenses'
+import { useAnomalies } from '@/hooks/useAnomalies'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
+import { AnomalyBanner } from '@/components/AnomalyBanner'
 import { History, TrendingUp, TrendingDown } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { format, parseISO } from 'date-fns'
@@ -14,6 +18,8 @@ export function RecentTransactions() {
   const { user } = useAuthContext()
   const { entries: incomeEntries, loading: incomeLoading } = useIncome(user?.id)
   const { expenses, loading: expensesLoading } = useExpenses(user?.id)
+  const { isAnomalous, getAnomalyInfo, anomalyCount } = useAnomalies(user?.id)
+  const [expandedAnomaly, setExpandedAnomaly] = useState<string | null>(null)
 
   const loading = incomeLoading || expensesLoading
 
@@ -79,35 +85,59 @@ export function RecentTransactions() {
           </TabsList>
 
           <TabsContent value="all">
+            <AnomalyBanner anomalyCount={anomalyCount} />
             <ScrollArea className="h-72">
               <div className="space-y-2">
                 {allTransactions.length === 0 ? (
                   <p className="text-center text-muted-foreground">No transactions yet</p>
                 ) : (
-                  allTransactions.slice(0, 15).map((transaction) => (
-                    <div
-                      key={`${transaction.type}-${transaction.id}`}
-                      className="flex items-center justify-between rounded-lg border p-3"
-                    >
-                      <div>
-                        <p className="font-medium">{transaction.description}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {format(parseISO(transaction.date), 'MMM d, yyyy')}
-                          {'bucketName' in transaction && (
-                            <span className="ml-1">• {transaction.bucketName}</span>
-                          )}
-                        </p>
-                      </div>
-                      <span
-                        className={`font-bold ${
-                          transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
-                        }`}
+                  allTransactions.slice(0, 15).map((transaction) => {
+                    const anomalous = transaction.type === 'expense' && isAnomalous(transaction.id)
+                    const anomalyInfo = anomalous ? getAnomalyInfo(transaction.id) : null
+                    const isExpanded = expandedAnomaly === `all-${transaction.id}`
+
+                    return (
+                      <div
+                        key={`${transaction.type}-${transaction.id}`}
+                        className={`rounded-lg border p-3 ${anomalous ? 'border-amber-500/30' : ''}`}
+                        onClick={() => anomalous && setExpandedAnomaly(isExpanded ? null : `all-${transaction.id}`)}
+                        role={anomalous ? 'button' : undefined}
+                        tabIndex={anomalous ? 0 : undefined}
                       >
-                        {transaction.type === 'income' ? '+' : '-'}
-                        {formatCurrency(transaction.amount)}
-                      </span>
-                    </div>
-                  ))
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">{transaction.description}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {format(parseISO(transaction.date), 'MMM d, yyyy')}
+                              {'bucketName' in transaction && (
+                                <span className="ml-1">• {transaction.bucketName}</span>
+                              )}
+                            </p>
+                          </div>
+                          <div className="flex items-center">
+                            <span
+                              className={`font-bold ${
+                                transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                              }`}
+                            >
+                              {transaction.type === 'income' ? '+' : '-'}
+                              {formatCurrency(transaction.amount)}
+                            </span>
+                            {anomalous && (
+                              <Badge variant="outline" className="text-amber-500 border-amber-500/30 text-xs ml-2">
+                                Unusual
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        {isExpanded && anomalyInfo && (
+                          <p className="text-xs text-amber-500/80 mt-2">
+                            {anomalyInfo.reason}
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })
                 )}
               </div>
             </ScrollArea>
@@ -146,25 +176,48 @@ export function RecentTransactions() {
                 {recentExpenses.length === 0 ? (
                   <p className="text-center text-muted-foreground">No expenses yet</p>
                 ) : (
-                  recentExpenses.map((expense) => (
-                    <div
-                      key={expense.id}
-                      className="flex items-center justify-between rounded-lg border p-3"
-                    >
-                      <div>
-                        <p className="font-medium">
-                          {expense.description || expense.category || 'Expense'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {format(parseISO(expense.entry_date), 'MMM d, yyyy')}
-                          <span className="ml-1">• {expense.bucket_name}</span>
-                        </p>
+                  recentExpenses.map((expense) => {
+                    const anomalous = isAnomalous(expense.id)
+                    const anomalyInfo = anomalous ? getAnomalyInfo(expense.id) : null
+                    const isExpanded = expandedAnomaly === `exp-${expense.id}`
+
+                    return (
+                      <div
+                        key={expense.id}
+                        className={`rounded-lg border p-3 ${anomalous ? 'border-amber-500/30' : ''}`}
+                        onClick={() => anomalous && setExpandedAnomaly(isExpanded ? null : `exp-${expense.id}`)}
+                        role={anomalous ? 'button' : undefined}
+                        tabIndex={anomalous ? 0 : undefined}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">
+                              {expense.description || expense.category || 'Expense'}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {format(parseISO(expense.entry_date), 'MMM d, yyyy')}
+                              <span className="ml-1">• {expense.bucket_name}</span>
+                            </p>
+                          </div>
+                          <div className="flex items-center">
+                            <span className="font-bold text-red-600">
+                              -{formatCurrency(expense.amount)}
+                            </span>
+                            {anomalous && (
+                              <Badge variant="outline" className="text-amber-500 border-amber-500/30 text-xs ml-2">
+                                Unusual
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        {isExpanded && anomalyInfo && (
+                          <p className="text-xs text-amber-500/80 mt-2">
+                            {anomalyInfo.reason}
+                          </p>
+                        )}
                       </div>
-                      <span className="font-bold text-red-600">
-                        -{formatCurrency(expense.amount)}
-                      </span>
-                    </div>
-                  ))
+                    )
+                  })
                 )}
               </div>
             </ScrollArea>
