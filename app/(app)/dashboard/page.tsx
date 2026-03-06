@@ -14,6 +14,7 @@ import { BottomNav } from '@/components/BottomNav'
 import { QuickAddFAB } from '@/components/QuickAddFAB'
 import { WeeklySummaryCard } from '@/components/WeeklySummaryCard'
 import { ForecastCard } from '@/components/ForecastCard'
+import { WhatIfCard } from '@/components/WhatIfCard'
 
 export default function DashboardPage() {
   return (
@@ -50,6 +51,9 @@ export default function DashboardPage() {
           <StabilityMeter />
           <WeeklyChart />
         </div>
+
+        {/* What-If Scenario Slider */}
+        <WhatIfCard />
 
         {/* Jars — The Core */}
         <BucketBalances />
