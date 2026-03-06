@@ -13,6 +13,7 @@ import { WithdrawButton } from '@/components/WithdrawButton'
 import { BottomNav } from '@/components/BottomNav'
 import { QuickAddFAB } from '@/components/QuickAddFAB'
 import { WeeklySummaryCard } from '@/components/WeeklySummaryCard'
+import { ForecastCard } from '@/components/ForecastCard'
 
 export default function DashboardPage() {
   return (
@@ -34,6 +35,9 @@ export default function DashboardPage() {
       <main className="container mx-auto p-4 space-y-6 pb-24 md:pb-6">
         {/* Weekly Summary — Hero position */}
         <WeeklySummaryCard />
+
+        {/* Forecast — Income projections + bucket targets */}
+        <ForecastCard />
 
         {/* Desktop: Quick Income + Expense side by side (hidden on mobile/tablet — FAB handles it) */}
         <div className="hidden lg:grid lg:grid-cols-2 gap-6">
