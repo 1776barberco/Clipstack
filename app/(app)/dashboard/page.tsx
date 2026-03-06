@@ -15,6 +15,7 @@ import { QuickAddFAB } from '@/components/QuickAddFAB'
 import { WeeklySummaryCard } from '@/components/WeeklySummaryCard'
 import { ForecastCard } from '@/components/ForecastCard'
 import { WhatIfCard } from '@/components/WhatIfCard'
+import { MilestoneToast } from '@/components/MilestoneToast'
 
 export default function DashboardPage() {
   return (
@@ -34,6 +35,8 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="container mx-auto p-4 space-y-6 pb-24 md:pb-6">
+        <MilestoneToast />
+
         {/* Weekly Summary — Hero position */}
         <WeeklySummaryCard />
 
