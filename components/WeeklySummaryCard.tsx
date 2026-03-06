@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { useMemo } from 'react'
+import { StreakBadge } from '@/components/StreakBadge'
 
 export function WeeklySummaryCard() {
   const { user } = useAuthContext()
@@ -73,6 +74,7 @@ export function WeeklySummaryCard() {
                   {Math.abs(trend).toFixed(0)}% vs 4-week avg
                 </span>
               </div>
+              <StreakBadge />
             </div>
             <div className="text-right">
               <p className="text-xs text-muted-foreground">4-Week Avg</p>
