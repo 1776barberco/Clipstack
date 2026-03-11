@@ -162,8 +162,13 @@ export function useExpenses(userId: string | undefined) {
       )
       .subscribe()
 
+    // Listen for manual refresh events (Realtime may miss changes)
+    const handleManualRefresh = () => fetchExpenses()
+    window.addEventListener('income-updated', handleManualRefresh)
+
     return () => {
       subscription.unsubscribe()
+      window.removeEventListener('income-updated', handleManualRefresh)
     }
   }, [userId])
 
