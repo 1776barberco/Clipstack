@@ -145,8 +145,13 @@ export function useIncome(userId: string | undefined) {
       )
       .subscribe()
 
+    // Listen for manual refresh events (Realtime may miss SECURITY DEFINER changes)
+    const handleManualRefresh = () => fetchIncome()
+    window.addEventListener('income-updated', handleManualRefresh)
+
     return () => {
       subscription.unsubscribe()
+      window.removeEventListener('income-updated', handleManualRefresh)
     }
   }, [userId])
 

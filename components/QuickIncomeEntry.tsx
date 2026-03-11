@@ -127,6 +127,7 @@ export function QuickIncomeEntry() {
       }
 
       toast.success('Income added and split!')
+      window.dispatchEvent(new Event('income-updated'))
       setAmount('')
       setSource('')
       setStep('entry')

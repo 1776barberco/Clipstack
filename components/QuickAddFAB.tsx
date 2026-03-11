@@ -101,6 +101,7 @@ export function QuickAddFAB() {
       setLoading(false)
       if (error) { toast.error('Failed to log income'); return }
       toast.success(`+$${amount} logged!`)
+      window.dispatchEvent(new Event('income-updated'))
     } else {
       if (!selectedBucket) { toast.error('Select a jar'); setLoading(false); return }
       const { error } = await addExpense({
@@ -115,6 +116,7 @@ export function QuickAddFAB() {
       if (error) { toast.error('Failed to log expense'); return }
       const jar = buckets.find(b => b.id === selectedBucket)
       toast.success(`-$${amount} from ${jar?.name || 'jar'}`)
+      window.dispatchEvent(new Event('income-updated'))
     }
 
     resetAndClose()
@@ -163,6 +165,8 @@ export function QuickAddFAB() {
       }
 
       toast.success('Income added and split!')
+      // Trigger dashboard data refresh (Realtime may miss SECURITY DEFINER changes)
+      window.dispatchEvent(new Event('income-updated'))
       resetAndClose()
     } catch (err) {
       console.error('Split error:', err)

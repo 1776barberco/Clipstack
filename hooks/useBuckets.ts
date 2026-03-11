@@ -205,9 +205,14 @@ export function useBuckets(userId: string | undefined) {
       )
       .subscribe()
 
+    // Listen for manual refresh events (Realtime may miss SECURITY DEFINER changes)
+    const handleManualRefresh = () => fetchBuckets()
+    window.addEventListener('income-updated', handleManualRefresh)
+
     return () => {
       configsSubscription.unsubscribe()
       transactionsSubscription.unsubscribe()
+      window.removeEventListener('income-updated', handleManualRefresh)
     }
   }, [userId])
 
