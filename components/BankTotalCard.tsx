@@ -2,6 +2,7 @@
 
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useProfile } from '@/hooks/useProfile'
+import { useBankAccounts } from '@/hooks/useBankAccounts'
 import { useIncome } from '@/hooks/useIncome'
 import { useExpenses } from '@/hooks/useExpenses'
 import { Card, CardContent } from '@/components/ui/card'
@@ -11,16 +12,21 @@ import { formatCurrency } from '@/lib/utils'
 export function BankTotalCard() {
   const { user } = useAuthContext()
   const { profile, loading: profileLoading } = useProfile(user?.id)
+  const { accounts, loading: accountsLoading, getTotalStartingBalance } = useBankAccounts(user?.id)
   const { entries: incomes, loading: incomeLoading } = useIncome(user?.id)
   const { expenses, loading: expensesLoading } = useExpenses(user?.id)
 
-  const loading = profileLoading || incomeLoading || expensesLoading
+  const loading = profileLoading || accountsLoading || incomeLoading || expensesLoading
 
   if (loading) {
     return <div className="h-24 animate-pulse rounded-2xl bg-white/5" />
   }
 
-  const startingBalance = Number(profile?.starting_balance ?? 0)
+  // Use bank_accounts total if available, fall back to profiles.starting_balance for backwards compat
+  const startingBalance = accounts.length > 0
+    ? getTotalStartingBalance()
+    : Number(profile?.starting_balance ?? 0)
+
   const totalIncome = incomes.reduce((sum, e) => sum + Number(e.amount), 0)
   const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
   const currentTotal = startingBalance + totalIncome - totalExpenses
@@ -49,7 +55,7 @@ export function BankTotalCard() {
                 <Landmark className="h-4 w-4 text-emerald-400" />
               )}
               <p className="text-xs text-muted-foreground uppercase tracking-wider">
-                Current Bank Total
+                {accounts.length > 1 ? 'Total Across All Accounts' : 'Current Bank Total'}
               </p>
             </div>
             <p
@@ -69,7 +75,9 @@ export function BankTotalCard() {
           <div className="text-right space-y-1">
             {startingBalance > 0 && (
               <div>
-                <p className="text-xs text-muted-foreground">Starting</p>
+                <p className="text-xs text-muted-foreground">
+                  {accounts.length > 1 ? `Starting (${accounts.length} accts)` : 'Starting'}
+                </p>
                 <p className="text-sm font-medium text-muted-foreground">
                   {formatCurrency(startingBalance)}
                 </p>

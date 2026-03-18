@@ -40,6 +40,9 @@ const bucketUpdateSchema = z.object({
   priority: z.number().int().min(0).optional(),
   is_tax_bucket: z.boolean().optional(),
   target_amount: z.number().positive().nullable().optional(),
+  due_date: z.string().nullable().optional(),
+  is_recurring: z.boolean().optional(),
+  recurring_interval: z.enum(['weekly', 'biweekly', 'monthly', 'quarterly']).nullable().optional(),
 }).strict()
 
 const uuidSchema = z.string().uuid()
