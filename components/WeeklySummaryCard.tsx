@@ -65,8 +65,8 @@ export function WeeklySummaryCard() {
       <CardContent className="p-5">
         {thisWeek === 0 && fourWeekAvg === 0 ? (
           <div className="text-center py-2">
-            <p className="text-2xl mb-1">💈</p>
-            <p className="text-sm text-muted-foreground">Log your first tip to see your weekly summary!</p>
+            <p className="text-2xl mb-1">💸</p>
+            <p className="text-sm text-muted-foreground">Log your first income to see your weekly summary!</p>
           </div>
         ) : (
           <div className="flex items-center justify-between">
