@@ -68,7 +68,6 @@ export function RecentTransactions() {
     )
   }
 
-  // Combine and sort transactions by date
   const allTransactions = [
     ...incomeEntries.map((entry) => ({
       id: entry.id,
