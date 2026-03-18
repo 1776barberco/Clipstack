@@ -18,6 +18,7 @@ export interface Database {
           booth_rent_amount: number | null
           booth_rent_due_day: number | null
           tax_rate: number
+          starting_balance: number
           created_at: string
           updated_at: string
         }
@@ -29,6 +30,7 @@ export interface Database {
           booth_rent_amount?: number | null
           booth_rent_due_day?: number | null
           tax_rate?: number
+          starting_balance?: number
           created_at?: string
           updated_at?: string
         }
@@ -40,6 +42,7 @@ export interface Database {
           booth_rent_amount?: number | null
           booth_rent_due_day?: number | null
           tax_rate?: number
+          starting_balance?: number
           created_at?: string
           updated_at?: string
         }

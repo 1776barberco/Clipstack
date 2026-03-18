@@ -22,6 +22,7 @@ import {
   Plus,
   Trash2,
   Lock,
+  Landmark,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -35,6 +36,7 @@ export default function SettingsPage() {
   const [boothRent, setBoothRent] = useState<string | null>(null)
   const [dueDay, setDueDay] = useState<string | null>(null)
   const [taxRate, setTaxRate] = useState<string | null>(null)
+  const [startingBalance, setStartingBalance] = useState<string | null>(null)
   const [savingProfile, setSavingProfile] = useState(false)
 
   const [editedBuckets, setEditedBuckets] = useState<Record<string, { name?: string; percentage?: string; color?: string; target_amount?: string; due_date?: string }>>({})
@@ -59,6 +61,7 @@ export default function SettingsPage() {
   const displayBoothRent = boothRent ?? (profile?.booth_rent_amount?.toString() || '')
   const displayDueDay = dueDay ?? (profile?.booth_rent_due_day?.toString() || '')
   const displayTaxRate = taxRate ?? (profile?.tax_rate != null ? (profile.tax_rate * 100).toString() : '25')
+  const displayStartingBalance = startingBalance ?? (profile?.starting_balance?.toString() || '0')
 
   const handleSaveProfile = async () => {
     if (!user) return
@@ -69,6 +72,7 @@ export default function SettingsPage() {
     if (boothRent !== null) updates.booth_rent_amount = boothRent ? parseFloat(boothRent) : null
     if (dueDay !== null) updates.booth_rent_due_day = dueDay ? parseInt(dueDay) : null
     if (taxRate !== null) updates.tax_rate = (parseFloat(taxRate) || 25) / 100
+    if (startingBalance !== null) updates.starting_balance = parseFloat(startingBalance) || 0
 
     if (Object.keys(updates).length === 0) {
       toast.info('No changes to save.')
@@ -86,6 +90,7 @@ export default function SettingsPage() {
       setBoothRent(null)
       setDueDay(null)
       setTaxRate(null)
+      setStartingBalance(null)
       toast.success('Profile updated!')
     }
   }
@@ -383,6 +388,29 @@ export default function SettingsPage() {
                 value={displayTaxRate}
                 onChange={(e) => setTaxRate(e.target.value)}
               />
+            </div>
+            <Separator />
+            <div className="space-y-2">
+              <Label htmlFor="startingBalance" className="flex items-center gap-2">
+                <Landmark className="h-4 w-4" />
+                Starting Bank Balance
+              </Label>
+              <CardDescription className="text-xs">
+                Your bank balance before you started using TipJars. This is used to calculate your current bank total.
+              </CardDescription>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="startingBalance"
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  placeholder="0.00"
+                  value={displayStartingBalance}
+                  onChange={(e) => setStartingBalance(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
             <Button onClick={handleSaveProfile} disabled={savingProfile}>
               <Save className="mr-2 h-4 w-4" />

@@ -16,6 +16,7 @@ import { WeeklySummaryCard } from '@/components/WeeklySummaryCard'
 import { ForecastCard } from '@/components/ForecastCard'
 import { WhatIfCard } from '@/components/WhatIfCard'
 import { MilestoneToast } from '@/components/MilestoneToast'
+import { BankTotalCard } from '@/components/BankTotalCard'
 
 export default function DashboardPage() {
   return (
@@ -36,6 +37,9 @@ export default function DashboardPage() {
       {/* Main Content */}
       <main className="container mx-auto p-4 space-y-6 pb-24 md:pb-6">
         <MilestoneToast />
+
+        {/* Bank Total — Overall financial position */}
+        <BankTotalCard />
 
         {/* Weekly Summary — Hero position */}
         <WeeklySummaryCard />

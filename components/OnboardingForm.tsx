@@ -46,6 +46,7 @@ export function OnboardingForm() {
   const [fullName, setFullName] = useState('')
   const [boothRent, setBoothRent] = useState('')
   const [dueDay, setDueDay] = useState('')
+  const [startingBalance, setStartingBalance] = useState('')
   const [loading, setLoading] = useState(false)
   const { user } = useAuthContext()
   const router = useRouter()
@@ -78,6 +79,7 @@ export function OnboardingForm() {
         full_name: fullName,
         booth_rent_amount: boothRent ? parseFloat(boothRent) : null,
         booth_rent_due_day: dueDay ? parseInt(dueDay) : null,
+        starting_balance: startingBalance ? parseFloat(startingBalance) : 0,
       }, { onConflict: 'id' })
 
       if (profileError) throw new Error(`Profile save failed: ${profileError.message}`)
@@ -164,6 +166,25 @@ export function OnboardingForm() {
                   placeholder="1"
                   value={dueDay}
                   onChange={(e) => setDueDay(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="startingBalance">Current bank balance (optional)</Label>
+              <p className="text-xs text-muted-foreground">
+                How much is in your bank right now? We&apos;ll track everything from here.
+              </p>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="startingBalance"
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  placeholder="0.00"
+                  value={startingBalance}
+                  onChange={(e) => setStartingBalance(e.target.value)}
                   className="pl-10"
                 />
               </div>

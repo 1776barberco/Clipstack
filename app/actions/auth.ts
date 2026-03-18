@@ -21,6 +21,7 @@ const profileUpdateSchema = z.object({
   booth_rent_amount: z.number().positive().nullable().optional(),
   booth_rent_due_day: z.number().int().min(1).max(31).nullable().optional(),
   tax_rate: z.number().min(0).max(1).optional(),
+  starting_balance: z.number().min(0).optional(),
 }).strict()
 
 const bucketSchema = z.object({
