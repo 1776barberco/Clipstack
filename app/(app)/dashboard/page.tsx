@@ -17,6 +17,7 @@ import { ForecastCard } from '@/components/ForecastCard'
 import { WhatIfCard } from '@/components/WhatIfCard'
 import { MilestoneToast } from '@/components/MilestoneToast'
 import { BankTotalCard } from '@/components/BankTotalCard'
+import { UpcomingBillsCard } from '@/components/UpcomingBillsCard'
 
 export default function DashboardPage() {
   return (
@@ -67,6 +68,9 @@ export default function DashboardPage() {
 
         {/* Recent Activity */}
         <RecentTransactions />
+
+        {/* Upcoming Bills */}
+        <UpcomingBillsCard />
 
         {/* AI Coach */}
         <CoachCard />
