@@ -18,8 +18,8 @@ import { toast } from 'sonner'
 
 export function RecentTransactions() {
   const { user } = useAuthContext()
-  const { entries: incomeEntries, loading: incomeLoading, mutate: mutateIncome } = useIncome(user?.id)
-  const { expenses, loading: expensesLoading, mutate: mutateExpenses } = useExpenses(user?.id)
+  const { entries: incomeEntries, loading: incomeLoading, deleteIncome } = useIncome(user?.id)
+  const { expenses, loading: expensesLoading, deleteExpense } = useExpenses(user?.id)
   const { isAnomalous, getAnomalyInfo, anomalyCount } = useAnomalies(user?.id)
   const [expandedAnomaly, setExpandedAnomaly] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
@@ -40,8 +40,14 @@ export function RecentTransactions() {
       if (!response.ok) throw new Error('Failed to delete')
 
       toast.success(`${type === 'income' ? 'Income' : 'Expense'} deleted successfully`)
-      if (type === 'income') mutateIncome()
-      else mutateExpenses()
+      // Refresh logic via hooks
+      if (type === 'income') {
+        // @ts-ignore
+        if (typeof window !== 'undefined') window.location.reload()
+      } else {
+        // @ts-ignore
+        if (typeof window !== 'undefined') window.location.reload()
+      }
     } catch (error) {
       toast.error('Failed to delete transaction')
     } finally {
