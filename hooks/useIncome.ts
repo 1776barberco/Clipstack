@@ -10,6 +10,7 @@ type IncomeEntry = {
   source: string | null
   notes: string | null
   entry_date: string
+  account_id?: string | null
   created_at: string
   updated_at: string
 }

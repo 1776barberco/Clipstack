@@ -1,0 +1,1 @@
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS starting_balance decimal(10,2) DEFAULT 0;

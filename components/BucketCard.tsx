@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dialog'
 import { formatCurrency } from '@/lib/utils'
 import { ProgressRing } from './ProgressRing'
-import { MinusCircle, Loader2, Receipt, CalendarClock } from 'lucide-react'
+import { MinusCircle, Loader2, Receipt, CalendarClock, RefreshCw, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { format, differenceInDays, parseISO } from 'date-fns'
 
@@ -29,6 +29,8 @@ interface BucketCardProps {
     is_tax_bucket?: boolean
     target_amount?: number | null
     due_date?: string | null
+    is_recurring?: boolean
+    recurring_interval?: string | null
   }
   balance: number
   totalBalance: number
@@ -82,10 +84,39 @@ export function BucketCard({ bucket, balance, totalBalance, onExpenseAdded }: Bu
   const [expenseAmount, setExpenseAmount] = useState('')
   const [expenseDescription, setExpenseDescription] = useState('')
   const [loading, setLoading] = useState(false)
+  const [markingPaid, setMarkingPaid] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
 
   const percentage = totalBalance > 0 ? (balance / totalBalance) * 100 : 0
   const riskLevel = getRiskLevel(balance, bucket.target_amount, bucket.due_date)
+
+  const handleMarkPaid = async (e: React.MouseEvent) => {
+    e.stopPropagation() // prevent opening the expense dialog
+    if (!user) return
+
+    setMarkingPaid(true)
+    try {
+      const res = await fetch('/api/jars/mark-paid', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bucketId: bucket.id }),
+      })
+      const data = await res.json()
+
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to mark jar as paid')
+      } else {
+        toast.success(`${bucket.name} marked as paid! Next due: ${data.newDueDate}`)
+        // Trigger a data refresh
+        window.dispatchEvent(new Event('income-updated'))
+        onExpenseAdded?.()
+      }
+    } catch {
+      toast.error('Network error — could not mark jar as paid')
+    } finally {
+      setMarkingPaid(false)
+    }
+  }
 
   const handleQuickExpense = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -171,7 +202,29 @@ export function BucketCard({ bucket, balance, totalBalance, onExpenseAdded }: Bu
                       Due {format(parseISO(bucket.due_date), 'MMM d')}
                     </span>
                   )}
+                  {bucket.is_recurring && (
+                    <span className="flex items-center gap-0.5 text-xs text-blue-400">
+                      <RefreshCw className="h-3 w-3 shrink-0" />
+                      {bucket.recurring_interval}
+                    </span>
+                  )}
                 </div>
+                {bucket.is_recurring && bucket.due_date && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 h-7 text-xs gap-1.5"
+                    onClick={handleMarkPaid}
+                    disabled={markingPaid || balance <= 0}
+                  >
+                    {markingPaid ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="h-3 w-3" />
+                    )}
+                    Mark as Paid ✅
+                  </Button>
+                )}
               </div>
 
               <div className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">

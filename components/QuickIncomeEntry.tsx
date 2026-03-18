@@ -4,11 +4,12 @@ import { useState } from 'react'
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useIncome } from '@/hooks/useIncome'
 import { useBuckets } from '@/hooks/useBuckets'
+import { useBankAccounts } from '@/hooks/useBankAccounts'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { DollarSign, Plus, Loader2 } from 'lucide-react'
+import { DollarSign, Plus, Loader2, MinusCircle, Landmark } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { IncomeSplitStep } from '@/components/IncomeSplitStep'
@@ -18,8 +19,11 @@ export function QuickIncomeEntry() {
   const { user, loading: authLoading } = useAuthContext()
   const { addIncome } = useIncome(user?.id)
   const { buckets } = useBuckets(user?.id)
+  const { accounts } = useBankAccounts(user?.id)
   const [amount, setAmount] = useState('')
   const [source, setSource] = useState('')
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null)
+  const [isNegative, setIsNegative] = useState(false)
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState<'entry' | 'split'>('entry')
 
@@ -47,6 +51,12 @@ export function QuickIncomeEntry() {
     e.preventDefault()
     if (!amount) return
 
+    // Negative entries (expenses) skip the split step
+    if (isNegative) {
+      handleSubmitDirect()
+      return
+    }
+
     // If there are fixed jars, show the split step
     if (fixedJars.length > 0) {
       setStep('split')
@@ -65,22 +75,29 @@ export function QuickIncomeEntry() {
     }
 
     setLoading(true)
-    const { error } = await addIncome({
+    const finalAmount = isNegative ? -Math.abs(parseFloat(amount)) : parseFloat(amount)
+    const incomeData: Record<string, unknown> = {
       user_id: user.id,
-      amount: parseFloat(amount),
+      amount: finalAmount,
       source: source || null,
       notes: null,
       entry_date: format(new Date(), 'yyyy-MM-dd'),
-    })
+    }
+    if (selectedAccountId) {
+      incomeData.account_id = selectedAccountId
+    }
+
+    const { error } = await addIncome(incomeData as Parameters<typeof addIncome>[0])
     setLoading(false)
 
     if (error) {
       console.error('Income insert error:', error)
-      toast.error(`Failed to add income: ${error.message || 'Unknown error'}`)
+      toast.error(`Failed to add ${isNegative ? 'expense' : 'income'}: ${error.message || 'Unknown error'}`)
     } else {
-      toast.success('Income added!')
+      toast.success(isNegative ? 'Expense recorded!' : 'Income added!')
       setAmount('')
       setSource('')
+      setIsNegative(false)
       setStep('entry')
     }
   }
@@ -91,13 +108,18 @@ export function QuickIncomeEntry() {
     setLoading(true)
     try {
       // 1. Insert the income entry
-      const { data: income, error: incomeError } = await addIncome({
+      const incomeData: Record<string, unknown> = {
         user_id: user.id,
         amount: parseFloat(amount),
         source: source || null,
         notes: null,
         entry_date: format(new Date(), 'yyyy-MM-dd'),
-      })
+      }
+      if (selectedAccountId) {
+        incomeData.account_id = selectedAccountId
+      }
+
+      const { data: income, error: incomeError } = await addIncome(incomeData as Parameters<typeof addIncome>[0])
 
       if (incomeError || !income) {
         toast.error(`Failed to add income: ${incomeError?.message || 'Unknown error'}`)
@@ -130,6 +152,7 @@ export function QuickIncomeEntry() {
       window.dispatchEvent(new Event('income-updated'))
       setAmount('')
       setSource('')
+      setIsNegative(false)
       setStep('entry')
     } catch (err) {
       console.error('Split error:', err)
@@ -176,6 +199,30 @@ export function QuickIncomeEntry() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleNext} className="space-y-4">
+          {/* Income / Expense toggle */}
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant={isNegative ? 'outline' : 'default'}
+              size="sm"
+              className="flex-1"
+              onClick={() => setIsNegative(false)}
+            >
+              <Plus className="mr-1 h-4 w-4" />
+              Income
+            </Button>
+            <Button
+              type="button"
+              variant={isNegative ? 'default' : 'outline'}
+              size="sm"
+              className="flex-1"
+              onClick={() => setIsNegative(true)}
+            >
+              <MinusCircle className="mr-1 h-4 w-4" />
+              Expense
+            </Button>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="amount">Amount</Label>
             <div className="relative">
@@ -192,6 +239,11 @@ export function QuickIncomeEntry() {
                 autoFocus
               />
             </div>
+            {isNegative && (
+              <p className="text-xs text-amber-500">
+                This will be recorded as an expense (negative amount).
+              </p>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -208,11 +260,40 @@ export function QuickIncomeEntry() {
             ))}
           </div>
 
+          {/* Account selector (only when multiple accounts exist) */}
+          {accounts.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="account" className="flex items-center gap-1">
+                <Landmark className="h-3 w-3" />
+                Account
+              </Label>
+              <select
+                id="account"
+                value={selectedAccountId ?? ''}
+                onChange={(e) => setSelectedAccountId(e.target.value || null)}
+                className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+              >
+                <option value="">
+                  {accounts.length === 1
+                    ? accounts[0].name
+                    : 'Select account (optional)'}
+                </option>
+                {accounts.length > 1 &&
+                  accounts.map((acct) => (
+                    <option key={acct.id} value={acct.id}>
+                      {acct.name}
+                      {acct.is_primary ? ' ★' : ''}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="source">Source (optional)</Label>
             <Input
               id="source"
-              placeholder="e.g., Haircut, Color, Tips"
+              placeholder={isNegative ? 'e.g., Supplies, Tools' : 'e.g., Haircut, Color, Tips'}
               value={source}
               onChange={(e) => setSource(e.target.value)}
             />
@@ -225,6 +306,11 @@ export function QuickIncomeEntry() {
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isNegative ? (
+              <>
+                <MinusCircle className="mr-2 h-4 w-4" />
+                Record Expense
+              </>
             ) : fixedJars.length > 0 ? (
               <>
                 Next: Split Income

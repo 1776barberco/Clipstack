@@ -58,6 +58,8 @@ export interface Database {
           is_tax_bucket: boolean
           priority: number
           color: string
+          is_recurring: boolean
+          recurring_interval: 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | null
           created_at: string
           updated_at: string
         }
@@ -70,6 +72,8 @@ export interface Database {
           is_tax_bucket?: boolean
           priority?: number
           color?: string
+          is_recurring?: boolean
+          recurring_interval?: 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | null
           created_at?: string
           updated_at?: string
         }
@@ -82,6 +86,8 @@ export interface Database {
           is_tax_bucket?: boolean
           priority?: number
           color?: string
+          is_recurring?: boolean
+          recurring_interval?: 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | null
           created_at?: string
           updated_at?: string
         }
@@ -283,6 +289,13 @@ export interface Database {
           p_user_id: string
         }
         Returns: number
+      }
+      advance_jar_due_date: {
+        Args: {
+          p_bucket_id: string
+          p_user_id: string
+        }
+        Returns: string
       }
     }
     Enums: {

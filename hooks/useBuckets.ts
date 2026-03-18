@@ -10,6 +10,8 @@ type BucketConfig = {
   target_amount: number | null
   due_date: string | null
   is_tax_bucket: boolean
+  is_recurring: boolean
+  recurring_interval: 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | null
   priority: number
   color: string
   created_at: string
@@ -38,6 +40,8 @@ const DEMO_BUCKETS: BucketConfig[] = [
     target_amount: 10000,
     due_date: null,
     is_tax_bucket: true,
+    is_recurring: false,
+    recurring_interval: null,
     priority: 100,
     color: '#ef4444',
     created_at: new Date().toISOString(),
@@ -51,6 +55,8 @@ const DEMO_BUCKETS: BucketConfig[] = [
     target_amount: 50000,
     due_date: null,
     is_tax_bucket: false,
+    is_recurring: false,
+    recurring_interval: null,
     priority: 90,
     color: '#22c55e',
     created_at: new Date().toISOString(),
@@ -64,6 +70,8 @@ const DEMO_BUCKETS: BucketConfig[] = [
     target_amount: 25000,
     due_date: null,
     is_tax_bucket: false,
+    is_recurring: false,
+    recurring_interval: null,
     priority: 80,
     color: '#3b82f6',
     created_at: new Date().toISOString(),
@@ -77,6 +85,8 @@ const DEMO_BUCKETS: BucketConfig[] = [
     target_amount: null,
     due_date: null,
     is_tax_bucket: false,
+    is_recurring: false,
+    recurring_interval: null,
     priority: 70,
     color: '#a855f7',
     created_at: new Date().toISOString(),
