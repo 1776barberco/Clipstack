@@ -9,17 +9,45 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { AnomalyBanner } from '@/components/AnomalyBanner'
-import { History, TrendingUp, TrendingDown } from 'lucide-react'
+import { History, TrendingUp, TrendingDown, Trash2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { format, parseISO } from 'date-fns'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 export function RecentTransactions() {
   const { user } = useAuthContext()
-  const { entries: incomeEntries, loading: incomeLoading } = useIncome(user?.id)
-  const { expenses, loading: expensesLoading } = useExpenses(user?.id)
+  const { entries: incomeEntries, loading: incomeLoading, mutate: mutateIncome } = useIncome(user?.id)
+  const { expenses, loading: expensesLoading, mutate: mutateExpenses } = useExpenses(user?.id)
   const { isAnomalous, getAnomalyInfo, anomalyCount } = useAnomalies(user?.id)
   const [expandedAnomaly, setExpandedAnomaly] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState<string | null>(null)
+
+  const handleDelete = async (id: string, type: 'income' | 'expense') => {
+    if (!confirm(`Are you sure you want to delete this ${type}? This will also reverse any changes to your jars and bank balance.`)) {
+      return
+    }
+
+    setIsDeleting(id)
+    try {
+      const response = await fetch('/api/transactions/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, type }),
+      })
+
+      if (!response.ok) throw new Error('Failed to delete')
+
+      toast.success(`${type === 'income' ? 'Income' : 'Expense'} deleted successfully`)
+      if (type === 'income') mutateIncome()
+      else mutateExpenses()
+    } catch (error) {
+      toast.error('Failed to delete transaction')
+    } finally {
+      setIsDeleting(null)
+    }
+  }
 
   const loading = incomeLoading || expensesLoading
 
@@ -128,6 +156,18 @@ export function RecentTransactions() {
                                 Unusual
                               </Badge>
                             )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="ml-2 h-8 w-8 text-muted-foreground hover:text-red-600"
+                              disabled={isDeleting === transaction.id}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDelete(transaction.id, transaction.type)
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
                         {isExpanded && anomalyInfo && (
@@ -160,9 +200,20 @@ export function RecentTransactions() {
                           {format(parseISO(entry.entry_date), 'MMM d, yyyy')}
                         </p>
                       </div>
-                      <span className="font-bold text-green-600">
-                        +{formatCurrency(entry.amount)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-green-600">
+                          +{formatCurrency(entry.amount)}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                          disabled={isDeleting === entry.id}
+                          onClick={() => handleDelete(entry.id, 'income')}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))
                 )}
@@ -199,7 +250,7 @@ export function RecentTransactions() {
                               <span className="ml-1">• {expense.bucket_name}</span>
                             </p>
                           </div>
-                          <div className="flex items-center">
+                          <div className="flex items-center gap-2">
                             <span className="font-bold text-red-600">
                               -{formatCurrency(expense.amount)}
                             </span>
@@ -208,6 +259,18 @@ export function RecentTransactions() {
                                 Unusual
                               </Badge>
                             )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                              disabled={isDeleting === expense.id}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDelete(expense.id, 'expense')
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
                         {isExpanded && anomalyInfo && (
