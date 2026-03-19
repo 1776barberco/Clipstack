@@ -7,6 +7,7 @@ import { useProfile } from '@/hooks/useProfile'
 import { useBuckets } from '@/hooks/useBuckets'
 import { useBankAccounts, BankAccount } from '@/hooks/useBankAccounts'
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences'
+import { usePushSubscription } from '@/hooks/usePushSubscription'
 import { updateProfileAction } from '@/app/actions/auth'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -42,6 +43,7 @@ export default function SettingsPage() {
   const { buckets, loading: bucketsLoading, createBucket, updateBucket, deleteBucket } = useBuckets(user?.id)
   const { accounts, loading: accountsLoading, createAccount, updateAccount, deleteAccount } = useBankAccounts(user?.id)
   const { preferences: notifPrefs, loading: notifLoading, updatePreferences: updateNotifPrefs } = useNotificationPreferences(user?.id)
+  const { pushState, subscribing, subscribe: subscribePush, unsubscribe: unsubscribePush, isSupported: pushSupported } = usePushSubscription(user?.id)
 
   const [fullName, setFullName] = useState<string | null>(null)
   const [boothRent, setBoothRent] = useState<string | null>(null)
@@ -1006,6 +1008,49 @@ export default function SettingsPage() {
                 <p className="text-xs text-muted-foreground">
                   Timezone: {notifPrefs?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone}
                 </p>
+
+                {/* Push Notification Toggle */}
+                {pushSupported && (
+                  <div className="mt-3 pt-3 border-t border-primary/10">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label className="text-xs font-medium">Push notifications</Label>
+                        <p className="text-xs text-muted-foreground">
+                          {pushState === 'denied'
+                            ? 'Notifications blocked — enable in browser settings.'
+                            : pushState === 'subscribed'
+                            ? "You'll get a push reminder on this device."
+                            : 'Get a push reminder even when the app is closed.'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (pushState === 'subscribed') {
+                            await unsubscribePush()
+                            toast.success('Push notifications disabled')
+                          } else {
+                            await subscribePush()
+                            if (Notification.permission === 'granted') {
+                              toast.success('Push notifications enabled! 🔔')
+                            } else if (Notification.permission === 'denied') {
+                              toast.error('Notifications blocked by browser')
+                            }
+                          }
+                        }}
+                        disabled={subscribing || pushState === 'denied'}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          pushState === 'subscribed' ? 'bg-primary' : 'bg-muted'
+                        } ${pushState === 'denied' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            pushState === 'subscribed' ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
