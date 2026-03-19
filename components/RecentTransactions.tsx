@@ -142,7 +142,7 @@ export function RecentTransactions() {
                             <p className="font-medium">{transaction.description}</p>
                             <p className="text-sm text-muted-foreground">
                               {format(parseISO(transaction.date), 'MMM d, yyyy')}
-                              {'bucketName' in transaction && (
+                              {'bucketName' in transaction && transaction.bucketName && (
                                 <span className="ml-1">• {transaction.bucketName}</span>
                               )}
                             </p>

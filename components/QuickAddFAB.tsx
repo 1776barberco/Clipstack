@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, X, Loader2, DollarSign, ArrowDownLeft, ArrowUpRight, Settings2, ArrowLeft } from 'lucide-react'
+import { Plus, X, Loader2, DollarSign, ArrowDownLeft, ArrowUpRight, Settings2, ArrowLeft, Landmark } from 'lucide-react'
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useIncome } from '@/hooks/useIncome'
 import { useExpenses } from '@/hooks/useExpenses'
@@ -64,12 +64,12 @@ export function QuickAddFAB() {
     return () => window.removeEventListener('open-quick-log', handler)
   }, [])
 
-  // Auto-select first bucket for expenses
+  // Auto-select "Bank Total" for expenses by default
   useEffect(() => {
-    if (mode === 'expense' && !selectedBucket && buckets.length > 0) {
-      setSelectedBucket(buckets[0].id)
+    if (mode === 'expense' && !selectedBucket) {
+      setSelectedBucket('__bank_total__')
     }
-  }, [mode, selectedBucket, buckets])
+  }, [mode, selectedBucket])
 
   const handleNext = () => {
     if (!amount) return
@@ -103,10 +103,11 @@ export function QuickAddFAB() {
       toast.success(`+$${amount} logged!`)
       window.dispatchEvent(new Event('income-updated'))
     } else {
-      if (!selectedBucket) { toast.error('Select a jar'); setLoading(false); return }
+      if (!selectedBucket) { toast.error('Select a jar or Bank Total'); setLoading(false); return }
+      const isJarless = selectedBucket === '__bank_total__'
       const { error } = await addExpense({
         user_id: user.id,
-        bucket_id: selectedBucket,
+        bucket_id: isJarless ? null : selectedBucket,
         amount: parseFloat(amount),
         description: note || null,
         category: null,
@@ -114,8 +115,12 @@ export function QuickAddFAB() {
       })
       setLoading(false)
       if (error) { toast.error('Failed to log expense'); return }
-      const jar = buckets.find(b => b.id === selectedBucket)
-      toast.success(`-$${amount} from ${jar?.name || 'jar'}`)
+      if (isJarless) {
+        toast.success(`-$${amount} from Bank Total`)
+      } else {
+        const jar = buckets.find(b => b.id === selectedBucket)
+        toast.success(`-$${amount} from ${jar?.name || 'jar'}`)
+      }
       window.dispatchEvent(new Event('income-updated'))
     }
 
@@ -348,9 +353,20 @@ export function QuickAddFAB() {
               </button>
             </div>
 
-            {/* Expense: Jar selector */}
-            {mode === 'expense' && buckets.length > 0 && (
+            {/* Expense: Jar selector (including Bank Total) */}
+            {mode === 'expense' && (
               <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                <button
+                  onClick={() => setSelectedBucket('__bank_total__')}
+                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium border transition-all ${
+                    selectedBucket === '__bank_total__'
+                      ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                      : 'border-white/5 text-muted-foreground hover:border-white/15'
+                  }`}
+                >
+                  <Landmark className="h-2.5 w-2.5" />
+                  Bank Total
+                </button>
                 {buckets.map((b) => (
                   <button
                     key={b.id}

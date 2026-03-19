@@ -6,6 +6,7 @@ import { useAuthContext } from '@/providers/AuthProvider'
 import { useProfile } from '@/hooks/useProfile'
 import { useBuckets } from '@/hooks/useBuckets'
 import { useBankAccounts, BankAccount } from '@/hooks/useBankAccounts'
+import { useNotificationPreferences } from '@/hooks/useNotificationPreferences'
 import { updateProfileAction } from '@/app/actions/auth'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -29,6 +30,8 @@ import {
   Star,
   ChevronLeft,
   ChevronRight,
+  Bell,
+  Clock,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -38,6 +41,7 @@ export default function SettingsPage() {
   const { profile, loading: profileLoading } = useProfile(user?.id)
   const { buckets, loading: bucketsLoading, createBucket, updateBucket, deleteBucket } = useBuckets(user?.id)
   const { accounts, loading: accountsLoading, createAccount, updateAccount, deleteAccount } = useBankAccounts(user?.id)
+  const { preferences: notifPrefs, loading: notifLoading, updatePreferences: updateNotifPrefs } = useNotificationPreferences(user?.id)
 
   const [fullName, setFullName] = useState<string | null>(null)
   const [boothRent, setBoothRent] = useState<string | null>(null)
@@ -937,6 +941,71 @@ export default function SettingsPage() {
                     {savingBuckets ? 'Saving...' : 'Save Jars'}
                   </Button>
                 </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Daily Reminders */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              Daily Tracking Reminders
+            </CardTitle>
+            <CardDescription>Get a daily nudge to log your income and expenses.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium">Enable daily reminders</Label>
+                <p className="text-xs text-muted-foreground">
+                  {`We'll remind you to track your earnings each day.`}
+                </p>
+              </div>
+              <button
+                onClick={async () => {
+                  const newVal = !notifPrefs?.daily_tracking_reminder
+                  const result = await updateNotifPrefs({ daily_tracking_reminder: newVal })
+                  if (result.error) {
+                    toast.error('Failed to update reminder preference')
+                  } else {
+                    toast.success(newVal ? 'Daily reminders enabled!' : 'Daily reminders disabled')
+                  }
+                }}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  notifPrefs?.daily_tracking_reminder ? 'bg-primary' : 'bg-muted'
+                }`}
+                disabled={notifLoading}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    notifPrefs?.daily_tracking_reminder ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {notifPrefs?.daily_tracking_reminder && (
+              <div className="space-y-3 rounded-lg border border-dashed border-primary/20 bg-primary/5 p-3">
+                <div className="flex items-center gap-3">
+                  <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <div className="flex-1 space-y-1">
+                    <Label className="text-xs">Reminder time</Label>
+                    <Input
+                      type="time"
+                      value={notifPrefs?.reminder_time || '18:00'}
+                      onChange={async (e) => {
+                        const result = await updateNotifPrefs({ reminder_time: e.target.value })
+                        if (result.error) toast.error('Failed to update reminder time')
+                      }}
+                      className="w-32"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Timezone: {notifPrefs?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone}
+                </p>
               </div>
             )}
           </CardContent>

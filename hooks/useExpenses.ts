@@ -6,7 +6,7 @@ import { startOfWeek, endOfWeek, format, subWeeks } from 'date-fns'
 type Expense = {
   id: string
   user_id: string
-  bucket_id: string
+  bucket_id: string | null
   amount: number
   description: string | null
   category: string | null
@@ -121,7 +121,7 @@ export function useExpenses(userId: string | undefined) {
           .from('expenses')
           .select(`
             *,
-            bucket_configs(name)
+            bucket_configs!left(name)
           `)
           .eq('user_id', userId)
           .order('entry_date', { ascending: false })
@@ -131,7 +131,7 @@ export function useExpenses(userId: string | undefined) {
         
         const formattedData = (data || []).map((expense: Record<string, unknown> & { bucket_configs?: { name?: string } }) => ({
           ...expense,
-          bucket_name: expense.bucket_configs?.name || 'Unknown Jar'
+          bucket_name: expense.bucket_id ? (expense.bucket_configs?.name || 'Unknown Jar') : 'Bank Total'
         }))
         
         setExpenses(formattedData)
@@ -171,6 +171,12 @@ export function useExpenses(userId: string | undefined) {
       window.removeEventListener('income-updated', handleManualRefresh)
     }
   }, [userId])
+
+  const getJarlessExpenses = () => {
+    return expenses
+      .filter((e) => !e.bucket_id)
+      .reduce((sum, e) => sum + Number(e.amount), 0)
+  }
 
   const addExpense = async (expense: Omit<Expense, 'id' | 'created_at' | 'updated_at'>) => {
     if (DEMO_MODE) {
@@ -275,5 +281,6 @@ export function useExpenses(userId: string | undefined) {
     getTodayExpenses,
     getWeekExpenses,
     getExpensesByBucket,
+    getJarlessExpenses,
   }
 }

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Receipt, Plus, Loader2 } from 'lucide-react'
+import { Receipt, Plus, Loader2, Landmark } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 
@@ -40,7 +40,7 @@ export function QuickExpenseEntry({ defaultBucketId, onSuccess }: QuickExpenseEn
     setLoading(true)
     const { error } = await addExpense({
       user_id: user.id,
-      bucket_id: bucketId,
+      bucket_id: bucketId === '__bank_total__' ? null : bucketId,
       amount: parseFloat(amount),
       description: description || null,
       category: category || null,
@@ -113,9 +113,15 @@ export function QuickExpenseEntry({ defaultBucketId, onSuccess }: QuickExpenseEn
               <Label htmlFor="bucket">Jar</Label>
               <Select value={bucketId} onValueChange={setBucketId}>
                 <SelectTrigger id="bucket">
-                  <SelectValue placeholder="Select a jar" />
+                  <SelectValue placeholder="Select a jar or Bank Total" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="__bank_total__">
+                    <div className="flex items-center gap-2">
+                      <Landmark className="h-3 w-3 text-emerald-500" />
+                      Bank Total (no jar)
+                    </div>
+                  </SelectItem>
                   {buckets.map((bucket) => (
                     <SelectItem key={bucket.id} value={bucket.id}>
                       <div className="flex items-center gap-2">

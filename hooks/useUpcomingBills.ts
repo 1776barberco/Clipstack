@@ -191,6 +191,10 @@ export function useUpcomingBills(userId: string | undefined) {
       .select()
       .single()
 
+    if (!error && data) {
+      setBills(prev => [...prev, data as UpcomingBill].sort((a, b) => a.due_date.localeCompare(b.due_date)))
+    }
+
     return { data: data as UpcomingBill, error }
   }
 
@@ -221,6 +225,13 @@ export function useUpcomingBills(userId: string | undefined) {
       return { error }
     }
 
+    setBills(prev =>
+      prev.map(b =>
+        b.id === billId
+          ? { ...b, status: 'paid' as const, linked_expense_id: (data as { expense_id?: string })?.expense_id || null, updated_at: new Date().toISOString() }
+          : b
+      )
+    )
     toast.success('Bill logged as expense!')
     return { data, error: null }
   }
@@ -250,6 +261,13 @@ export function useUpcomingBills(userId: string | undefined) {
       return { error }
     }
 
+    setBills(prev =>
+      prev.map(b =>
+        b.id === billId
+          ? { ...b, status: 'skipped' as const, updated_at: new Date().toISOString() }
+          : b
+      )
+    )
     toast.success('Bill skipped')
     return { error: null }
   }
@@ -273,6 +291,7 @@ export function useUpcomingBills(userId: string | undefined) {
       return { error }
     }
 
+    setBills(prev => prev.filter(b => b.id !== billId))
     toast.success('Bill deleted')
     return { error: null }
   }

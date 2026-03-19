@@ -42,11 +42,13 @@ export async function POST(req: Request) {
         const accountId = (expense as any).account_id;
         // @ts-ignore
         const amount = (expense as any).amount;
-        // @ts-ignore
-        await supabase.rpc('adjust_account_balance', {
-          account_id: accountId,
-          amount_change: amount
-        });
+        if (accountId) {
+          // @ts-ignore
+          await supabase.rpc('adjust_account_balance', {
+            account_id: accountId,
+            amount_change: amount
+          });
+        }
         await supabase.from('expenses').delete().eq('id', id);
       }
     }
