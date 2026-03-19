@@ -6,6 +6,7 @@ import { useAuthContext } from '@/providers/AuthProvider'
 import { useIncome } from '@/hooks/useIncome'
 import { useExpenses } from '@/hooks/useExpenses'
 import { useBuckets } from '@/hooks/useBuckets'
+import { useBankAccounts } from '@/hooks/useBankAccounts'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
@@ -36,6 +37,7 @@ export function QuickAddFAB() {
   const { addIncome } = useIncome(user?.id)
   const { addExpense } = useExpenses(user?.id)
   const { buckets } = useBuckets(user?.id)
+  const { accounts } = useBankAccounts(user?.id)
   const [open, setOpen] = useState(false)
   const [mode, setMode] = useState<Mode>('income')
   const [step, setStep] = useState<Step>('entry')
@@ -47,6 +49,7 @@ export function QuickAddFAB() {
   const [editingAmounts, setEditingAmounts] = useState(false)
   const [amountInput, setAmountInput] = useState('')
   const [fixedAllocations, setFixedAllocations] = useState<Record<string, string>>({})
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null)
 
   // Separate fixed vs percentage jars
   const fixedJars = buckets.filter((b) => b.target_amount && b.target_amount > 0)
@@ -71,6 +74,14 @@ export function QuickAddFAB() {
     }
   }, [mode, selectedBucket])
 
+  // Auto-select primary bank account for income (or single account)
+  useEffect(() => {
+    if (mode === 'income' && accounts.length > 0 && !selectedAccountId) {
+      const primary = accounts.find(a => a.is_primary)
+      setSelectedAccountId(primary?.id ?? accounts[0].id)
+    }
+  }, [mode, accounts, selectedAccountId])
+
   const handleNext = () => {
     if (!amount) return
     if (mode === 'income' && hasFixedJars) {
@@ -91,13 +102,17 @@ export function QuickAddFAB() {
     setLoading(true)
 
     if (mode === 'income') {
-      const { error } = await addIncome({
+      const incomeData: Record<string, unknown> = {
         user_id: user.id,
         amount: parseFloat(amount),
         source: note || null,
         notes: null,
         entry_date: format(new Date(), 'yyyy-MM-dd'),
-      })
+      }
+      if (selectedAccountId) {
+        incomeData.account_id = selectedAccountId
+      }
+      const { error } = await addIncome(incomeData as Parameters<typeof addIncome>[0])
       setLoading(false)
       if (error) { toast.error('Failed to log income'); return }
       toast.success(`+$${amount} logged!`)
@@ -133,13 +148,17 @@ export function QuickAddFAB() {
 
     try {
       // 1. Insert income entry
-      const { data: income, error: incomeError } = await addIncome({
+      const incomeData: Record<string, unknown> = {
         user_id: user.id,
         amount: parseFloat(amount),
         source: note || null,
         notes: null,
         entry_date: format(new Date(), 'yyyy-MM-dd'),
-      })
+      }
+      if (selectedAccountId) {
+        incomeData.account_id = selectedAccountId
+      }
+      const { data: income, error: incomeError } = await addIncome(incomeData as Parameters<typeof addIncome>[0])
 
       if (incomeError || !income) {
         toast.error(`Failed to add income: ${incomeError?.message || 'Unknown error'}`)
@@ -186,6 +205,7 @@ export function QuickAddFAB() {
     setNote('')
     setStep('entry')
     setFixedAllocations({})
+    setSelectedAccountId(null)
     setOpen(false)
     setEditingAmounts(false)
   }
@@ -352,6 +372,27 @@ export function QuickAddFAB() {
                 Expense
               </button>
             </div>
+
+            {/* Income: Bank account selector */}
+            {mode === 'income' && accounts.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                {accounts.map((acct) => (
+                  <button
+                    key={acct.id}
+                    onClick={() => setSelectedAccountId(selectedAccountId === acct.id ? null : acct.id)}
+                    className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium border transition-all ${
+                      selectedAccountId === acct.id
+                        ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                        : 'border-white/5 text-muted-foreground hover:border-white/15'
+                    }`}
+                  >
+                    <Landmark className="h-2.5 w-2.5" />
+                    {acct.name}
+                    {acct.is_primary ? ' ★' : ''}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Expense: Jar selector (including Bank Total) */}
             {mode === 'expense' && (
