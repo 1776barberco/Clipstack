@@ -33,8 +33,10 @@ import {
   ChevronRight,
   Bell,
   Clock,
+  Calculator,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { JarSplitCalculator } from '@/components/JarSplitCalculator'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -68,6 +70,7 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [savingPassword, setSavingPassword] = useState(false)
+  const [showJarCalculator, setShowJarCalculator] = useState(false)
 
   // Auto-focus newly created jar name input
   useEffect(() => {
@@ -774,6 +777,41 @@ export default function SettingsPage() {
               </>
             )}
           </CardContent>
+        </Card>
+
+        {/* Jar Split Calculator */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Calculator className="h-5 w-5" />
+                  Jar Split Calculator
+                </CardTitle>
+                <CardDescription>
+                  Not sure how to split your jars? Enter your income and bills — we&apos;ll calculate the percentages for you.
+                </CardDescription>
+              </div>
+              <Button
+                variant={showJarCalculator ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setShowJarCalculator(!showJarCalculator)}
+              >
+                {showJarCalculator ? 'Close' : 'Open'}
+              </Button>
+            </div>
+          </CardHeader>
+          {showJarCalculator && (
+            <CardContent>
+              <JarSplitCalculator
+                mode="settings"
+                onComplete={() => {
+                  setShowJarCalculator(false)
+                  toast.success('Jars recalculated!')
+                }}
+              />
+            </CardContent>
+          )}
         </Card>
 
         {/* Buckets */}
