@@ -1008,7 +1008,11 @@ export default function SettingsPage() {
                   const newVal = !notifPrefs?.daily_tracking_reminder
                   const result = await updateNotifPrefs({ daily_tracking_reminder: newVal })
                   if (result.error) {
-                    toast.error('Failed to update reminder preference')
+                    console.error('Notification pref error:', result.error)
+                    const msg = result.error && typeof result.error === 'object' && 'message' in result.error
+                      ? (result.error as { message: string }).message
+                      : 'Unknown error'
+                    toast.error(`Failed to update reminders: ${msg}`)
                   } else {
                     toast.success(newVal ? 'Daily reminders enabled!' : 'Daily reminders disabled')
                   }

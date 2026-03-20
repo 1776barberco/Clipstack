@@ -69,7 +69,25 @@ export function useNotificationPreferences(userId: string | undefined) {
       }
       return { data, error }
     } else {
-      // Insert new
+      // Insert new — ensure profile exists first (FK constraint)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle()
+
+      if (!profile) {
+        // Auto-create a minimal profile so the FK doesn't fail
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({ id: userId, email: '' }, { onConflict: 'id' })
+
+        if (profileError) {
+          console.error('Failed to create profile for notifications:', profileError)
+          return { data: null, error: profileError }
+        }
+      }
+
       const { data, error } = await supabase
         .from('notification_preferences')
         .insert({
