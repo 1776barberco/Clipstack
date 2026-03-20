@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, X, Loader2, DollarSign, ArrowDownLeft, ArrowUpRight, Settings2, ArrowLeft, Landmark } from 'lucide-react'
+import { Plus, X, Loader2, DollarSign, ArrowDownLeft, ArrowUpRight, Settings2, ArrowLeft, Landmark, PlusCircle, Check } from 'lucide-react'
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useIncome } from '@/hooks/useIncome'
 import { useExpenses } from '@/hooks/useExpenses'
@@ -37,7 +37,7 @@ export function QuickAddFAB() {
   const { addIncome } = useIncome(user?.id)
   const { addExpense } = useExpenses(user?.id)
   const { buckets } = useBuckets(user?.id)
-  const { accounts } = useBankAccounts(user?.id)
+  const { accounts, createAccount } = useBankAccounts(user?.id)
   const [open, setOpen] = useState(false)
   const [mode, setMode] = useState<Mode>('income')
   const [step, setStep] = useState<Step>('entry')
@@ -50,6 +50,11 @@ export function QuickAddFAB() {
   const [amountInput, setAmountInput] = useState('')
   const [fixedAllocations, setFixedAllocations] = useState<Record<string, string>>({})
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null)
+  const [showAddAccount, setShowAddAccount] = useState(false)
+  const [newAccountName, setNewAccountName] = useState('')
+  const [newAccountType, setNewAccountType] = useState('checking')
+  const [newAccountBalance, setNewAccountBalance] = useState('')
+  const [addingAccount, setAddingAccount] = useState(false)
 
   // Separate fixed vs percentage jars
   const fixedJars = buckets.filter((b) => b.target_amount && b.target_amount > 0)
@@ -109,12 +114,18 @@ export function QuickAddFAB() {
         notes: null,
         entry_date: format(new Date(), 'yyyy-MM-dd'),
       }
-      if (selectedAccountId) {
+      // Only attach account_id if we actually have a valid selection
+      if (selectedAccountId && accounts.some(a => a.id === selectedAccountId)) {
         incomeData.account_id = selectedAccountId
       }
       const { error } = await addIncome(incomeData as Parameters<typeof addIncome>[0])
       setLoading(false)
-      if (error) { toast.error('Failed to log income'); return }
+      if (error) {
+        console.error('Income insert error:', error)
+        const msg = typeof error === 'object' && 'message' in error ? (error as { message: string }).message : 'Unknown error'
+        toast.error(`Failed to log income: ${msg}`)
+        return
+      }
       toast.success(`+$${amount} logged!`)
       window.dispatchEvent(new Event('income-updated'))
     } else {
@@ -208,6 +219,34 @@ export function QuickAddFAB() {
     setSelectedAccountId(null)
     setOpen(false)
     setEditingAmounts(false)
+    setShowAddAccount(false)
+    setNewAccountName('')
+    setNewAccountType('checking')
+    setNewAccountBalance('')
+  }
+
+  const handleAddAccount = async () => {
+    if (!newAccountName.trim()) { toast.error('Enter an account name'); return }
+    setAddingAccount(true)
+    const { data, error } = await createAccount({
+      name: newAccountName.trim(),
+      type: newAccountType,
+      starting_balance: parseFloat(newAccountBalance) || 0,
+      is_primary: accounts.length === 0,
+    })
+    setAddingAccount(false)
+    if (error) {
+      toast.error('Failed to add account')
+      return
+    }
+    if (data) {
+      setSelectedAccountId(data.id)
+    }
+    toast.success(`${newAccountName.trim()} added!`)
+    setShowAddAccount(false)
+    setNewAccountName('')
+    setNewAccountType('checking')
+    setNewAccountBalance('')
   }
 
   const handleSubmit = async () => {
@@ -373,24 +412,94 @@ export function QuickAddFAB() {
               </button>
             </div>
 
-            {/* Income: Bank account selector */}
-            {mode === 'income' && accounts.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                {accounts.map((acct) => (
+            {/* Income: Bank account selector + Add Account */}
+            {mode === 'income' && (
+              <div className="space-y-2">
+                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                  {accounts.map((acct) => (
+                    <button
+                      key={acct.id}
+                      onClick={() => setSelectedAccountId(selectedAccountId === acct.id ? null : acct.id)}
+                      className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium border transition-all ${
+                        selectedAccountId === acct.id
+                          ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                          : 'border-white/5 text-muted-foreground hover:border-white/15'
+                      }`}
+                    >
+                      <Landmark className="h-2.5 w-2.5" />
+                      {acct.name}
+                      {acct.is_primary ? ' ★' : ''}
+                    </button>
+                  ))}
                   <button
-                    key={acct.id}
-                    onClick={() => setSelectedAccountId(selectedAccountId === acct.id ? null : acct.id)}
+                    onClick={() => setShowAddAccount(!showAddAccount)}
                     className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium border transition-all ${
-                      selectedAccountId === acct.id
-                        ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
-                        : 'border-white/5 text-muted-foreground hover:border-white/15'
+                      showAddAccount
+                        ? 'bg-primary/15 border-primary/30 text-primary'
+                        : 'border-dashed border-white/10 text-muted-foreground hover:border-white/20 hover:text-foreground'
                     }`}
                   >
-                    <Landmark className="h-2.5 w-2.5" />
-                    {acct.name}
-                    {acct.is_primary ? ' ★' : ''}
+                    <PlusCircle className="h-2.5 w-2.5" />
+                    Add Account
                   </button>
-                ))}
+                </div>
+
+                {/* Inline Add Account form */}
+                {showAddAccount && (
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-3 space-y-2 animate-in slide-in-from-top-2 duration-200">
+                    <Input
+                      placeholder="Account name (e.g., Cash App)"
+                      value={newAccountName}
+                      onChange={(e) => setNewAccountName(e.target.value)}
+                      className="h-9 bg-white/5 border-white/10 text-sm"
+                      autoFocus
+                    />
+                    <div className="flex gap-2">
+                      <select
+                        value={newAccountType}
+                        onChange={(e) => setNewAccountType(e.target.value)}
+                        className="h-9 flex-1 rounded-md border border-white/10 bg-white/5 px-2 text-sm text-foreground"
+                      >
+                        <option value="checking">Checking</option>
+                        <option value="savings">Savings</option>
+                        <option value="cash">Cash</option>
+                        <option value="cashapp">Cash App</option>
+                        <option value="venmo">Venmo</option>
+                        <option value="other">Other</option>
+                      </select>
+                      <div className="relative flex-1">
+                        <DollarSign className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="Balance"
+                          value={newAccountBalance}
+                          onChange={(e) => setNewAccountBalance(e.target.value)}
+                          className="h-9 pl-6 bg-white/5 border-white/10 text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 h-8 text-xs"
+                        onClick={() => setShowAddAccount(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="flex-1 h-8 text-xs"
+                        onClick={handleAddAccount}
+                        disabled={addingAccount || !newAccountName.trim()}
+                      >
+                        {addingAccount ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Check className="h-3 w-3 mr-1" /> Add</>}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

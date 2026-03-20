@@ -34,6 +34,7 @@ import {
   isSameDay,
   differenceInDays,
 } from 'date-fns'
+import { parseLocalDate } from '@/hooks/useUpcomingBills'
 import {
   Dialog,
   DialogContent,
@@ -138,7 +139,7 @@ export function UpcomingBillsCard() {
   const allBillsForMonth = getBillsForMonth(currentMonth)
 
   const getBillsForDay = (day: Date) => {
-    return allBillsForMonth.filter(b => isSameDay(new Date(b.due_date), day))
+    return allBillsForMonth.filter(b => isSameDay(parseLocalDate(b.due_date), day))
   }
 
   return (
@@ -457,7 +458,7 @@ function BillRow({
   isOverdue?: boolean
   isDueSoon?: boolean
 }) {
-  const daysUntil = differenceInDays(new Date(bill.due_date), new Date())
+  const daysUntil = differenceInDays(parseLocalDate(bill.due_date), new Date())
 
   return (
     <div
@@ -510,7 +511,7 @@ function BillRow({
       <div className="text-right shrink-0">
         <p className="font-semibold text-sm">{formatCurrency(bill.amount)}</p>
         <p className="text-[10px] text-muted-foreground">
-          {format(new Date(bill.due_date), 'MMM d')}
+          {format(parseLocalDate(bill.due_date), 'MMM d')}
         </p>
       </div>
 

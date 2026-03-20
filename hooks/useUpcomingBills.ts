@@ -5,6 +5,17 @@ import { supabase, DEMO_MODE, DEMO_USER } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { format, addDays, differenceInDays, isWithinInterval, startOfMonth, endOfMonth } from 'date-fns'
 
+/**
+ * Parse a date-only string (YYYY-MM-DD) as local midnight instead of UTC.
+ * new Date('2026-03-21') → UTC midnight → shows as Mar 20 in US timezones.
+ * This helper appends T00:00:00 to force local timezone interpretation.
+ */
+export function parseLocalDate(dateStr: string): Date {
+  // If already has time component, parse as-is
+  if (dateStr.includes('T')) return new Date(dateStr)
+  return new Date(dateStr + 'T00:00:00')
+}
+
 export type BillCategory = 'zip' | 'klarna' | 'credit_card' | 'personal' | 'other'
 
 export type UpcomingBill = {
@@ -303,7 +314,7 @@ export function useUpcomingBills(userId: string | undefined) {
   const getDueSoon = (days = 3) => {
     const now = new Date()
     return pendingBills.filter(b => {
-      const due = new Date(b.due_date)
+      const due = parseLocalDate(b.due_date)
       const diff = differenceInDays(due, now)
       return diff >= 0 && diff <= days
     })
@@ -318,7 +329,7 @@ export function useUpcomingBills(userId: string | undefined) {
     const start = startOfMonth(date)
     const end = endOfMonth(date)
     return bills.filter(b => {
-      const due = new Date(b.due_date)
+      const due = parseLocalDate(b.due_date)
       return isWithinInterval(due, { start, end })
     })
   }
