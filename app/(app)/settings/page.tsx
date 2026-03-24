@@ -186,7 +186,7 @@ export default function SettingsPage() {
       if (accountCarouselIndex >= accounts.length - 1) {
         setAccountCarouselIndex(Math.max(0, accountCarouselIndex - 1))
       }
-      toast.success(`${name} deleted.`)
+      toast.success(`${name} deleted. Remaining jars rebalanced.`)
     }
   }
 
@@ -365,7 +365,7 @@ export default function SettingsPage() {
       const updated = { ...editedBuckets }
       delete updated[id]
       setEditedBuckets(updated)
-      toast.success(`${name} deleted.`)
+      toast.success(`${name} deleted. Remaining jars rebalanced.`)
     }
   }
 

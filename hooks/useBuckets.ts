@@ -301,8 +301,21 @@ export function useBuckets(userId: string | undefined) {
       .eq('id', id)
 
     if (!error) {
+      // Immediately remove from local state
       setBuckets(prev => prev.filter(b => b.id !== id))
       setBalances(prev => prev.filter(b => b.bucket_id !== id))
+      
+      // Refetch immediately to capture any rebalancing that happened server-side
+      try {
+        const result = await fetchBucketsAction()
+        if (!result.error) {
+          setBuckets((result.buckets as BucketConfig[]) || [])
+          setBalances((result.balances as BucketBalance[]) || [])
+        }
+      } catch (err) {
+        console.error('Error refetching buckets after deletion:', err)
+        // State already updated with deletion, rebalance will sync via Realtime
+      }
     }
 
     return { error }
