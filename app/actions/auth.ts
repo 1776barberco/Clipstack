@@ -303,14 +303,76 @@ export async function deleteBucketAction(id: string) {
     return { error: 'Not authenticated' }
   }
 
-  const { error } = await supabase
+  // Fetch the bucket being deleted to check its type
+  const { data: bucketToDelete } = await supabase
+    .from('bucket_configs')
+    .select('*')
+    .eq('id', parsedId.data)
+    .eq('user_id', user.id)
+    .single()
+
+  // Delete the bucket
+  const { error: deleteError } = await supabase
     .from('bucket_configs')
     .delete()
     .eq('id', parsedId.data)
     .eq('user_id', user.id)
 
-  if (error) {
-    return { error: error.message }
+  if (deleteError) {
+    return { error: deleteError.message }
+  }
+
+  // Auto-rebalance: if the deleted bucket had a percentage, rebalance remaining buckets
+  if (bucketToDelete?.percentage !== null && bucketToDelete?.percentage !== undefined) {
+    // Fetch all remaining buckets for this user that have percentages
+    const { data: remainingBuckets, error: fetchError } = await supabase
+      .from('bucket_configs')
+      .select('*')
+      .eq('user_id', user.id)
+      .not('percentage', 'is', null)
+
+    if (fetchError) {
+      console.error('Error fetching remaining buckets:', fetchError)
+      return { error: null } // Deletion succeeded, rebalance non-critical
+    }
+
+    if (remainingBuckets && remainingBuckets.length > 0) {
+      // Calculate sum of remaining percentages
+      const totalPercentage = remainingBuckets.reduce((sum: number, b: any) => sum + (b.percentage || 0), 0)
+
+      // Only rebalance if we have remaining percentage-based buckets
+      if (totalPercentage > 0 && totalPercentage !== 100) {
+        // Rebalance: scale each bucket proportionally
+        const updates = remainingBuckets.map((bucket: any, index: number) => {
+          let newPercentage = (bucket.percentage / totalPercentage) * 100
+
+          // Ensure we don't exceed 100% due to rounding
+          if (index === remainingBuckets.length - 1) {
+            // Last bucket: adjust to ensure total = 100%
+            const sumOfOthers = remainingBuckets
+              .slice(0, -1)
+              .reduce((sum: number, b: any) => sum + Math.round((b.percentage / totalPercentage) * 100 * 100) / 100, 0)
+            newPercentage = Math.round((100 - sumOfOthers) * 100) / 100
+          } else {
+            newPercentage = Math.round(newPercentage * 100) / 100
+          }
+
+          return {
+            id: bucket.id,
+            percentage: Math.max(0, Math.min(100, newPercentage)), // Clamp to 0-100
+          }
+        })
+
+        // Update all remaining buckets in parallel
+        for (const update of updates) {
+          await supabase
+            .from('bucket_configs')
+            .update({ percentage: update.percentage })
+            .eq('id', update.id)
+            .eq('user_id', user.id)
+        }
+      }
+    }
   }
 
   return { error: null }
