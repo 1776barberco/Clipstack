@@ -13,7 +13,7 @@ export function Footer() {
               <span className="text-lg font-bold">TipJars</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              Smart budgeting for barbers and beauty professionals. Track income, manage expenses, and build financial stability.
+              Smart budgeting for barbers, beauty professionals, and independent contractors with fluctuating incomes. Track income, manage expenses, and build financial stability.
             </p>
           </div>
 
