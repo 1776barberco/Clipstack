@@ -37,6 +37,25 @@ interface Subscriber {
   is_admin: boolean
 }
 
+interface PromoCode {
+  id: string
+  code: string
+  active: boolean
+  timesRedeemed: number
+  maxRedemptions: number | null
+  expiresAt: string | null
+  createdAt: string | null
+  coupon: {
+    id: string
+    percentOff: number | null
+    amountOff: number | null
+    currency: string | null
+    duration: string | null
+    durationInMonths: number | null
+    name: string | null
+  }
+}
+
 const statusColors: Record<string, string> = {
   active: 'bg-green-500/10 text-green-600 border-green-200',
   trialing: 'bg-blue-500/10 text-blue-600 border-blue-200',
@@ -58,14 +77,21 @@ export default function AdminPage() {
   const [hasTestKeys, setHasTestKeys] = useState(false)
   const [hasLiveKeys, setHasLiveKeys] = useState(false)
   const [togglingMode, setTogglingMode] = useState(false)
+  const [promoCodes, setPromoCodes] = useState<PromoCode[]>([])
+  const [promoCodeValue, setPromoCodeValue] = useState('FOUNDINGPRO')
+  const [promoPercentOff, setPromoPercentOff] = useState('100')
+  const [promoMonths, setPromoMonths] = useState('2')
+  const [promoMaxRedemptions, setPromoMaxRedemptions] = useState('15')
+  const [creatingPromo, setCreatingPromo] = useState(false)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const [statsRes, subsRes, modeRes] = await Promise.all([
+      const [statsRes, subsRes, modeRes, promoRes] = await Promise.all([
         fetch('/api/admin/stats'),
         fetch(`/api/admin/subscribers${search ? `?q=${encodeURIComponent(search)}` : ''}`),
         fetch('/api/admin/stripe-mode'),
+        fetch('/api/admin/promo-codes'),
       ])
 
       if (statsRes.status === 403 || subsRes.status === 403) {
@@ -84,6 +110,10 @@ export default function AdminPage() {
         setStripeMode(modeData.mode)
         setHasTestKeys(modeData.hasTestKeys)
         setHasLiveKeys(modeData.hasLiveKeys)
+      }
+
+      if (promoRes.ok) {
+        setPromoCodes(await promoRes.json())
       }
     } catch {
       toast.error('Failed to load admin data')
@@ -141,6 +171,29 @@ export default function AdminPage() {
     } else {
       const data = await res.json().catch(() => ({}))
       toast.error(data.error || 'Failed to switch mode')
+    }
+  }
+
+  const handleCreatePromoCode = async () => {
+    setCreatingPromo(true)
+    const res = await fetch('/api/admin/promo-codes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        code: promoCodeValue.trim().toUpperCase(),
+        percentOff: Number(promoPercentOff),
+        months: Number(promoMonths),
+        maxRedemptions: Number(promoMaxRedemptions),
+      }),
+    })
+    setCreatingPromo(false)
+
+    if (res.ok) {
+      toast.success('Promo code created')
+      fetchData()
+    } else {
+      const data = await res.json().catch(() => ({}))
+      toast.error(data.error || 'Failed to create promo code')
     }
   }
 
@@ -254,6 +307,80 @@ export default function AdminPage() {
             {!hasTestKeys && (
               <p className="text-xs text-amber-500 mt-2">⚠️ Test keys not configured in Vercel env vars</p>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Promo Codes */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Zap className="h-5 w-5" />
+              Promo Codes
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground mb-3">
+                Create Stripe promo codes for Premium offers like 2 months free for testers.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                <Input
+                  placeholder="Code"
+                  value={promoCodeValue}
+                  onChange={(e) => setPromoCodeValue(e.target.value.toUpperCase())}
+                />
+                <Input
+                  placeholder="% off"
+                  value={promoPercentOff}
+                  onChange={(e) => setPromoPercentOff(e.target.value)}
+                />
+                <Input
+                  placeholder="Months"
+                  value={promoMonths}
+                  onChange={(e) => setPromoMonths(e.target.value)}
+                />
+                <Input
+                  placeholder="Max redemptions"
+                  value={promoMaxRedemptions}
+                  onChange={(e) => setPromoMaxRedemptions(e.target.value)}
+                />
+              </div>
+              <Button
+                className="mt-3"
+                onClick={handleCreatePromoCode}
+                disabled={creatingPromo || !promoCodeValue.trim()}
+              >
+                {creatingPromo ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Zap className="h-4 w-4 mr-2" />}
+                Create Promo Code
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {promoCodes.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No promo codes yet.</p>
+              ) : (
+                promoCodes.map((promo) => (
+                  <div key={promo.id} className="rounded-lg border p-4 space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium">{promo.code}</span>
+                      <Badge variant="outline" className={promo.active ? 'bg-green-500/10 text-green-600 border-green-200' : 'bg-zinc-500/10 text-zinc-500 border-zinc-200'}>
+                        {promo.active ? 'active' : 'inactive'}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {promo.coupon.percentOff ? `${promo.coupon.percentOff}% off` : 'Discount'}
+                      {promo.coupon.duration === 'repeating' && promo.coupon.durationInMonths
+                        ? ` for ${promo.coupon.durationInMonths} month${promo.coupon.durationInMonths === 1 ? '' : 's'}`
+                        : ''}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Redeemed {promo.timesRedeemed}{promo.maxRedemptions ? ` / ${promo.maxRedemptions}` : ''}
+                      {promo.createdAt ? ` • Created ${new Date(promo.createdAt).toLocaleDateString()}` : ''}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
           </CardContent>
         </Card>
 
