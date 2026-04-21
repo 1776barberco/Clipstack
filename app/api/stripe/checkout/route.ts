@@ -61,6 +61,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
+    const body = await request.json().catch(() => ({})) as { promoCode?: string }
+    const promoCode = body.promoCode?.trim() || ''
+
+    let promotionCodeId: string | undefined
+    if (promoCode) {
+      const promotionCodes = await stripe.promotionCodes.list({
+        code: promoCode,
+        active: true,
+        limit: 1,
+      })
+
+      const promo = promotionCodes.data[0]
+      if (!promo) {
+        return NextResponse.json({ error: 'Invalid or inactive promo code' }, { status: 400 })
+      }
+
+      if (promo.max_redemptions && (promo.times_redeemed ?? 0) >= promo.max_redemptions) {
+        return NextResponse.json({ error: 'That promo code has reached its redemption limit' }, { status: 400 })
+      }
+
+      promotionCodeId = promo.id
+    }
+
     const priceId = await getOrCreatePrice()
     const origin = request.nextUrl.origin
 
@@ -69,14 +92,18 @@ export async function POST(request: NextRequest) {
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: {
-        trial_period_days: 7,
+        ...(promotionCodeId ? {} : { trial_period_days: 7 }),
         metadata: { user_id: user.id },
       },
       customer_email: user.email,
-      metadata: { user_id: user.id },
+      metadata: {
+        user_id: user.id,
+        ...(promoCode ? { promo_code: promoCode } : {}),
+      },
       success_url: `${origin}/coach?success=true`,
       cancel_url: `${origin}/coach`,
-      allow_promotion_codes: true,
+      allow_promotion_codes: !promotionCodeId,
+      ...(promotionCodeId ? { discounts: [{ promotion_code: promotionCodeId }] } : {}),
     })
 
     return NextResponse.json({ url: session.url })

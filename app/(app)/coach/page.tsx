@@ -19,6 +19,7 @@ export default function CoachPage() {
   const { user } = useAuthContext()
   const { isSubscribed, isTrialing, trialDaysLeft, loading } = useSubscription(user?.id)
   const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [promoCode, setPromoCode] = useState('')
   const [tone, setTone] = useState('motivator')
   const [userName, setUserName] = useState<string | undefined>()
 
@@ -165,7 +166,7 @@ export default function CoachPage() {
                       <span className="text-4xl font-bold">$9.99</span>
                       <span className="text-muted-foreground">/mo</span>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">7-day free trial</p>
+                    <p className="text-sm text-muted-foreground mt-1">7-day free trial, or use your promo code</p>
                   </div>
 
                   <div className="space-y-2 text-sm">
@@ -177,13 +178,30 @@ export default function CoachPage() {
                     ))}
                   </div>
 
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                      placeholder="Promo code"
+                      className="w-full h-11 rounded-full border bg-background px-4 text-sm outline-none ring-0 focus:border-primary"
+                    />
+                    <p className="text-[11px] text-muted-foreground px-1">
+                      Got a 2-month free code? Enter it here before checkout.
+                    </p>
+                  </div>
+
                   <Button
                     className="w-full h-12 text-base rounded-full bg-primary hover:bg-primary/90"
                     disabled={checkoutLoading}
                     onClick={async () => {
                       setCheckoutLoading(true)
                       try {
-                        const res = await fetch('/api/stripe/checkout', { method: 'POST' })
+                        const res = await fetch('/api/stripe/checkout', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ promoCode: promoCode.trim() || undefined }),
+                        })
                         const data = await res.json()
                         if (data.url) {
                           window.location.href = data.url
@@ -202,11 +220,11 @@ export default function CoachPage() {
                     ) : (
                       <Sparkles className="h-4 w-4 mr-2" />
                     )}
-                    Start 7-Day Free Trial
+                    {promoCode.trim() ? 'Continue with Promo Code' : 'Start 7-Day Free Trial'}
                   </Button>
 
                   <p className="text-[10px] text-center text-muted-foreground">
-                    No charge for 7 days. Cancel anytime. Auto-renews at $9.99/mo.
+                    No charge for 7 days by default. Promo codes can override the trial. Cancel anytime. Auto-renews at $9.99/mo.
                   </p>
                 </CardContent>
               </Card>
