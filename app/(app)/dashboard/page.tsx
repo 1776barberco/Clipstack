@@ -18,6 +18,14 @@ import { WhatIfCard } from '@/components/WhatIfCard'
 import { MilestoneToast } from '@/components/MilestoneToast'
 import { BankTotalCard } from '@/components/BankTotalCard'
 import { UpcomingBillsCard } from '@/components/UpcomingBillsCard'
+import { DashboardOnboardingTour } from '@/components/DashboardOnboardingTour'
+import { DashboardWelcomeModal } from '@/components/DashboardWelcomeModal'
+import { DailyReminderNudge } from '@/components/DailyReminderNudge'
+import { DailyMomentumCard } from '@/components/DailyMomentumCard'
+import { EveningStreakReminder } from '@/components/EveningStreakReminder'
+import { StreakCelebration } from '@/components/StreakCelebration'
+import { StreakProtectedToast } from '@/components/StreakProtectedToast'
+import { StreakRewardsCard } from '@/components/StreakRewardsCard'
 
 export default function DashboardPage() {
   return (
@@ -38,19 +46,32 @@ export default function DashboardPage() {
       {/* Main Content */}
       <main className="container mx-auto p-4 space-y-6 pb-24 md:pb-6">
         <MilestoneToast />
+        <StreakCelebration />
+        <StreakProtectedToast />
+
+        <DailyMomentumCard />
 
         {/* Bank Total — Overall financial position */}
         <BankTotalCard />
 
+        <DailyReminderNudge />
+        <EveningStreakReminder />
+
         {/* Weekly Summary — Hero position */}
-        <WeeklySummaryCard />
+        <div id="tour-weekly-summary">
+          <WeeklySummaryCard />
+        </div>
 
         {/* Forecast — Income projections + bucket targets */}
-        <ForecastCard />
+        <div id="tour-forecast">
+          <ForecastCard />
+        </div>
 
         {/* Desktop: Quick Income + Expense side by side (hidden on mobile/tablet — FAB handles it) */}
         <div className="hidden lg:grid lg:grid-cols-2 gap-6">
-          <QuickIncomeEntry />
+          <div id="tour-quick-income">
+            <QuickIncomeEntry />
+          </div>
           <QuickExpenseEntry />
         </div>
 
@@ -64,16 +85,22 @@ export default function DashboardPage() {
         <WhatIfCard />
 
         {/* Jars — The Core */}
-        <BucketBalances />
+        <div id="tour-buckets">
+          <BucketBalances />
+        </div>
 
         {/* Recent Activity */}
-        <RecentTransactions />
+        <div id="tour-recent-transactions">
+          <RecentTransactions />
+        </div>
 
         {/* Upcoming Bills */}
         <UpcomingBillsCard />
 
         {/* AI Coach */}
         <CoachCard />
+
+        <StreakRewardsCard />
 
         {/* Rent + Tax Details */}
         <div className="grid gap-4 md:gap-6 sm:grid-cols-2">
@@ -85,6 +112,8 @@ export default function DashboardPage() {
       <Footer />
       <BottomNav />
       <QuickAddFAB />
+      <DashboardWelcomeModal />
+      <DashboardOnboardingTour />
     </div>
   )
 }

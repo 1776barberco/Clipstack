@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase, DEMO_MODE } from '@/lib/supabase/client'
 import { useIncome } from '@/hooks/useIncome'
-import { startOfWeek, subWeeks } from 'date-fns'
+import { format, subDays } from 'date-fns'
 
 interface StreakData {
   currentStreak: number
@@ -54,56 +54,52 @@ export function useStreak(userId: string | undefined): StreakData {
     fetchStreak()
   }, [userId])
 
-  // Client-side fallback: calculate streak from income entries
+  // Client-side fallback: calculate streak from daily income check-ins
   const clientStreak = useMemo(() => {
     if (!entries || entries.length === 0) return { current: 0, longest: 0 }
 
-    const now = new Date()
-    // Use Sunday as week start to match the DB function
-    const currentWeekStart = startOfWeek(now, { weekStartsOn: 0 })
+    const daySet = new Set(entries.map((entry) => entry.entry_date))
 
-    // Group entries by week (Sunday start)
-    const weekSet = new Set<string>()
-    for (const entry of entries) {
-      const entryDate = new Date(entry.entry_date)
-      const ws = startOfWeek(entryDate, { weekStartsOn: 0 })
-      weekSet.add(ws.toISOString())
-    }
-
-    // Walk backwards from current week, count consecutive weeks with income
     let current = 0
-    let longest = 0
-    let streak = 0
+    let cursor = new Date()
 
-    for (let i = 0; i < 52; i++) {
-      const weekStart = subWeeks(currentWeekStart, i)
-      if (weekSet.has(weekStart.toISOString())) {
-        streak++
-        if (streak > longest) longest = streak
-      } else {
-        if (i === 0) {
-          // Current week has no income yet — don't break, just skip
-          continue
-        }
-        if (current === 0) current = streak
-        streak = 0
-      }
+    // If they have not logged today, allow the streak to continue from yesterday.
+    if (!daySet.has(format(cursor, 'yyyy-MM-dd'))) {
+      cursor = subDays(cursor, 1)
     }
 
-    if (current === 0) current = streak
+    while (daySet.has(format(cursor, 'yyyy-MM-dd'))) {
+      current += 1
+      cursor = subDays(cursor, 1)
+    }
+
+    const sortedDays = Array.from(daySet).sort()
+    let longest = 0
+    let running = 0
+    let prev: Date | null = null
+
+    for (const day of sortedDays) {
+      const [y, m, d] = day.split('-').map(Number)
+      const currentDate = new Date(y, m - 1, d)
+
+      if (!prev) {
+        running = 1
+      } else {
+        const diffDays = Math.round((currentDate.getTime() - prev.getTime()) / 86400000)
+        running = diffDays === 1 ? running + 1 : 1
+      }
+
+      if (running > longest) longest = running
+      prev = currentDate
+    }
 
     return { current, longest }
   }, [entries])
 
   const loading = dbLoading || incomeLoading
 
-  // Prefer DB values if available and non-zero, otherwise use client-side
-  const currentStreak = dbStreak && dbStreak.current_streak > 0
-    ? dbStreak.current_streak
-    : clientStreak.current
-  const longestStreak = dbStreak && dbStreak.longest_streak > 0
-    ? dbStreak.longest_streak
-    : clientStreak.longest
+  const currentStreak = clientStreak.current
+  const longestStreak = Math.max(clientStreak.longest, dbStreak?.longest_streak || 0)
 
   return { currentStreak, longestStreak, loading }
 }

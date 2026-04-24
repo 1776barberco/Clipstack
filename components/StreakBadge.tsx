@@ -13,7 +13,7 @@ export function StreakBadge() {
   if (currentStreak === 0) {
     return (
       <p className="text-xs text-muted-foreground mt-2">
-        Start your streak — log this week&apos;s income!
+        Start your streak - log today&apos;s income.
       </p>
     )
   }
@@ -29,7 +29,7 @@ export function StreakBadge() {
         <span className={`font-bold ${isHot ? 'text-amber-400' : ''}`}>
           {currentStreak}
         </span>
-        -week streak
+        -day streak
       </span>
       {isOnFire && isPersonalBest && (
         <span className="text-xs font-medium text-green-400 ml-1">

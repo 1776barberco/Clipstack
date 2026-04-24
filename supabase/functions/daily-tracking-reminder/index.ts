@@ -308,13 +308,14 @@ serve(async (req) => {
       // Check if we already sent a reminder today
       const { data: existing } = await supabaseClient
         .from('notifications')
-        .select('id')
+        .select('id, type')
         .eq('user_id', pref.user_id)
-        .eq('type', 'daily_tracking_reminder')
+        .in('type', ['daily_tracking_reminder', 'streak_warning_reminder'])
         .gte('created_at', `${today}T00:00:00Z`)
-        .limit(1)
+        .limit(20)
 
-      if (existing && existing.length > 0) continue
+      const alreadySentDaily = !!existing?.some((n) => n.type === 'daily_tracking_reminder')
+      const alreadySentStreak = !!existing?.some((n) => n.type === 'streak_warning_reminder')
 
       // Check if user already logged income/expenses today
       const { data: todayIncome } = await supabaseClient
@@ -331,24 +332,48 @@ serve(async (req) => {
         .eq('entry_date', today)
         .limit(1)
 
-      const hasActivity = (todayIncome && todayIncome.length > 0) || (todayExpenses && todayExpenses.length > 0)
+      const hasIncomeToday = !!(todayIncome && todayIncome.length > 0)
+      const hasExpensesToday = !!(todayExpenses && todayExpenses.length > 0)
+      const hasActivity = hasIncomeToday || hasExpensesToday
 
-      const title = hasActivity
+      const yesterday = new Date(now)
+      yesterday.setUTCDate(yesterday.getUTCDate() - 1)
+      const yesterdayStr = yesterday.toISOString().split('T')[0]
+
+      const { data: yesterdayIncome } = await supabaseClient
+        .from('income_entries')
+        .select('id')
+        .eq('user_id', pref.user_id)
+        .eq('entry_date', yesterdayStr)
+        .limit(1)
+
+      const streakAtRisk = !!(yesterdayIncome && yesterdayIncome.length > 0) && !hasIncomeToday
+
+      const type = streakAtRisk ? 'streak_warning_reminder' : 'daily_tracking_reminder'
+      const title = streakAtRisk
+        ? 'Protect your streak tonight 🔥'
+        : hasActivity
         ? "Don't forget to finish logging today!"
         : "Time to log today's earnings! 💰"
-      const message = hasActivity
-        ? "You've started logging today — make sure everything's captured before the day ends."
+      const message = streakAtRisk
+        ? 'You logged income yesterday but not today yet. Add today\'s income before the day ends to keep your streak alive.'
+        : hasActivity
+        ? "You've started logging today - make sure everything's captured before the day ends."
         : "Take a minute to log your income and expenses. Your future self will thank you!"
 
       // Create the in-app notification
       const notification = {
         user_id: pref.user_id,
-        type: 'daily_tracking_reminder',
+        type,
         title,
         message,
-        data: { date: today, has_activity: hasActivity },
+        data: { date: today, has_activity: hasActivity, streak_at_risk: streakAtRisk },
       }
       notifications.push(notification)
+
+      if ((streakAtRisk && alreadySentStreak) || (!streakAtRisk && alreadySentDaily)) {
+        continue
+      }
 
       // Send real push notification if user has push enabled and valid subscription
       if (
@@ -365,7 +390,7 @@ serve(async (req) => {
             {
               title,
               body: message,
-              tag: 'tipjars-daily-reminder',
+              tag: streakAtRisk ? 'tipjars-streak-warning' : 'tipjars-daily-reminder',
               url: '/dashboard',
             },
             vapidKeys.privateKey,
