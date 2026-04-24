@@ -269,7 +269,7 @@ export function QuickAddFAB() {
   }
 
   return (
-    <>
+    <div id="tour-quick-add">
       {/* Overlay */}
       {open && (
         <div
@@ -627,6 +627,6 @@ export function QuickAddFAB() {
       >
         <Plus className="h-6 w-6" />
       </button>
-    </>
+    </div>
   )
 }

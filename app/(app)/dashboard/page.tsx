@@ -49,10 +49,14 @@ export default function DashboardPage() {
         <StreakCelebration />
         <StreakProtectedToast />
 
-        <DailyMomentumCard />
+        <div id="tour-daily-momentum">
+          <DailyMomentumCard />
+        </div>
 
         {/* Bank Total — Overall financial position */}
-        <BankTotalCard />
+        <div id="tour-bank-total">
+          <BankTotalCard />
+        </div>
 
         <DailyReminderNudge />
         <EveningStreakReminder />
@@ -77,12 +81,16 @@ export default function DashboardPage() {
 
         {/* Stability + Chart */}
         <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
-          <StabilityMeter />
+          <div id="tour-stability-meter">
+            <StabilityMeter />
+          </div>
           <WeeklyChart />
         </div>
 
         {/* What-If Scenario Slider */}
-        <WhatIfCard />
+        <div id="tour-what-if">
+          <WhatIfCard />
+        </div>
 
         {/* Jars — The Core */}
         <div id="tour-buckets">
@@ -95,17 +103,25 @@ export default function DashboardPage() {
         </div>
 
         {/* Upcoming Bills */}
-        <UpcomingBillsCard />
+        <div id="tour-upcoming-bills">
+          <UpcomingBillsCard />
+        </div>
 
         {/* AI Coach */}
-        <CoachCard />
+        <div id="tour-ai-coach">
+          <CoachCard />
+        </div>
 
-        <StreakRewardsCard />
+        <div id="tour-streak-rewards">
+          <StreakRewardsCard />
+        </div>
 
         {/* Rent + Tax Details */}
         <div className="grid gap-4 md:gap-6 sm:grid-cols-2">
           <BoothRentCard />
-          <TaxEstimateCard />
+          <div id="tour-tax-estimate">
+            <TaxEstimateCard />
+          </div>
         </div>
       </main>
 
