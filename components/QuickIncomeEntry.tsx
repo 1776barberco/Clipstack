@@ -167,12 +167,15 @@ export function QuickIncomeEntry() {
   // Step 2: Split screen
   if (step === 'split') {
     return (
-      <Card>
+      <Card id="tour-quick-income">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            Split Your Income
+            Daily Check-In
           </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Log what you made today so TipJars can guide your spending and keep improving your split.
+          </p>
         </CardHeader>
         <CardContent>
           <IncomeSplitStep
@@ -190,12 +193,15 @@ export function QuickIncomeEntry() {
 
   // Step 1: Amount entry
   return (
-    <Card>
+    <Card id="tour-quick-income">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <DollarSign className="h-5 w-5" />
-          Quick Income Entry
+          Daily Income Check-In
         </CardTitle>
+        <p className="text-sm text-muted-foreground">
+          TipJars works best when you log income every day. Even a rough number helps the app guide your spending better.
+        </p>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleNext} className="space-y-4">
@@ -224,7 +230,7 @@ export function QuickIncomeEntry() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount</Label>
+            <Label htmlFor="amount">What did you make today?</Label>
             <div className="relative">
               <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -232,7 +238,7 @@ export function QuickIncomeEntry() {
                 type="number"
                 step="0.01"
                 min="0.01"
-                placeholder="0.00"
+                placeholder="Enter today's income"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="pl-10 text-lg"
@@ -313,13 +319,13 @@ export function QuickIncomeEntry() {
               </>
             ) : fixedJars.length > 0 ? (
               <>
-                Next: Split Income
+                Next: Split Today's Income
                 <DollarSign className="ml-2 h-4 w-4" />
               </>
             ) : (
               <>
                 <Plus className="mr-2 h-4 w-4" />
-                Add Income
+                Log Today's Income
               </>
             )}
           </Button>

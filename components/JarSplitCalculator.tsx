@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
-type Frequency = 'weekly' | 'biweekly' | 'monthly'
+type Frequency = 'daily' | 'weekly' | 'biweekly' | 'monthly'
 
 interface Bill {
   id: string
@@ -31,12 +31,14 @@ interface Bill {
 }
 
 const FREQUENCY_TO_MONTHLY: Record<Frequency, number> = {
+  daily: 30,
   weekly: 4.33,
   biweekly: 2.167,
   monthly: 1,
 }
 
 const FREQUENCY_LABELS: Record<Frequency, string> = {
+  daily: 'Daily',
   weekly: 'Weekly',
   biweekly: 'Every 2 weeks',
   monthly: 'Monthly',
@@ -83,7 +85,7 @@ export function JarSplitCalculator({ mode = 'settings', onComplete, onSkip }: Ja
 
   const [step, setStep] = useState(1)
   const [incomeAmount, setIncomeAmount] = useState('')
-  const [incomeFrequency, setIncomeFrequency] = useState<Frequency>('weekly')
+  const [incomeFrequency, setIncomeFrequency] = useState<Frequency>('daily')
   const [bills, setBills] = useState<Bill[]>([])
   const [includeTax, setIncludeTax] = useState(true)
   const [taxRate, setTaxRate] = useState('25')
@@ -236,9 +238,13 @@ export function JarSplitCalculator({ mode = 'settings', onComplete, onSkip }: Ja
 
   const renderStep1 = () => (
     <div className="space-y-5">
-      <div className="text-center space-y-1">
-        <h3 className="text-lg font-semibold">How much do you make?</h3>
-        <p className="text-sm text-muted-foreground">Your average take-home — tips, cuts, color, everything.</p>
+      <div className="text-center space-y-2">
+        <h3 className="text-lg font-semibold">Start with what you made today</h3>
+        <p className="text-sm text-muted-foreground">TipJars works best when you use it daily. Enter a rough estimate of your take-home income, then keep checking in so the app can help you build better spending habits over time.</p>
+        <div className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-left text-xs text-muted-foreground">
+          <p className="font-medium text-foreground">Daily is recommended.</p>
+          <p>Logging income every day gives TipJars the best data to improve your splits and guide your spending in real time.</p>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -257,7 +263,7 @@ export function JarSplitCalculator({ mode = 'settings', onComplete, onSkip }: Ja
         </div>
 
         <div className="flex rounded-xl bg-white/5 border border-white/10 p-1">
-          {(['weekly', 'biweekly', 'monthly'] as Frequency[]).map(freq => (
+          {(['daily', 'weekly', 'biweekly', 'monthly'] as Frequency[]).map(freq => (
             <button
               key={freq}
               onClick={() => setIncomeFrequency(freq)}
@@ -267,14 +273,18 @@ export function JarSplitCalculator({ mode = 'settings', onComplete, onSkip }: Ja
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              {FREQUENCY_LABELS[freq]}
+              <span>{FREQUENCY_LABELS[freq]}</span>
+              {freq === 'daily' ? <span className="ml-1 text-[10px] uppercase tracking-wide text-primary">Recommended</span> : null}
             </button>
           ))}
         </div>
 
         {monthlyIncome > 0 && (
-          <div className="text-center text-sm text-muted-foreground">
-            ≈ <span className="font-semibold text-foreground">${monthlyIncome.toFixed(0)}</span> / month
+          <div className="space-y-2 text-center text-sm text-muted-foreground">
+            <div>
+              ≈ <span className="font-semibold text-foreground">${monthlyIncome.toFixed(0)}</span> / month
+            </div>
+            <p className="text-xs">A rough estimate is enough to get started. You can update this anytime, and TipJars will get smarter as it learns your income trends.</p>
           </div>
         )}
       </div>

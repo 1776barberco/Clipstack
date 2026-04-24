@@ -34,6 +34,7 @@ import {
   Bell,
   Clock,
   Calculator,
+  Compass,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { JarSplitCalculator } from '@/components/JarSplitCalculator'
@@ -998,9 +999,9 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label className="text-sm font-medium">Enable daily reminders</Label>
+                <Label className="text-sm font-medium">Enable gentle daily reminders</Label>
                 <p className="text-xs text-muted-foreground">
-                  {`We'll remind you to track your earnings each day.`}
+                  {`We&apos;ll send a light nudge if you haven&apos;t logged your income yet.`}
                 </p>
               </div>
               <button
@@ -1059,10 +1060,10 @@ export default function SettingsPage() {
                         <Label className="text-xs font-medium">Push notifications</Label>
                         <p className="text-xs text-muted-foreground">
                           {pushState === 'denied'
-                            ? 'Notifications blocked — enable in browser settings.'
+                            ? 'Notifications blocked - enable in browser settings.'
                             : pushState === 'subscribed'
-                            ? "You'll get a push reminder on this device."
-                            : 'Get a push reminder even when the app is closed.'}
+                            ? "You'll get daily and streak-warning push reminders on this device."
+                            : 'Get push reminders even when the app is closed, including streak warnings in the evening.'}
                         </p>
                       </div>
                       <button
@@ -1095,6 +1096,35 @@ export default function SettingsPage() {
                 )}
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Compass className="h-5 w-5" />
+              Guided Tour
+            </CardTitle>
+            <CardDescription>Replay the onboarding tour anytime from settings.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              If you want another walkthrough of the daily income flow, jars, forecast, and weekly summary, you can launch it again here.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.localStorage.setItem('tipjars-force-tour-open', 'true')
+                  window.localStorage.removeItem('tipjars-dashboard-tour-completed')
+                  window.localStorage.removeItem('tipjars-dashboard-welcome-dismissed')
+                }
+                router.push('/dashboard')
+              }}
+            >
+              <Compass className="mr-2 h-4 w-4" />
+              Replay Tour
+            </Button>
           </CardContent>
         </Card>
 
