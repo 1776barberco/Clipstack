@@ -71,6 +71,7 @@ export function QuickAddFAB() {
   const actionPreview = mode === 'expense'
     ? `Log ${amountLabel} expense${selectedAccount ? ` from ${selectedAccount.name}` : ''}${selectedExpenseTarget ? ` to ${selectedExpenseTarget}` : ''}`
     : `Log ${amountLabel} income${selectedAccount ? ` to ${selectedAccount.name}` : ''}`
+  const submitLabel = mode === 'expense' ? 'Log Expense' : 'Log Income'
 
   useEffect(() => {
     setQuickAmounts(getQuickAmounts())
@@ -629,7 +630,7 @@ export function QuickAddFAB() {
               }`}
               disabled={!amount || loading}
             >
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : mode === 'income' ? (hasFixedJars ? 'Next: Split Income' : actionPreview) : actionPreview}
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : mode === 'income' ? (hasFixedJars ? 'Next: Split Income' : submitLabel) : submitLabel}
             </Button>
               </>
             )}
