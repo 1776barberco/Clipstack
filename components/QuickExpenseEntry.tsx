@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useExpenses } from '@/hooks/useExpenses'
 import { useBuckets } from '@/hooks/useBuckets'
+import { useBankAccounts } from '@/hooks/useBankAccounts'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,11 +23,18 @@ export function QuickExpenseEntry({ defaultBucketId, onSuccess }: QuickExpenseEn
   const { user, loading: authLoading } = useAuthContext()
   const { addExpense } = useExpenses(user?.id)
   const { buckets } = useBuckets(user?.id)
+  const { accounts } = useBankAccounts(user?.id)
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
   const [bucketId, setBucketId] = useState(defaultBucketId || '')
+  const [accountId, setAccountId] = useState('')
   const [loading, setLoading] = useState(false)
+
+  if (!accountId && accounts.length > 0) {
+    const primary = accounts.find((account) => account.is_primary)
+    setAccountId(primary?.id ?? accounts[0].id)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,14 +46,19 @@ export function QuickExpenseEntry({ defaultBucketId, onSuccess }: QuickExpenseEn
     }
 
     setLoading(true)
-    const { error } = await addExpense({
+    const expenseData: Record<string, unknown> = {
       user_id: user.id,
       bucket_id: bucketId === '__bank_total__' ? null : bucketId,
       amount: parseFloat(amount),
       description: description || null,
       category: category || null,
       entry_date: format(new Date(), 'yyyy-MM-dd'),
-    })
+    }
+    if (accountId && accounts.some((account) => account.id === accountId)) {
+      expenseData.account_id = accountId
+    }
+
+    const { error } = await addExpense(expenseData as Parameters<typeof addExpense>[0])
     setLoading(false)
 
     if (error) {
@@ -106,6 +119,22 @@ export function QuickExpenseEntry({ defaultBucketId, onSuccess }: QuickExpenseEn
                 ${amt}
               </Button>
             ))}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="expense-account">Paying from account</Label>
+            <Select value={accountId} onValueChange={setAccountId}>
+              <SelectTrigger id="expense-account">
+                <SelectValue placeholder="Select account" />
+              </SelectTrigger>
+              <SelectContent>
+                {accounts.map((account) => (
+                  <SelectItem key={account.id} value={account.id}>
+                    {account.name}{account.is_primary ? ' ★' : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {!defaultBucketId && (

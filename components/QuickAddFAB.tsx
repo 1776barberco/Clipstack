@@ -79,9 +79,9 @@ export function QuickAddFAB() {
     }
   }, [mode, selectedBucket])
 
-  // Auto-select primary bank account for income (or single account)
+  // Auto-select primary bank account for income and expenses (or single account)
   useEffect(() => {
-    if (mode === 'income' && accounts.length > 0 && !selectedAccountId) {
+    if ((mode === 'income' || mode === 'expense') && accounts.length > 0 && !selectedAccountId) {
       const primary = accounts.find(a => a.is_primary)
       setSelectedAccountId(primary?.id ?? accounts[0].id)
     }
@@ -131,14 +131,18 @@ export function QuickAddFAB() {
     } else {
       if (!selectedBucket) { toast.error('Select a jar or Bank Total'); setLoading(false); return }
       const isJarless = selectedBucket === '__bank_total__'
-      const { error } = await addExpense({
+      const expenseData: Record<string, unknown> = {
         user_id: user.id,
         bucket_id: isJarless ? null : selectedBucket,
         amount: parseFloat(amount),
         description: note || null,
         category: null,
         entry_date: format(new Date(), 'yyyy-MM-dd'),
-      })
+      }
+      if (selectedAccountId && accounts.some(a => a.id === selectedAccountId)) {
+        expenseData.account_id = selectedAccountId
+      }
+      const { error } = await addExpense(expenseData as Parameters<typeof addExpense>[0])
       setLoading(false)
       if (error) { toast.error('Failed to log expense'); return }
       if (isJarless) {
@@ -412,8 +416,8 @@ export function QuickAddFAB() {
               </button>
             </div>
 
-            {/* Income: Bank account selector + Add Account */}
-            {mode === 'income' && (
+            {/* Income/Expense: Bank account selector + Add Account */}
+            {(mode === 'income' || mode === 'expense') && (
               <div className="space-y-2">
                 <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                   {accounts.map((acct) => (

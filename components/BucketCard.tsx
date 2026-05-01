@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useExpenses } from '@/hooks/useExpenses'
+import { useBankAccounts } from '@/hooks/useBankAccounts'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,6 +18,7 @@ import {
 import { formatCurrency } from '@/lib/utils'
 import { ProgressRing } from './ProgressRing'
 import { MinusCircle, Loader2, Receipt, CalendarClock, RefreshCw, CheckCircle2 } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { format, differenceInDays, parseISO } from 'date-fns'
 
@@ -81,11 +83,18 @@ const RISK_LABEL: Record<'green' | 'yellow' | 'red', string> = {
 export function BucketCard({ bucket, balance, totalBalance, onExpenseAdded }: BucketCardProps) {
   const { user } = useAuthContext()
   const { addExpense } = useExpenses(user?.id)
+  const { accounts } = useBankAccounts(user?.id)
   const [expenseAmount, setExpenseAmount] = useState('')
   const [expenseDescription, setExpenseDescription] = useState('')
+  const [expenseAccountId, setExpenseAccountId] = useState('')
   const [loading, setLoading] = useState(false)
   const [markingPaid, setMarkingPaid] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
+
+  if (!expenseAccountId && accounts.length > 0) {
+    const primary = accounts.find((account) => account.is_primary)
+    setExpenseAccountId(primary?.id ?? accounts[0].id)
+  }
 
   const percentage = totalBalance > 0 ? (balance / totalBalance) * 100 : 0
   const riskLevel = getRiskLevel(balance, bucket.target_amount, bucket.due_date)
@@ -123,14 +132,19 @@ export function BucketCard({ bucket, balance, totalBalance, onExpenseAdded }: Bu
     if (!expenseAmount || !user) return
 
     setLoading(true)
-    const { error } = await addExpense({
+    const expenseData: Record<string, unknown> = {
       user_id: user.id,
       bucket_id: bucket.id,
       amount: parseFloat(expenseAmount),
       description: expenseDescription || null,
       category: null,
       entry_date: format(new Date(), 'yyyy-MM-dd'),
-    })
+    }
+    if (expenseAccountId && accounts.some((account) => account.id === expenseAccountId)) {
+      expenseData.account_id = expenseAccountId
+    }
+
+    const { error } = await addExpense(expenseData as Parameters<typeof addExpense>[0])
     setLoading(false)
 
     if (error) {
@@ -279,6 +293,22 @@ export function BucketCard({ bucket, balance, totalBalance, onExpenseAdded }: Bu
                 ${amt}
               </Button>
             ))}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="bucket-expense-account">Paying from account</Label>
+            <Select value={expenseAccountId} onValueChange={setExpenseAccountId}>
+              <SelectTrigger id="bucket-expense-account">
+                <SelectValue placeholder="Select account" />
+              </SelectTrigger>
+              <SelectContent>
+                {accounts.map((account) => (
+                  <SelectItem key={account.id} value={account.id}>
+                    {account.name}{account.is_primary ? ' ★' : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
