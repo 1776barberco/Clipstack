@@ -40,16 +40,35 @@ export function RecentTransactions() {
       if (!response.ok) throw new Error('Failed to delete')
 
       toast.success(`${type === 'income' ? 'Income' : 'Expense'} deleted successfully`)
-      // Refresh logic via hooks
-      if (type === 'income') {
-        // @ts-ignore
-        if (typeof window !== 'undefined') window.location.reload()
-      } else {
-        // @ts-ignore
-        if (typeof window !== 'undefined') window.location.reload()
-      }
+      window.dispatchEvent(new Event('income-updated'))
+      if (typeof window !== 'undefined') window.location.reload()
     } catch (error) {
       toast.error('Failed to delete transaction')
+    } finally {
+      setIsDeleting(null)
+    }
+  }
+
+  const handleClearAll = async () => {
+    if (!confirm('Delete all logged income and expenses? This will reset jar balances to $0 and bank accounts back to starting balances.')) {
+      return
+    }
+
+    setIsDeleting('all')
+    try {
+      const response = await fetch('/api/transactions/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scope: 'all' }),
+      })
+
+      if (!response.ok) throw new Error('Failed to clear transactions')
+
+      toast.success('All income, expenses, and jar balances reset')
+      window.dispatchEvent(new Event('income-updated'))
+      if (typeof window !== 'undefined') window.location.reload()
+    } catch (error) {
+      toast.error('Failed to clear transactions')
     } finally {
       setIsDeleting(null)
     }
@@ -102,6 +121,17 @@ export function RecentTransactions() {
           <History className="h-5 w-5" />
           Recent Transactions
         </CardTitle>
+        {(incomeEntries.length > 0 || expenses.length > 0) && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClearAll}
+            disabled={isDeleting === 'all'}
+            className="mt-3 border-destructive/30 text-destructive hover:bg-destructive/10"
+          >
+            {isDeleting === 'all' ? 'Resetting...' : 'Delete all & reset jars'}
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="all" className="w-full">
