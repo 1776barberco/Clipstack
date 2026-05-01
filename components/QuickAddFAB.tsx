@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Plus, X, Loader2, DollarSign, ArrowDownLeft, ArrowUpRight, Settings2, ArrowLeft, Landmark, PlusCircle, Check } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Plus, X, Loader2, DollarSign, ArrowDownLeft, ArrowUpRight, Settings2, ArrowLeft, Landmark, PlusCircle, Check, ChevronDown } from 'lucide-react'
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useIncome } from '@/hooks/useIncome'
 import { useExpenses } from '@/hooks/useExpenses'
@@ -60,6 +60,17 @@ export function QuickAddFAB() {
   const fixedJars = buckets.filter((b) => b.target_amount && b.target_amount > 0)
   const percentageJars = buckets.filter((b) => !b.target_amount || b.target_amount === 0).filter((b) => b.percentage > 0)
   const hasFixedJars = fixedJars.length > 0
+  const selectedAccount = useMemo(
+    () => accounts.find((account) => account.id === selectedAccountId) ?? null,
+    [accounts, selectedAccountId]
+  )
+  const selectedExpenseTarget = selectedBucket === '__bank_total__'
+    ? 'Bank Total'
+    : buckets.find((bucket) => bucket.id === selectedBucket)?.name
+  const amountLabel = amount ? `$${parseFloat(amount || '0').toFixed(2)}` : 'this amount'
+  const actionPreview = mode === 'expense'
+    ? `Log ${amountLabel} expense${selectedAccount ? ` from ${selectedAccount.name}` : ''}${selectedExpenseTarget ? ` to ${selectedExpenseTarget}` : ''}`
+    : `Log ${amountLabel} income${selectedAccount ? ` to ${selectedAccount.name}` : ''}`
 
   useEffect(() => {
     setQuickAmounts(getQuickAmounts())
@@ -419,34 +430,39 @@ export function QuickAddFAB() {
             {/* Income/Expense: Bank account selector + Add Account */}
             {(mode === 'income' || mode === 'expense') && (
               <div className="space-y-2">
-                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                  {accounts.map((acct) => (
-                    <button
-                      key={acct.id}
-                      onClick={() => setSelectedAccountId(selectedAccountId === acct.id ? null : acct.id)}
-                      className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium border transition-all ${
-                        selectedAccountId === acct.id
-                          ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
-                          : 'border-white/5 text-muted-foreground hover:border-white/15'
-                      }`}
+                <label className="block space-y-1.5">
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    {mode === 'expense' ? 'From account' : 'Deposit to account'}
+                  </span>
+                  <div className="relative">
+                    <Landmark className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-400" />
+                    <select
+                      value={selectedAccountId ?? ''}
+                      onChange={(e) => setSelectedAccountId(e.target.value || null)}
+                      className="h-12 w-full appearance-none rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-10 pr-10 text-sm font-semibold text-foreground outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/25"
                     >
-                      <Landmark className="h-2.5 w-2.5" />
-                      {acct.name}
-                      {acct.is_primary ? ' ★' : ''}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => setShowAddAccount(!showAddAccount)}
-                    className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium border transition-all ${
-                      showAddAccount
-                        ? 'bg-primary/15 border-primary/30 text-primary'
-                        : 'border-dashed border-white/10 text-muted-foreground hover:border-white/20 hover:text-foreground'
-                    }`}
-                  >
-                    <PlusCircle className="h-2.5 w-2.5" />
-                    Add Account
-                  </button>
-                </div>
+                      <option value="">No account selected</option>
+                      {accounts.map((acct) => (
+                        <option key={acct.id} value={acct.id}>
+                          {acct.name}{acct.is_primary ? ' ★ Primary' : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  </div>
+                </label>
+
+                <button
+                  onClick={() => setShowAddAccount(!showAddAccount)}
+                  className={`flex w-full items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-all ${
+                    showAddAccount
+                      ? 'bg-primary/15 border-primary/30 text-primary'
+                      : 'border-dashed border-white/10 text-muted-foreground hover:border-white/20 hover:text-foreground'
+                  }`}
+                >
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  Add another account
+                </button>
 
                 {/* Inline Add Account form */}
                 {showAddAccount && (
@@ -509,33 +525,30 @@ export function QuickAddFAB() {
 
             {/* Expense: Jar selector (including Bank Total) */}
             {mode === 'expense' && (
-              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                <button
-                  onClick={() => setSelectedBucket('__bank_total__')}
-                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium border transition-all ${
-                    selectedBucket === '__bank_total__'
-                      ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
-                      : 'border-white/5 text-muted-foreground hover:border-white/15'
-                  }`}
-                >
-                  <Landmark className="h-2.5 w-2.5" />
-                  Bank Total
-                </button>
-                {buckets.map((b) => (
-                  <button
-                    key={b.id}
-                    onClick={() => setSelectedBucket(b.id)}
-                    className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium border transition-all ${
-                      selectedBucket === b.id
-                        ? 'bg-white/10 border-white/30 text-foreground'
-                        : 'border-white/5 text-muted-foreground hover:border-white/15'
-                    }`}
+              <label className="block space-y-1.5">
+                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Jar / category
+                </span>
+                <div className="relative">
+                  <div
+                    className="pointer-events-none absolute left-3 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full ring-2 ring-white/10"
+                    style={{ backgroundColor: selectedBucket === '__bank_total__' ? '#10b981' : buckets.find((b) => b.id === selectedBucket)?.color ?? '#71717a' }}
+                  />
+                  <select
+                    value={selectedBucket}
+                    onChange={(e) => setSelectedBucket(e.target.value)}
+                    className="h-12 w-full appearance-none rounded-xl border border-white/25 bg-white/10 px-9 pr-10 text-sm font-semibold text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/25"
                   >
-                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: b.color }} />
-                    {b.name}
-                  </button>
-                ))}
-              </div>
+                    <option value="__bank_total__">Bank Total</option>
+                    {buckets.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                </div>
+              </label>
             )}
 
             {/* Amount */}
@@ -605,6 +618,10 @@ export function QuickAddFAB() {
               className="h-10 bg-white/5 border-white/10 text-sm"
             />
 
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">Ready:</span> {actionPreview}
+            </div>
+
             <Button
               onClick={handleSubmit}
               className={`w-full h-12 text-base rounded-xl ${
@@ -612,7 +629,7 @@ export function QuickAddFAB() {
               }`}
               disabled={!amount || loading}
             >
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : mode === 'income' ? (hasFixedJars ? 'Next: Split Income' : 'Log Income') : 'Log Expense'}
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : mode === 'income' ? (hasFixedJars ? 'Next: Split Income' : actionPreview) : actionPreview}
             </Button>
               </>
             )}
