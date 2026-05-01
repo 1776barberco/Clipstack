@@ -29,6 +29,7 @@ export type UpcomingBill = {
   is_recurring: boolean
   recurring_interval: 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | null
   linked_expense_id: string | null
+  linked_bucket_id: string | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -47,6 +48,7 @@ const DEMO_BILLS: UpcomingBill[] = [
     is_recurring: false,
     recurring_interval: null,
     linked_expense_id: null,
+    linked_bucket_id: 'bucket-bill-1',
     notes: '4th installment of 4',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -62,6 +64,7 @@ const DEMO_BILLS: UpcomingBill[] = [
     is_recurring: true,
     recurring_interval: 'monthly',
     linked_expense_id: null,
+    linked_bucket_id: 'bucket-bill-2',
     notes: 'Minimum payment',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -77,6 +80,7 @@ const DEMO_BILLS: UpcomingBill[] = [
     is_recurring: false,
     recurring_interval: null,
     linked_expense_id: null,
+    linked_bucket_id: 'bucket-bill-3',
     notes: '2nd of 4 payments',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -92,6 +96,7 @@ const DEMO_BILLS: UpcomingBill[] = [
     is_recurring: true,
     recurring_interval: 'monthly',
     linked_expense_id: null,
+    linked_bucket_id: 'bucket-bill-4',
     notes: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -115,6 +120,9 @@ const CATEGORY_LABELS: Record<BillCategory, string> = {
 }
 
 export const billCategoryMeta = { CATEGORY_COLORS, CATEGORY_LABELS }
+
+const billJarToast = (billName: string) =>
+  toast.success(`Bill added. A jar for ${billName} was created automatically.`)
 
 export function useUpcomingBills(userId: string | undefined) {
   const [bills, setBills] = useState<UpcomingBill[]>([])
@@ -180,17 +188,19 @@ export function useUpcomingBills(userId: string | undefined) {
     }
   }, [userId, fetchBills])
 
-  const addBill = async (bill: Omit<UpcomingBill, 'id' | 'created_at' | 'updated_at' | 'status' | 'linked_expense_id'>) => {
+  const addBill = async (bill: Omit<UpcomingBill, 'id' | 'created_at' | 'updated_at' | 'status' | 'linked_expense_id' | 'linked_bucket_id'>) => {
     if (DEMO_MODE) {
       const newBill: UpcomingBill = {
         ...bill,
         id: `bill-${Date.now()}`,
         status: 'pending',
         linked_expense_id: null,
+        linked_bucket_id: `bucket-for-${Date.now()}`,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }
       setBills(prev => [...prev, newBill].sort((a, b) => a.due_date.localeCompare(b.due_date)))
+      billJarToast(newBill.name)
       return { data: newBill, error: null }
     }
 
@@ -204,6 +214,7 @@ export function useUpcomingBills(userId: string | undefined) {
 
     if (!error && data) {
       setBills(prev => [...prev, data as UpcomingBill].sort((a, b) => a.due_date.localeCompare(b.due_date)))
+      billJarToast((data as UpcomingBill).name)
     }
 
     return { data: data as UpcomingBill, error }
