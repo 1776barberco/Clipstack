@@ -3,7 +3,7 @@ import { supabase, DEMO_MODE, DEMO_USER } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { startOfWeek, endOfWeek, format, subWeeks } from 'date-fns'
 
-type Expense = {
+export type Expense = {
   id: string
   user_id: string
   bucket_id: string | null
@@ -180,9 +180,18 @@ export function useExpenses(userId: string | undefined) {
   }
 
   const addExpense = async (expense: Omit<Expense, 'id' | 'created_at' | 'updated_at'>) => {
+    const normalizedExpense = {
+      ...expense,
+      amount: Math.abs(Number(expense.amount)),
+    }
+
+    if (!Number.isFinite(normalizedExpense.amount) || normalizedExpense.amount <= 0) {
+      return { data: null, error: new Error('Expense amount must be greater than 0') }
+    }
+
     if (DEMO_MODE) {
       const newExpense: Expense = {
-        ...expense,
+        ...normalizedExpense,
         id: `expense-${Date.now()}`,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -210,7 +219,7 @@ export function useExpenses(userId: string | undefined) {
 
     const { data, error } = await supabase
       .from('expenses')
-      .insert(expense)
+      .insert(normalizedExpense)
       .select()
       .single()
 

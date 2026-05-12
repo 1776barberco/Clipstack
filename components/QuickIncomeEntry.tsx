@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useIncome } from '@/hooks/useIncome'
+import { useExpenses, type Expense } from '@/hooks/useExpenses'
 import { useBuckets } from '@/hooks/useBuckets'
 import { useBankAccounts } from '@/hooks/useBankAccounts'
 import { Button } from '@/components/ui/button'
@@ -18,6 +19,7 @@ import { supabase } from '@/lib/supabase/client'
 export function QuickIncomeEntry() {
   const { user, loading: authLoading } = useAuthContext()
   const { addIncome } = useIncome(user?.id)
+  const { addExpense } = useExpenses(user?.id)
   const { buckets } = useBuckets(user?.id)
   const { accounts } = useBankAccounts(user?.id)
   const [amount, setAmount] = useState('')
@@ -57,6 +59,13 @@ export function QuickIncomeEntry() {
       return
     }
 
+    // Savings accounts skip the split step - money is already earmarked
+    const selectedAccount = accounts.find((a) => a.id === selectedAccountId)
+    if (selectedAccount?.type === 'savings') {
+      handleSubmitDirect()
+      return
+    }
+
     // If there are fixed jars, show the split step
     if (fixedJars.length > 0) {
       setStep('split')
@@ -70,33 +79,40 @@ export function QuickIncomeEntry() {
     if (!amount) return
     if (authLoading) return
     if (!user) {
-      toast.error('You must be signed in to add income.')
+      toast.error(`You must be signed in to add ${isNegative ? 'an expense' : 'income'}.`)
       return
     }
 
     setLoading(true)
-    const finalAmount = isNegative ? -Math.abs(parseFloat(amount)) : parseFloat(amount)
-    const incomeData: Record<string, unknown> = {
-      user_id: user.id,
-      amount: finalAmount,
-      source: source || null,
-      notes: null,
-      entry_date: format(new Date(), 'yyyy-MM-dd'),
-    }
-    if (selectedAccountId) {
-      incomeData.account_id = selectedAccountId
-    }
-
-    const { error } = await addIncome(incomeData as Parameters<typeof addIncome>[0])
+    const parsedAmount = Math.abs(parseFloat(amount))
+    const { error } = isNegative
+      ? await addExpense({
+          user_id: user.id,
+          bucket_id: null,
+          amount: parsedAmount,
+          description: source || 'Expense',
+          category: 'Expense',
+          entry_date: format(new Date(), 'yyyy-MM-dd'),
+          account_id: selectedAccountId,
+        } satisfies Omit<Expense, 'id' | 'created_at' | 'updated_at'>)
+      : await addIncome({
+          user_id: user.id,
+          amount: parsedAmount,
+          source: source || null,
+          notes: null,
+          entry_date: format(new Date(), 'yyyy-MM-dd'),
+          account_id: selectedAccountId,
+        } as Parameters<typeof addIncome>[0])
     setLoading(false)
 
     if (error) {
-      console.error('Income insert error:', error)
+      console.error(`${isNegative ? 'Expense' : 'Income'} insert error:`, error)
       toast.error(`Failed to add ${isNegative ? 'expense' : 'income'}: ${error.message || 'Unknown error'}`)
     } else {
       toast.success(isNegative ? 'Expense recorded!' : 'Income added!')
       setAmount('')
       setSource('')
+      setSelectedAccountId(null)
       setIsNegative(false)
       setStep('entry')
     }
