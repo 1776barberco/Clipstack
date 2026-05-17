@@ -38,6 +38,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { JarSplitCalculator } from '@/components/JarSplitCalculator'
+import { PlaidConnectionCard } from '@/components/PlaidConnectionCard'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -1098,6 +1099,8 @@ export default function SettingsPage() {
             )}
           </CardContent>
         </Card>
+
+        <PlaidConnectionCard userId={user?.id} />
 
         <Card>
           <CardHeader>

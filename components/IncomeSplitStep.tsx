@@ -37,8 +37,18 @@ export function IncomeSplitStep({
   onBack,
   loading,
 }: IncomeSplitStepProps) {
+  // Auto-fill fixed jars with their target amounts, capped by available income
+  const computeAutoFill = () => {
+    const totalTargets = fixedJars.reduce((sum, j) => sum + j.target_amount, 0)
+    // If targets exceed income, pro-rate proportionally
+    const scale = totalTargets > amount ? amount / totalTargets : 1
+    return Object.fromEntries(
+      fixedJars.map((j) => [j.id, (j.target_amount * scale).toFixed(2)])
+    )
+  }
+
   const [fixedAllocations, setFixedAllocations] = useState<Record<string, string>>(
-    Object.fromEntries(fixedJars.map((j) => [j.id, '']))
+    computeAutoFill()
   )
 
   const totalFixed = Object.values(fixedAllocations).reduce(
@@ -76,10 +86,20 @@ export function IncomeSplitStep({
       {fixedJars.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <PiggyBank className="h-4 w-4" />
-              Fixed Jars — Choose How Much
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <PiggyBank className="h-4 w-4" />
+                Fixed Jars — Choose How Much
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-muted-foreground"
+                onClick={() => setFixedAllocations(computeAutoFill())}
+              >
+                Auto-fill
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-3">
             {fixedJars.map((jar) => (

@@ -26,6 +26,7 @@ import { EveningStreakReminder } from '@/components/EveningStreakReminder'
 import { StreakCelebration } from '@/components/StreakCelebration'
 import { StreakProtectedToast } from '@/components/StreakProtectedToast'
 import { StreakRewardsCard } from '@/components/StreakRewardsCard'
+import { PlaidJarMovementCard } from '@/components/PlaidJarMovementCard'
 
 export default function DashboardPage() {
   return (
@@ -96,6 +97,8 @@ export default function DashboardPage() {
         <div id="tour-buckets">
           <BucketBalances />
         </div>
+
+        <PlaidJarMovementCard />
 
         {/* Recent Activity */}
         <div id="tour-recent-transactions">
