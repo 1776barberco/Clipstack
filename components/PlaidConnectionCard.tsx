@@ -102,7 +102,7 @@ export function PlaidConnectionCard({ userId }: PlaidConnectionCardProps) {
               Bank Transaction Sync
             </CardTitle>
             <CardDescription>
-              Read-only Plaid feed for EveryDollar-style jar tracking. TipJars imports transactions, it does not move money.
+              Securely connect your bank through Plaid to see up-to-date balances, income, and spending in TipJars. TipJars uses read-only transaction data to make jar tracking easier, it never touches or moves your money.
             </CardDescription>
           </div>
           <Badge variant="secondary" className="gap-1">

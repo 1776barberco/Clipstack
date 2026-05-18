@@ -67,7 +67,7 @@ export function PlaidJarMovementCard() {
               Bank-fed jar movement
             </CardTitle>
             <CardDescription>
-              EveryDollar-style view of imported bank activity against your jar plan. No money is moved.
+              Clear view of imported bank activity against your TipJars plan. Visualize income, spending, and jar movement with read-only Plaid data. No money is moved.
             </CardDescription>
           </div>
           <Badge variant="secondary">Plaid read-only</Badge>

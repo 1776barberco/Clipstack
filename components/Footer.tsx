@@ -32,6 +32,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><a href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</a></li>
               <li><a href="/terms" className="hover:text-foreground transition-colors">Terms of Service</a></li>
+              <li><a href="/plaid-disclosures" className="hover:text-foreground transition-colors">Plaid Disclosures</a></li>
               <li><a href="mailto:tipjarsapp@gmail.com" className="hover:text-foreground transition-colors">Contact</a></li>
             </ul>
           </div>
