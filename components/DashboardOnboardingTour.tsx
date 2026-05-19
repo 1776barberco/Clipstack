@@ -50,6 +50,11 @@ const TOUR_STEPS: TourStep[] = [
     body: 'Every income entry gets split into your jars so you can see what is safe to spend, save, or hold back for taxes and bills.',
   },
   {
+    targetId: 'tour-plaid-jar-movement',
+    title: 'Plaid brings bank activity into your jar plan',
+    body: 'Connect your bank securely through Plaid to import read-only balances and transactions. TipJars uses that data to show income, spending, and jar movement more clearly, without touching or moving your money.',
+  },
+  {
     targetId: 'tour-what-if',
     title: 'Use What If to test jar changes before you commit',
     body: 'This lets you explore how changing a jar percentage could affect future balances, so you can make smarter adjustments.',

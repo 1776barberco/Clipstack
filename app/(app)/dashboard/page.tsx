@@ -98,7 +98,9 @@ export default function DashboardPage() {
           <BucketBalances />
         </div>
 
-        <PlaidJarMovementCard />
+        <div id="tour-plaid-jar-movement">
+          <PlaidJarMovementCard />
+        </div>
 
         {/* Recent Activity */}
         <div id="tour-recent-transactions">
