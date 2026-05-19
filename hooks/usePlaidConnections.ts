@@ -57,6 +57,7 @@ export function usePlaidConnections(userId?: string) {
   const [transactions, setTransactions] = useState<PlaidTransaction[]>([])
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
+  const [disconnectingId, setDisconnectingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const uid = useMemo(() => effectiveUserId(userId), [userId])
@@ -127,5 +128,28 @@ export function usePlaidConnections(userId?: string) {
     }
   }, [load])
 
-  return { items, accounts, transactions, loading, syncing, error, reload: load, sync }
+  const disconnect = useCallback(async (itemId: string) => {
+    setDisconnectingId(itemId)
+    setError(null)
+    try {
+      const response = await fetch('/api/plaid/remove', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item_id: itemId }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload.error ?? 'Failed to disconnect bank')
+      await load()
+      return payload
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to disconnect bank'
+      setError(message)
+      throw err
+    } finally {
+      setDisconnectingId(null)
+    }
+  }, [load])
+
+  return { items, accounts, transactions, loading, syncing, disconnectingId, error, reload: load, sync, disconnect }
 }
+

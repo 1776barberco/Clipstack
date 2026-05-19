@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { usePlaidLink } from 'react-plaid-link'
 import { toast } from 'sonner'
-import { Banknote, CreditCard, Landmark, Link2, RefreshCw, ShieldCheck } from 'lucide-react'
+import { Banknote, CreditCard, Landmark, Link2, RefreshCw, ShieldCheck, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { usePlaidConnections } from '@/hooks/usePlaidConnections'
 
 function formatMoney(amount: number | null | undefined) {
@@ -24,12 +25,14 @@ type PlaidConnectionCardProps = {
 }
 
 export function PlaidConnectionCard({ userId }: PlaidConnectionCardProps) {
-  const { items, accounts, transactions, loading, syncing, error, reload, sync } = usePlaidConnections(userId)
+  const { items, accounts, transactions, loading, syncing, disconnectingId, error, reload, sync, disconnect } = usePlaidConnections(userId)
   const [linkToken, setLinkToken] = useState<string | null>(null)
   const [creatingLink, setCreatingLink] = useState(false)
   const [exchanging, setExchanging] = useState(false)
+  const [itemToDisconnect, setItemToDisconnect] = useState<string | null>(null)
 
   const connectedCount = accounts.length
+  const selectedItem = items.find((item) => item.id === itemToDisconnect) ?? null
   const lastSynced = useMemo(() => {
     const latest = items
       .map((item) => item.last_synced_at)
@@ -92,7 +95,20 @@ export function PlaidConnectionCard({ userId }: PlaidConnectionCardProps) {
     }
   }
 
+  const handleDisconnect = async () => {
+    if (!itemToDisconnect) return
+
+    try {
+      const payload = await disconnect(itemToDisconnect)
+      toast.success(`${payload.institution_name ?? 'Bank'} disconnected`)
+      setItemToDisconnect(null)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to disconnect bank')
+    }
+  }
+
   return (
+    <>
     <Card className="border-blue-200 bg-blue-50/40">
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
@@ -151,20 +167,41 @@ export function PlaidConnectionCard({ userId }: PlaidConnectionCardProps) {
           <div className="space-y-2">
             <h3 className="text-sm font-semibold">Connected accounts</h3>
             <div className="grid gap-2 sm:grid-cols-2">
-              {accounts.map((account) => (
-                <div key={account.id} className="flex items-center justify-between rounded-lg border bg-white p-3">
-                  <div className="flex items-center gap-3">
-                    {account.type === 'credit' ? <CreditCard className="h-4 w-4 text-muted-foreground" /> : <Banknote className="h-4 w-4 text-muted-foreground" />}
-                    <div>
-                      <p className="font-medium">{account.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {[account.subtype, account.mask ? `••${account.mask}` : null].filter(Boolean).join(' • ')}
-                      </p>
+              {accounts.map((account) => {
+                const parentItem = items.find((item) => item.id === account.plaid_item_id)
+
+                return (
+                  <div key={account.id} className="rounded-lg border bg-white p-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-3">
+                        {account.type === 'credit' ? <CreditCard className="h-4 w-4 text-muted-foreground" /> : <Banknote className="h-4 w-4 text-muted-foreground" />}
+                        <div>
+                          <p className="font-medium">{account.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {[account.subtype, account.mask ? `••${account.mask}` : null].filter(Boolean).join(' • ')}
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {parentItem?.institution_name ?? 'Connected bank'} · Read-only
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between gap-3 sm:justify-end">
+                        <p className="text-sm font-semibold">{formatMoney(account.current_balance)}</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setItemToDisconnect(account.plaid_item_id)}
+                          disabled={disconnectingId === account.plaid_item_id}
+                          className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                        >
+                          <Trash2 className="mr-2 h-3.5 w-3.5" />
+                          {disconnectingId === account.plaid_item_id ? 'Disconnecting...' : 'Disconnect'}
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                  <p className="text-sm font-semibold">{formatMoney(account.current_balance)}</p>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}
@@ -191,5 +228,25 @@ export function PlaidConnectionCard({ userId }: PlaidConnectionCardProps) {
         )}
       </CardContent>
     </Card>
+
+    <Dialog open={Boolean(itemToDisconnect)} onOpenChange={(open) => !open && setItemToDisconnect(null)}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Disconnect bank?</DialogTitle>
+          <DialogDescription>
+            This will remove {selectedItem?.institution_name ?? 'this bank'} from TipJars, stop future syncs, and delete its imported accounts and transactions from your dashboard. TipJars will also revoke the Plaid connection.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setItemToDisconnect(null)} disabled={Boolean(disconnectingId)}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={handleDisconnect} disabled={Boolean(disconnectingId)}>
+            {disconnectingId ? 'Disconnecting...' : 'Disconnect bank'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }
