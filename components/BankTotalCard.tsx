@@ -27,7 +27,7 @@ export function BankTotalCard() {
 
   const plaidTotal = plaidAccounts.reduce((sum, account) => {
     if (!account.is_active || account.type !== 'depository') return sum
-    return sum + Number(account.available_balance ?? account.current_balance ?? 0)
+    return sum + Number(account.current_balance ?? account.available_balance ?? 0)
   }, 0)
 
   const currentTotal = plaidAccounts.length > 0 ? plaidTotal : startingBalance
@@ -77,7 +77,7 @@ export function BankTotalCard() {
             {startingBalance > 0 && (
               <div>
                 <p className="text-xs text-muted-foreground">
-                  {plaidAccounts.length > 0 ? `Plaid available (${plaidAccounts.filter((a) => a.is_active && a.type === 'depository').length} accts)` : accounts.length > 1 ? `Starting (${accounts.length} accts)` : 'Starting'}
+                  {plaidAccounts.length > 0 ? `Plaid current (${plaidAccounts.filter((a) => a.is_active && a.type === 'depository').length} accts)` : accounts.length > 1 ? `Starting (${accounts.length} accts)` : 'Starting'}
                 </p>
                 <p className="text-sm font-medium text-muted-foreground">
                   {formatCurrency(plaidAccounts.length > 0 ? plaidTotal : startingBalance)}

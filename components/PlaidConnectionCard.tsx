@@ -16,11 +16,8 @@ function formatMoney(amount: number | null | undefined) {
 }
 
 function getDisplayedBalance(account: { current_balance: number | null; available_balance: number | null; type: string | null }) {
-  // For depository accounts, Plaid's available balance usually matches what users
-  // expect to see as spendable cash. Fall back to current when available is null.
-  if (account.type === 'depository') return account.available_balance ?? account.current_balance
-
-  // Credit/loan balances are usually represented as current owed balance.
+  // Dashboard/account totals should use current balance. Available can be lower
+  // for pending holds, unposted deposits, or institution-specific rules.
   return account.current_balance ?? account.available_balance
 }
 
@@ -197,9 +194,12 @@ export function PlaidConnectionCard({ userId }: PlaidConnectionCardProps) {
                       <div className="flex items-center justify-between gap-3 sm:justify-end">
                         <div className="text-right">
                           <p className="text-sm font-semibold">{formatMoney(getDisplayedBalance(account))}</p>
-                          <p className="text-[11px] text-muted-foreground">
-                            {account.type === 'depository' && account.available_balance != null ? 'Available' : 'Current'}
-                          </p>
+                          <p className="text-[11px] text-muted-foreground">Current</p>
+                          {account.available_balance != null && account.available_balance !== account.current_balance && (
+                            <p className="text-[11px] text-muted-foreground">
+                              Available {formatMoney(account.available_balance)}
+                            </p>
+                          )}
                         </div>
                         <Button
                           variant="outline"
