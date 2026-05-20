@@ -15,6 +15,15 @@ function formatMoney(amount: number | null | undefined) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
 }
 
+function getDisplayedBalance(account: { current_balance: number | null; available_balance: number | null; type: string | null }) {
+  // For depository accounts, Plaid's available balance usually matches what users
+  // expect to see as spendable cash. Fall back to current when available is null.
+  if (account.type === 'depository') return account.available_balance ?? account.current_balance
+
+  // Credit/loan balances are usually represented as current owed balance.
+  return account.current_balance ?? account.available_balance
+}
+
 function formatTransactionAmount(amount: number, type: string) {
   const signed = type === 'income' ? Math.abs(amount) : -Math.abs(amount)
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', signDisplay: 'always' }).format(signed)
@@ -186,7 +195,12 @@ export function PlaidConnectionCard({ userId }: PlaidConnectionCardProps) {
                         </div>
                       </div>
                       <div className="flex items-center justify-between gap-3 sm:justify-end">
-                        <p className="text-sm font-semibold">{formatMoney(account.current_balance)}</p>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold">{formatMoney(getDisplayedBalance(account))}</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {account.type === 'depository' && account.available_balance != null ? 'Available' : 'Current'}
+                          </p>
+                        </div>
                         <Button
                           variant="outline"
                           size="sm"

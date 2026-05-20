@@ -7,6 +7,36 @@ import { assertPlaidConfigured, plaidClient } from '@/lib/plaid'
 
 export const dynamic = 'force-dynamic'
 
+async function refreshAccountBalances(supabase: SupabaseClient, userId: string, item: { id: string; access_token: string }) {
+  const accountsResponse = await plaidClient.accountsBalanceGet({ access_token: item.access_token })
+  const accounts = accountsResponse.data.accounts
+
+  if (!accounts.length) return 0
+
+  const { error: accountsError } = await supabase
+    .from('plaid_accounts')
+    .upsert(accounts.map((account) => ({
+      user_id: userId,
+      plaid_item_id: item.id,
+      plaid_account_id: account.account_id,
+      name: account.name,
+      official_name: account.official_name ?? null,
+      mask: account.mask ?? null,
+      type: account.type,
+      subtype: account.subtype ?? null,
+      verification_status: account.verification_status ?? null,
+      current_balance: account.balances.current ?? null,
+      available_balance: account.balances.available ?? null,
+      iso_currency_code: account.balances.iso_currency_code ?? 'USD',
+      unofficial_currency_code: account.balances.unofficial_currency_code ?? null,
+      is_active: true,
+    })), { onConflict: 'plaid_account_id' })
+
+  if (accountsError) throw accountsError
+
+  return accounts.length
+}
+
 async function syncItem(supabase: SupabaseClient, userId: string, item: { id: string; access_token: string; transactions_cursor: string | null }) {
   let cursor = item.transactions_cursor ?? undefined
   let hasMore = true
@@ -85,6 +115,8 @@ async function syncItem(supabase: SupabaseClient, userId: string, item: { id: st
     if (deleteError) throw deleteError
   }
 
+  const refreshedAccounts = await refreshAccountBalances(supabase, userId, item)
+
   const { error: itemError } = await supabase
     .from('plaid_items')
     .update({
@@ -98,7 +130,7 @@ async function syncItem(supabase: SupabaseClient, userId: string, item: { id: st
 
   if (itemError) throw itemError
 
-  return { added: added.length, modified: modified.length, removed: removed.length }
+  return { added: added.length, modified: modified.length, removed: removed.length, refreshed_accounts: refreshedAccounts }
 }
 
 export async function POST(request: NextRequest) {

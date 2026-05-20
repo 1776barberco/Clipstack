@@ -3,8 +3,7 @@
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useProfile } from '@/hooks/useProfile'
 import { useBankAccounts } from '@/hooks/useBankAccounts'
-import { useIncome } from '@/hooks/useIncome'
-import { useExpenses } from '@/hooks/useExpenses'
+import { usePlaidConnections } from '@/hooks/usePlaidConnections'
 import { Card, CardContent } from '@/components/ui/card'
 import { Landmark, TrendingDown } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
@@ -13,10 +12,9 @@ export function BankTotalCard() {
   const { user } = useAuthContext()
   const { profile, loading: profileLoading } = useProfile(user?.id)
   const { accounts, loading: accountsLoading, getTotalStartingBalance } = useBankAccounts(user?.id)
-  const { entries: incomes, loading: incomeLoading } = useIncome(user?.id)
-  const { expenses, loading: expensesLoading } = useExpenses(user?.id)
+  const { accounts: plaidAccounts, loading: plaidLoading } = usePlaidConnections(user?.id)
 
-  const loading = profileLoading || accountsLoading || incomeLoading || expensesLoading
+  const loading = profileLoading || accountsLoading || plaidLoading
 
   if (loading) {
     return <div className="h-24 animate-pulse rounded-2xl bg-white/5" />
@@ -27,13 +25,16 @@ export function BankTotalCard() {
     ? getTotalStartingBalance()
     : Number(profile?.starting_balance ?? 0)
 
-  const totalIncome = incomes.reduce((sum, e) => sum + Number(e.amount), 0)
-  const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
-  const currentTotal = startingBalance + totalIncome - totalExpenses
+  const plaidTotal = plaidAccounts.reduce((sum, account) => {
+    if (!account.is_active || account.type !== 'depository') return sum
+    return sum + Number(account.available_balance ?? account.current_balance ?? 0)
+  }, 0)
+
+  const currentTotal = plaidAccounts.length > 0 ? plaidTotal : startingBalance
   const isOverdrawn = currentTotal < 0
 
-  // Don't show if user hasn't set a starting balance and has no transactions
-  if (startingBalance === 0 && totalIncome === 0 && totalExpenses === 0) {
+  // Don't show if user hasn't set a starting balance or connected bank accounts
+  if (startingBalance === 0 && plaidAccounts.length === 0) {
     return null
   }
 
@@ -55,7 +56,7 @@ export function BankTotalCard() {
                 <Landmark className="h-4 w-4 text-emerald-400" />
               )}
               <p className="text-xs text-muted-foreground uppercase tracking-wider">
-                {accounts.length > 1 ? 'Total Across All Accounts' : 'Current Bank Total'}
+                {plaidAccounts.length > 0 ? 'Plaid Bank Total' : accounts.length > 1 ? 'Total Across All Accounts' : 'Current Bank Total'}
               </p>
             </div>
             <p
@@ -76,25 +77,13 @@ export function BankTotalCard() {
             {startingBalance > 0 && (
               <div>
                 <p className="text-xs text-muted-foreground">
-                  {accounts.length > 1 ? `Starting (${accounts.length} accts)` : 'Starting'}
+                  {plaidAccounts.length > 0 ? `Plaid available (${plaidAccounts.filter((a) => a.is_active && a.type === 'depository').length} accts)` : accounts.length > 1 ? `Starting (${accounts.length} accts)` : 'Starting'}
                 </p>
                 <p className="text-sm font-medium text-muted-foreground">
-                  {formatCurrency(startingBalance)}
+                  {formatCurrency(plaidAccounts.length > 0 ? plaidTotal : startingBalance)}
                 </p>
               </div>
             )}
-            <div>
-              <p className="text-xs text-muted-foreground">+ Income</p>
-              <p className="text-sm font-medium text-green-400/80">
-                {formatCurrency(totalIncome)}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">− Expenses</p>
-              <p className="text-sm font-medium text-red-400/80">
-                {formatCurrency(totalExpenses)}
-              </p>
-            </div>
           </div>
         </div>
       </CardContent>
