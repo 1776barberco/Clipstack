@@ -25,13 +25,18 @@ export function BankTotalCard() {
     ? getTotalStartingBalance()
     : Number(profile?.starting_balance ?? 0)
 
-  const plaidTotal = plaidAccounts.reduce((sum, account) => {
+  const plaidAvailableTotal = plaidAccounts.reduce((sum, account) => {
+    if (!account.is_active || account.type !== 'depository') return sum
+    return sum + Number(account.available_balance ?? account.current_balance ?? 0)
+  }, 0)
+
+  const plaidCurrentTotal = plaidAccounts.reduce((sum, account) => {
     if (!account.is_active || account.type !== 'depository') return sum
     return sum + Number(account.current_balance ?? account.available_balance ?? 0)
   }, 0)
 
-  const currentTotal = plaidAccounts.length > 0 ? plaidTotal : startingBalance
-  const isOverdrawn = currentTotal < 0
+  const spendableTotal = plaidAccounts.length > 0 ? plaidAvailableTotal : startingBalance
+  const isOverdrawn = spendableTotal < 0
 
   // Don't show if user hasn't set a starting balance or connected bank accounts
   if (startingBalance === 0 && plaidAccounts.length === 0) {
@@ -56,7 +61,7 @@ export function BankTotalCard() {
                 <Landmark className="h-4 w-4 text-emerald-400" />
               )}
               <p className="text-xs text-muted-foreground uppercase tracking-wider">
-                {plaidAccounts.length > 0 ? 'Plaid Bank Total' : accounts.length > 1 ? 'Total Across All Accounts' : 'Current Bank Total'}
+                {plaidAccounts.length > 0 ? 'Available to Spend' : accounts.length > 1 ? 'Total Available Across Accounts' : 'Available Bank Total'}
               </p>
             </div>
             <p
@@ -65,7 +70,7 @@ export function BankTotalCard() {
               }`}
             >
               {isOverdrawn && '-'}
-              {formatCurrency(Math.abs(currentTotal))}
+              {formatCurrency(Math.abs(spendableTotal))}
             </p>
             {isOverdrawn && (
               <p className="text-xs text-red-400/80 mt-1">
@@ -77,10 +82,10 @@ export function BankTotalCard() {
             {startingBalance > 0 && (
               <div>
                 <p className="text-xs text-muted-foreground">
-                  {plaidAccounts.length > 0 ? `Plaid current (${plaidAccounts.filter((a) => a.is_active && a.type === 'depository').length} accts)` : accounts.length > 1 ? `Starting (${accounts.length} accts)` : 'Starting'}
+                  {plaidAccounts.length > 0 ? `Current balance (${plaidAccounts.filter((a) => a.is_active && a.type === 'depository').length} accts)` : accounts.length > 1 ? `Starting (${accounts.length} accts)` : 'Starting'}
                 </p>
                 <p className="text-sm font-medium text-muted-foreground">
-                  {formatCurrency(plaidAccounts.length > 0 ? plaidTotal : startingBalance)}
+                  {formatCurrency(plaidAccounts.length > 0 ? plaidCurrentTotal : startingBalance)}
                 </p>
               </div>
             )}

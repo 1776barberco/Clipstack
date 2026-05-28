@@ -45,8 +45,14 @@ export type PlaidTransaction = {
   payment_channel: string | null
   pending: boolean
   transaction_type: 'income' | 'expense' | 'transfer'
+  review_status: 'needs_review' | 'assigned' | 'ignored' | 'pending' | 'reviewed'
   matched_bucket_id: string | null
+  income_entry_id?: string | null
+  expense_id?: string | null
+  assignment_note?: string | null
+  assigned_at?: string | null
   created_at: string
+  updated_at?: string
 }
 
 const effectiveUserId = (userId?: string) => (DEMO_MODE ? DEMO_USER.id : userId)
@@ -88,7 +94,7 @@ export function usePlaidConnections(userId?: string) {
         .order('name'),
       supabase
         .from('plaid_transactions')
-        .select('id,user_id,plaid_account_id,plaid_transaction_id,amount,iso_currency_code,date,authorized_date,name,merchant_name,primary_category,detailed_category,payment_channel,pending,transaction_type,matched_bucket_id,created_at')
+        .select('id,user_id,plaid_account_id,plaid_transaction_id,amount,iso_currency_code,date,authorized_date,name,merchant_name,primary_category,detailed_category,payment_channel,pending,transaction_type,review_status,matched_bucket_id,income_entry_id,expense_id,assignment_note,assigned_at,created_at,updated_at')
         .eq('user_id', uid)
         .order('date', { ascending: false })
         .limit(25),

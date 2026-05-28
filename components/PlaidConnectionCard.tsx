@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { usePlaidLink } from 'react-plaid-link'
 import { toast } from 'sonner'
-import { Banknote, CreditCard, Landmark, Link2, RefreshCw, ShieldCheck, Trash2 } from 'lucide-react'
+import { Banknote, CheckCircle2, CreditCard, Landmark, Link2, RefreshCw, ShieldCheck, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,9 +15,13 @@ function formatMoney(amount: number | null | undefined) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
 }
 
-function getDisplayedBalance(account: { current_balance: number | null; available_balance: number | null; type: string | null }) {
-  // Dashboard/account totals should use current balance. Available can be lower
-  // for pending holds, unposted deposits, or institution-specific rules.
+function getAvailableBalance(account: { current_balance: number | null; available_balance: number | null; type: string | null }) {
+  // Users make spending decisions from available funds. Current balance is secondary
+  // because it can include pending/unsettled money.
+  return account.available_balance ?? account.current_balance
+}
+
+function getCurrentBalance(account: { current_balance: number | null; available_balance: number | null; type: string | null }) {
   return account.current_balance ?? account.available_balance
 }
 
@@ -38,6 +42,9 @@ export function PlaidConnectionCard({ userId }: PlaidConnectionCardProps) {
   const [itemToDisconnect, setItemToDisconnect] = useState<string | null>(null)
 
   const connectedCount = accounts.length
+  const totalTransactions = transactions.length
+  const needsReviewCount = transactions.filter((transaction) => transaction.review_status === 'needs_review' || transaction.review_status === 'pending').length
+  const assignedCount = transactions.filter((transaction) => transaction.review_status === 'assigned' || transaction.review_status === 'reviewed').length
   const selectedItem = items.find((item) => item.id === itemToDisconnect) ?? null
   const lastSynced = useMemo(() => {
     const latest = items
@@ -140,14 +147,19 @@ export function PlaidConnectionCard({ userId }: PlaidConnectionCardProps) {
           </div>
         )}
 
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-4">
           <div className="rounded-lg border bg-white p-3">
             <p className="text-xs text-muted-foreground">Connected accounts</p>
             <p className="text-2xl font-semibold">{loading ? '...' : connectedCount}</p>
           </div>
           <div className="rounded-lg border bg-white p-3">
             <p className="text-xs text-muted-foreground">Transactions imported</p>
-            <p className="text-2xl font-semibold">{loading ? '...' : transactions.length}</p>
+            <p className="text-2xl font-semibold">{loading ? '...' : totalTransactions}</p>
+            <p className="text-xs text-amber-700">{needsReviewCount} need jar review</p>
+          </div>
+          <div className="rounded-lg border bg-white p-3">
+            <p className="text-xs text-muted-foreground">Assigned to jars</p>
+            <p className="flex items-center gap-1 text-2xl font-semibold text-emerald-700"><CheckCircle2 className="h-4 w-4" />{assignedCount}</p>
           </div>
           <div className="rounded-lg border bg-white p-3">
             <p className="text-xs text-muted-foreground">Last sync</p>
@@ -192,13 +204,22 @@ export function PlaidConnectionCard({ userId }: PlaidConnectionCardProps) {
                         </div>
                       </div>
                       <div className="flex items-center justify-between gap-3 sm:justify-end">
-                        <div className="text-right">
-                          <p className="text-sm font-semibold">{formatMoney(getDisplayedBalance(account))}</p>
-                          <p className="text-[11px] text-muted-foreground">Current</p>
-                          {account.available_balance != null && account.available_balance !== account.current_balance && (
-                            <p className="text-[11px] text-muted-foreground">
-                              Available {formatMoney(account.available_balance)}
-                            </p>
+                        <div className="space-y-1 text-right">
+                          {account.available_balance != null && account.available_balance !== account.current_balance ? (
+                            <>
+                              <div>
+                                <p className="text-2xl font-extrabold leading-none text-emerald-700">{formatMoney(account.available_balance)}</p>
+                                <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Available</p>
+                              </div>
+                              <div className="pt-1">
+                                <p className="text-[11px] font-medium text-muted-foreground">Current: {formatMoney(getCurrentBalance(account))}</p>
+                              </div>
+                            </>
+                          ) : (
+                            <div>
+                              <p className="text-2xl font-extrabold leading-none text-emerald-700">{formatMoney(getAvailableBalance(account))}</p>
+                              <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Available</p>
+                            </div>
                           )}
                         </div>
                         <Button

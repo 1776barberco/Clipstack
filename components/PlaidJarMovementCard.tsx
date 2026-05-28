@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress'
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useBuckets } from '@/hooks/useBuckets'
 import { usePlaidConnections } from '@/hooks/usePlaidConnections'
+import { PlaidTransactionReview } from '@/components/PlaidTransactionReview'
 
 const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
 
@@ -22,7 +23,7 @@ function signedCurrency(amount: number) {
 export function PlaidJarMovementCard() {
   const { user } = useAuthContext()
   const { buckets, getBucketBalance } = useBuckets(user?.id)
-  const { accounts, transactions, loading, syncing, sync } = usePlaidConnections(user?.id)
+  const { accounts, transactions, loading, syncing, sync, reload } = usePlaidConnections(user?.id)
 
   const summary = useMemo(() => {
     const income = transactions
@@ -33,12 +34,14 @@ export function PlaidJarMovementCard() {
       .filter((transaction) => transaction.transaction_type === 'expense')
       .reduce((sum, transaction) => sum + Math.abs(transaction.amount), 0)
 
+    const needsReview = transactions.filter((transaction) => transaction.review_status === 'needs_review' || transaction.review_status === 'pending').length
+    const assigned = transactions.filter((transaction) => transaction.review_status === 'assigned' || transaction.review_status === 'reviewed').length
     const connectedBalance = accounts.reduce((sum, account) => sum + (account.current_balance ?? 0), 0)
     const jarTarget = buckets.reduce((sum, bucket) => sum + Number(bucket.target_amount ?? 0), 0)
     const jarBalance = buckets.reduce((sum, bucket) => sum + Number(getBucketBalance(bucket.id) ?? 0), 0)
     const allocationProgress = jarTarget > 0 ? Math.min(100, Math.round((jarBalance / jarTarget) * 100)) : 0
 
-    return { income, spending, net: income - spending, connectedBalance, jarTarget, jarBalance, allocationProgress }
+    return { income, spending, net: income - spending, connectedBalance, jarTarget, jarBalance, allocationProgress, needsReview, assigned }
   }, [accounts, buckets, getBucketBalance, transactions])
 
   if (!loading && accounts.length === 0) {
@@ -74,7 +77,7 @@ export function PlaidJarMovementCard() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-3 sm:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-5">
           <div className="rounded-lg border bg-muted/30 p-3">
             <p className="flex items-center gap-1 text-xs text-muted-foreground"><ArrowDownLeft className="h-3 w-3" /> Imported income</p>
             <p className="text-xl font-semibold text-emerald-600">{currency.format(summary.income)}</p>
@@ -105,6 +108,20 @@ export function PlaidJarMovementCard() {
             Imported transactions show where money moved. Jar balances show how it should be allocated.
           </p>
         </div>
+
+        {user?.id && (
+          <PlaidTransactionReview
+            userId={user.id}
+            transactions={transactions}
+            buckets={buckets.map((bucket) => ({
+              id: bucket.id,
+              name: bucket.name,
+              percentage: bucket.percentage,
+              current_balance: getBucketBalance(bucket.id),
+            }))}
+            onAssigned={reload}
+          />
+        )}
 
         {transactions.length > 0 && (
           <div className="space-y-2">

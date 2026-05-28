@@ -287,6 +287,25 @@ export interface Database {
         }
         Returns: void
       }
+      assign_plaid_income_to_buckets: {
+        Args: {
+          p_user_id: string
+          p_transaction_id: string
+          p_allocations: Record<string, number>
+          p_note?: string | null
+        }
+        Returns: Json
+      }
+      assign_plaid_expense_to_bucket: {
+        Args: {
+          p_user_id: string
+          p_transaction_id: string
+          p_bucket_id: string
+          p_amount?: number | null
+          p_note?: string | null
+        }
+        Returns: Json
+      }
       get_stability_score: {
         Args: {
           p_user_id: string
