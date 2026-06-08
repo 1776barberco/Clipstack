@@ -98,17 +98,21 @@ export function PlaidTransactionReview({ userId, transactions, buckets, onAssign
     }
 
     setBusyId(transaction.id)
-    const { error } = await supabase.rpc('assign_plaid_expense_to_bucket', {
-      p_user_id: userId,
-      p_transaction_id: transaction.id,
-      p_bucket_id: bucketId,
-      p_amount: Math.abs(transaction.amount),
-      p_note: `Plaid expense: ${transaction.merchant_name ?? transaction.name}`,
+    const response = await fetch('/api/plaid/assign-expense', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        transactionId: transaction.id,
+        bucketId,
+        amount: Math.abs(transaction.amount),
+        note: `Plaid expense: ${transaction.merchant_name ?? transaction.name}`,
+      }),
     })
     setBusyId(null)
 
-    if (error) {
-      toast.error(error.message)
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({ error: 'Could not assign expense' }))
+      toast.error(result.error ?? 'Could not assign expense')
       return
     }
 
