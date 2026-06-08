@@ -141,6 +141,7 @@ export function PlaidTransactionReview({ userId, transactions, buckets, onAssign
         ) : (
           needsReview.slice(0, 10).map((transaction) => {
             const isIncome = transaction.transaction_type === 'income'
+            const isExpense = transaction.transaction_type === 'expense' || transaction.primary_category === 'TRANSFER_OUT'
             const split = incomeSplits[transaction.id] ?? {}
             const splitTotal = Object.values(split).reduce((sum, value) => sum + (Number(value) || 0), 0)
 
@@ -151,7 +152,7 @@ export function PlaidTransactionReview({ userId, transactions, buckets, onAssign
                     <div className="flex items-center gap-2">
                       {isIncome ? <ArrowDownCircle className="h-4 w-4 text-emerald-600" /> : <ArrowUpCircle className="h-4 w-4 text-red-600" />}
                       <p className="truncate font-semibold">{transaction.merchant_name ?? transaction.name}</p>
-                      <Badge variant="outline">{isIncome ? 'Income' : 'Expense'}</Badge>
+                      <Badge variant="outline">{isIncome ? 'Income' : isExpense ? 'Expense' : 'Transfer'}</Badge>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {transaction.date} · {transaction.primary_category ?? transaction.detailed_category ?? 'Uncategorized'}
@@ -188,7 +189,7 @@ export function PlaidTransactionReview({ userId, transactions, buckets, onAssign
                       </Button>
                     </div>
                   </div>
-                ) : (
+                ) : isExpense ? (
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
                     <div className="flex-1 space-y-2">
                       <Label>Paid from jar</Label>
@@ -206,6 +207,10 @@ export function PlaidTransactionReview({ userId, transactions, buckets, onAssign
                     <Button onClick={() => assignExpense(transaction)} disabled={busyId === transaction.id}>
                       Subtract from jar
                     </Button>
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-lg border border-dashed bg-muted/40 p-3 text-sm text-muted-foreground">
+                    This transfer is informational and does not need a jar action.
                   </div>
                 )}
               </div>

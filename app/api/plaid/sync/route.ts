@@ -96,7 +96,7 @@ async function syncItem(supabase: SupabaseClient, userId: string, item: { id: st
           category_id: transaction.category_id ?? null,
           primary_category: transaction.personal_finance_category?.primary ?? transaction.category?.[0] ?? null,
           detailed_category: transaction.personal_finance_category?.detailed ?? transaction.category?.[1] ?? null,
-          transaction_type: transaction.amount < 0 ? 'income' : (transaction.personal_finance_category?.primary === 'TRANSFER_IN' || transaction.personal_finance_category?.primary === 'TRANSFER_OUT' ? 'transfer' : 'expense'),
+          transaction_type: transaction.amount < 0 ? 'income' : (transaction.personal_finance_category?.primary === 'TRANSFER_IN' ? 'transfer' : 'expense'),
           personal_finance_category: transaction.personal_finance_category ?? null,
           location: transaction.location ?? null,
           raw: transaction,
