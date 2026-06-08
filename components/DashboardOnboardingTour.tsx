@@ -20,6 +20,11 @@ const TOUR_STEPS: TourStep[] = [
     body: 'It shows today\'s progress at a glance, including your streak, your latest income check-in, and the jar with the most money sitting in it.',
   },
   {
+    targetId: 'tour-plaid-jar-movement',
+    title: 'Plaid brings bank activity into your jar plan',
+    body: 'Connect your bank securely through Plaid to import read-only balances and transactions. TipJars uses that data to show income, spending, and jar movement more clearly, without touching or moving your money.',
+  },
+  {
     targetId: 'tour-bank-total',
     title: 'Your money across all accounts lives here',
     body: 'This gives you a top-level view of all your money across connected accounts so you know your real position before you spend.',
@@ -48,11 +53,6 @@ const TOUR_STEPS: TourStep[] = [
     targetId: 'tour-buckets',
     title: 'Your jars show where each dollar should go',
     body: 'Every income entry gets split into your jars so you can see what is safe to spend, save, or hold back for taxes and bills.',
-  },
-  {
-    targetId: 'tour-plaid-jar-movement',
-    title: 'Plaid brings bank activity into your jar plan',
-    body: 'Connect your bank securely through Plaid to import read-only balances and transactions. TipJars uses that data to show income, spending, and jar movement more clearly, without touching or moving your money.',
   },
   {
     targetId: 'tour-what-if',

@@ -77,7 +77,21 @@ export function PlaidJarMovementCard() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-3 sm:grid-cols-5">
+        {user?.id && (
+          <PlaidTransactionReview
+            userId={user.id}
+            transactions={transactions}
+            buckets={buckets.map((bucket) => ({
+              id: bucket.id,
+              name: bucket.name,
+              percentage: bucket.percentage,
+              current_balance: getBucketBalance(bucket.id),
+            }))}
+            onAssigned={reload}
+          />
+        )}
+
+        <div className="grid gap-3 sm:grid-cols-4">
           <div className="rounded-lg border bg-muted/30 p-3">
             <p className="flex items-center gap-1 text-xs text-muted-foreground"><ArrowDownLeft className="h-3 w-3" /> Imported income</p>
             <p className="text-xl font-semibold text-emerald-600">{currency.format(summary.income)}</p>
@@ -108,20 +122,6 @@ export function PlaidJarMovementCard() {
             Imported transactions show where money moved. Jar balances show how it should be allocated.
           </p>
         </div>
-
-        {user?.id && (
-          <PlaidTransactionReview
-            userId={user.id}
-            transactions={transactions}
-            buckets={buckets.map((bucket) => ({
-              id: bucket.id,
-              name: bucket.name,
-              percentage: bucket.percentage,
-              current_balance: getBucketBalance(bucket.id),
-            }))}
-            onAssigned={reload}
-          />
-        )}
 
         {transactions.length > 0 && (
           <div className="space-y-2">

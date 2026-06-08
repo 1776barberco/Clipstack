@@ -54,6 +54,10 @@ export default function DashboardPage() {
           <DailyMomentumCard />
         </div>
 
+        <div id="tour-plaid-jar-movement">
+          <PlaidJarMovementCard />
+        </div>
+
         {/* Bank Total — Overall financial position */}
         <div id="tour-bank-total">
           <BankTotalCard />
@@ -96,10 +100,6 @@ export default function DashboardPage() {
         {/* Jars — The Core */}
         <div id="tour-buckets">
           <BucketBalances />
-        </div>
-
-        <div id="tour-plaid-jar-movement">
-          <PlaidJarMovementCard />
         </div>
 
         {/* Recent Activity */}
