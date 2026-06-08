@@ -75,7 +75,7 @@ export function PlaidTransactionReview({ userId, transactions, buckets, onAssign
       p_user_id: userId,
       p_transaction_id: transaction.id,
       p_allocations: allocations,
-      p_note: 'Assigned from Plaid dashboard',
+      p_note: 'Assigned from transaction review',
     })
     setBusyId(null)
 
@@ -105,7 +105,7 @@ export function PlaidTransactionReview({ userId, transactions, buckets, onAssign
         transactionId: transaction.id,
         bucketId,
         amount: Math.abs(transaction.amount),
-        note: `Plaid expense: ${transaction.merchant_name ?? transaction.name}`,
+        note: `Synced expense: ${transaction.merchant_name ?? transaction.name}`,
       }),
     })
     setBusyId(null)
@@ -128,7 +128,7 @@ export function PlaidTransactionReview({ userId, transactions, buckets, onAssign
           <div>
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-amber-500" />
-              Plaid transaction review
+              Transaction review
             </CardTitle>
             <CardDescription>
               Synced transactions become jar actions here. Income can be split into jars, expenses can be pulled from the jar that paid for them.
@@ -140,7 +140,7 @@ export function PlaidTransactionReview({ userId, transactions, buckets, onAssign
       <CardContent className="space-y-4">
         {needsReview.length === 0 ? (
           <div className="rounded-xl border border-dashed bg-muted/40 p-6 text-center text-sm text-muted-foreground">
-            No synced transactions need review right now. New Plaid income and expenses will land here first.
+            No synced transactions need review right now. New income and expenses will land here first.
           </div>
         ) : (
           needsReview.slice(0, 10).map((transaction) => {

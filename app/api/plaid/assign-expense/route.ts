@@ -43,16 +43,16 @@ export async function POST(request: NextRequest) {
     .single<PlaidTransaction>()
 
   if (transactionError || !transaction) {
-    return NextResponse.json({ error: 'Plaid transaction not found' }, { status: 404 })
+    return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
   }
 
   const isOutgoingTransfer = transaction.primary_category === 'TRANSFER_OUT' && transaction.amount > 0
   if (transaction.transaction_type !== 'expense' && !isOutgoingTransfer) {
-    return NextResponse.json({ error: 'Plaid transaction is not an expense' }, { status: 400 })
+    return NextResponse.json({ error: 'Transaction is not an expense' }, { status: 400 })
   }
 
   if (transaction.review_status === 'assigned') {
-    return NextResponse.json({ error: 'Plaid transaction is already assigned' }, { status: 409 })
+    return NextResponse.json({ error: 'Transaction is already assigned' }, { status: 409 })
   }
 
   const expenseAmount = Number(amount ?? Math.abs(transaction.amount))
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid expense amount' }, { status: 400 })
   }
 
-  const description = note ?? `Plaid expense: ${transaction.merchant_name ?? transaction.name ?? 'Imported transaction'}`
+  const description = note ?? `Synced expense: ${transaction.merchant_name ?? transaction.name ?? 'Imported transaction'}`
 
   const { data: expense, error: expenseError } = await adminSupabase
     .from('expenses')
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       bucket_id: bucketId,
       amount: expenseAmount,
       description,
-      category: transaction.primary_category ?? transaction.detailed_category ?? 'Plaid',
+      category: transaction.primary_category ?? transaction.detailed_category ?? 'Synced',
       entry_date: transaction.date,
     })
     .select('id')
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
 
   if (allocationError) {
     console.error('Plaid allocation insert failed:', allocationError)
-    return NextResponse.json({ error: 'Could not record Plaid assignment' }, { status: 500 })
+    return NextResponse.json({ error: 'Could not record transaction assignment' }, { status: 500 })
   }
 
   const { error: updateError } = await adminSupabase

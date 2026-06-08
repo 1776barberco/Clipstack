@@ -21,8 +21,8 @@ const TOUR_STEPS: TourStep[] = [
   },
   {
     targetId: 'tour-plaid-jar-movement',
-    title: 'Plaid brings bank activity into your jar plan',
-    body: 'Connect your bank securely through Plaid to import read-only balances and transactions. TipJars uses that data to show income, spending, and jar movement more clearly, without touching or moving your money.',
+    title: 'Review bank activity in your jar plan',
+    body: 'After you connect your bank through Plaid, synced transactions show up here so you can review income, spending, and jar movement without manually entering everything.',
   },
   {
     targetId: 'tour-bank-total',

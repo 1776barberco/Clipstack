@@ -50,10 +50,10 @@ export function PlaidJarMovementCard() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Landmark className="h-5 w-5" />
-            Bank-fed jar movement
+            Bank activity
           </CardTitle>
           <CardDescription>
-            Connect Plaid in Settings to automatically pull bank transactions into this breakdown. TipJars stays read-only.
+            Connect your bank through Plaid in Settings to automatically pull transactions into this breakdown. TipJars stays read-only.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -67,13 +67,13 @@ export function PlaidJarMovementCard() {
           <div>
             <CardTitle className="flex items-center gap-2">
               <PiggyBank className="h-5 w-5 text-emerald-600" />
-              Bank-fed jar movement
+              Bank activity
             </CardTitle>
             <CardDescription>
-              Clear view of imported bank activity against your TipJars plan. Visualize income, spending, and jar movement with read-only Plaid data. No money is moved.
+              Clear view of synced bank activity against your TipJars plan. Review income, spending, and jar movement without manually entering every transaction. No money is moved.
             </CardDescription>
           </div>
-          <Badge variant="secondary">Plaid read-only</Badge>
+          <Badge variant="secondary">Read-only bank sync</Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -126,7 +126,7 @@ export function PlaidJarMovementCard() {
         {transactions.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Latest imported movement</h3>
+              <h3 className="text-sm font-semibold">Latest synced movement</h3>
               <button
                 type="button"
                 onClick={() => sync().catch(() => undefined)}
