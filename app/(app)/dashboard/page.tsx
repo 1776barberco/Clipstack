@@ -59,6 +59,11 @@ export default function DashboardPage() {
           <PlaidJarMovementCard />
         </div>
 
+        {/* Jars — The Core */}
+        <div id="tour-buckets">
+          <BucketBalances />
+        </div>
+
         <div id="tour-daily-momentum">
           <DailyMomentumCard />
         </div>
@@ -95,11 +100,6 @@ export default function DashboardPage() {
         {/* What-If Scenario Slider */}
         <div id="tour-what-if">
           <WhatIfCard />
-        </div>
-
-        {/* Jars — The Core */}
-        <div id="tour-buckets">
-          <BucketBalances />
         </div>
 
         {/* Recent Activity */}

@@ -25,6 +25,11 @@ const TOUR_STEPS: TourStep[] = [
     body: 'After you connect your bank through Plaid, synced transactions show up here so you can review income, spending, and jar movement without manually entering everything.',
   },
   {
+    targetId: 'tour-buckets',
+    title: 'Your jars show where each dollar should go',
+    body: 'Every income entry gets split into your jars so you can see what is safe to spend, save, or hold back for taxes and bills.',
+  },
+  {
     targetId: 'tour-daily-momentum',
     title: 'This is your daily momentum board',
     body: 'It shows today\'s progress at a glance, including your streak, your latest income check-in, and the jar with the most money sitting in it.',
@@ -48,11 +53,6 @@ const TOUR_STEPS: TourStep[] = [
     targetId: 'tour-stability-meter',
     title: 'The stability meter shows how safe your cushion is',
     body: 'This score tells you how stable your money situation is based on what you have saved relative to your average income.',
-  },
-  {
-    targetId: 'tour-buckets',
-    title: 'Your jars show where each dollar should go',
-    body: 'Every income entry gets split into your jars so you can see what is safe to spend, save, or hold back for taxes and bills.',
   },
   {
     targetId: 'tour-what-if',
