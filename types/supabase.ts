@@ -53,6 +53,7 @@ export interface Database {
           id: string
           user_id: string
           name: string
+          group_name: string | null
           percentage: number
           target_amount: number | null
           is_tax_bucket: boolean
@@ -67,6 +68,7 @@ export interface Database {
           id?: string
           user_id: string
           name: string
+          group_name?: string | null
           percentage: number
           target_amount?: number | null
           is_tax_bucket?: boolean
@@ -81,6 +83,7 @@ export interface Database {
           id?: string
           user_id?: string
           name?: string
+          group_name?: string | null
           percentage?: number
           target_amount?: number | null
           is_tax_bucket?: boolean
@@ -271,8 +274,12 @@ export interface Database {
           bucket_id: string
           user_id: string
           bucket_name: string
+          group_name: string | null
+          color: string
+          percentage: number
           total_deposits: number
           total_withdrawals: number
+          total_expenses: number
           current_balance: number
         }
         Relationships: []

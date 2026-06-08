@@ -26,6 +26,7 @@ interface BucketCardProps {
   bucket: {
     id: string
     name: string
+    group_name?: string | null
     color: string
     percentage: number
     is_tax_bucket?: boolean
@@ -191,6 +192,11 @@ export function BucketCard({ bucket, balance, totalBalance, onExpenseAdded }: Bu
                   <span className="font-semibold truncate">{bucket.name}</span>
                   {bucket.is_tax_bucket && (
                     <span className="text-[10px] text-muted-foreground">(Tax)</span>
+                  )}
+                  {bucket.group_name && (
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                      {bucket.group_name}
+                    </span>
                   )}
                   {riskLevel && (
                     <span

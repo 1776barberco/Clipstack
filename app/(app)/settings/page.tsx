@@ -64,7 +64,7 @@ export default function SettingsPage() {
   const [newAccountBalance, setNewAccountBalance] = useState('')
   const [accountCarouselIndex, setAccountCarouselIndex] = useState(0)
 
-  const [editedBuckets, setEditedBuckets] = useState<Record<string, { name?: string; percentage?: string; color?: string; target_amount?: string; due_date?: string; is_recurring?: string; recurring_interval?: string }>>({})
+  const [editedBuckets, setEditedBuckets] = useState<Record<string, { name?: string; group_name?: string; percentage?: string; color?: string; target_amount?: string; due_date?: string; is_recurring?: string; recurring_interval?: string }>>({})
   const [savingBuckets, setSavingBuckets] = useState(false)
   const [newBucketId, setNewBucketId] = useState<string | null>(null)
   const newBucketNameRef = useRef<HTMLInputElement>(null)
@@ -305,6 +305,7 @@ export default function SettingsPage() {
     for (const [id, changes] of Object.entries(editedBuckets)) {
       const updates: Record<string, unknown> = {}
       if (changes.name !== undefined) updates.name = changes.name
+      if (changes.group_name !== undefined) updates.group_name = changes.group_name.trim() || null
       if (changes.percentage !== undefined) updates.percentage = parseFloat(changes.percentage)
       if (changes.color !== undefined) updates.color = changes.color
       if (changes.target_amount !== undefined) {
@@ -340,6 +341,7 @@ export default function SettingsPage() {
     const { data, error } = await createBucket({
       user_id: user.id,
       name: 'New Jar',
+      group_name: null,
       percentage: 0,
       target_amount: null,
       due_date: null,
@@ -395,11 +397,11 @@ export default function SettingsPage() {
     }
   }
 
-  const getBucketField = (id: string, field: 'name' | 'percentage' | 'color' | 'target_amount' | 'due_date' | 'is_recurring' | 'recurring_interval', fallback: string) => {
+  const getBucketField = (id: string, field: 'name' | 'group_name' | 'percentage' | 'color' | 'target_amount' | 'due_date' | 'is_recurring' | 'recurring_interval', fallback: string) => {
     return editedBuckets[id]?.[field] ?? fallback
   }
 
-  const setBucketField = (id: string, field: 'name' | 'percentage' | 'color' | 'target_amount' | 'due_date' | 'is_recurring' | 'recurring_interval', value: string) => {
+  const setBucketField = (id: string, field: 'name' | 'group_name' | 'percentage' | 'color' | 'target_amount' | 'due_date' | 'is_recurring' | 'recurring_interval', value: string) => {
     // Direct edit — user controls their own splits
     setEditedBuckets((prev) => ({
       ...prev,
@@ -834,6 +836,13 @@ export default function SettingsPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
+            <datalist id="jar-group-suggestions">
+              <option value="Personal" />
+              <option value="Business" />
+              <option value="Taxes" />
+              <option value="Savings" />
+              <option value="Bills" />
+            </datalist>
             {buckets.map((bucket) => {
               const fixed = isFixedAmount(bucket.id)
               const isNewBucket = bucket.id === newBucketId
@@ -862,6 +871,19 @@ export default function SettingsPage() {
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
+                  </div>
+
+                  <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Group</Label>
+                      <Input
+                        list="jar-group-suggestions"
+                        value={getBucketField(bucket.id, 'group_name', bucket.group_name ?? '')}
+                        onChange={(e) => setBucketField(bucket.id, 'group_name', e.target.value)}
+                        placeholder="Personal, Business, Taxes..."
+                      />
+                    </div>
+                    <span className="pb-2 text-xs text-muted-foreground">Optional</span>
                   </div>
 
                   {/* Row 2: Allocation + Due Date */}

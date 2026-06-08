@@ -3,7 +3,7 @@
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useBuckets } from '@/hooks/useBuckets'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Wallet } from 'lucide-react'
+import { Layers3, Wallet } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { BucketCard } from './BucketCard'
 
@@ -29,6 +29,38 @@ export function BucketBalances() {
   }
 
   const totalBalance = getTotalBalance()
+  const jarGroups = buckets.reduce<Array<{
+    name: string
+    balance: number
+    target: number
+    percentage: number
+    count: number
+    color: string
+  }>>((groups, bucket) => {
+    const name = bucket.group_name?.trim() || 'Ungrouped'
+    const existing = groups.find((group) => group.name === name)
+    const balance = getBucketBalance(bucket.id)
+    const target = Number(bucket.target_amount ?? 0)
+    const percentage = Number(bucket.percentage ?? 0)
+
+    if (existing) {
+      existing.balance += balance
+      existing.target += target
+      existing.percentage += percentage
+      existing.count += 1
+      return groups
+    }
+
+    groups.push({
+      name,
+      balance,
+      target,
+      percentage,
+      count: 1,
+      color: bucket.color,
+    })
+    return groups
+  }, [])
 
   return (
     <Card>
@@ -51,6 +83,33 @@ export function BucketBalances() {
               <p className="text-sm text-muted-foreground">Total Balance</p>
               <p className="text-3xl font-bold">{formatCurrency(totalBalance)}</p>
             </div>
+            {jarGroups.length > 0 && (
+              <div className="mb-5 grid gap-3 sm:grid-cols-2">
+                {jarGroups.map((group) => {
+                  const fundedPct = group.target > 0 ? Math.min(100, Math.round((group.balance / group.target) * 100)) : null
+                  return (
+                    <div key={group.name} className="rounded-lg border bg-muted/30 p-3">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: group.color }} />
+                          <p className="truncate text-sm font-semibold">{group.name}</p>
+                        </div>
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Layers3 className="h-3 w-3" />
+                          {group.count}
+                        </span>
+                      </div>
+                      <p className="text-xl font-bold">{formatCurrency(group.balance)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {group.target > 0
+                          ? `${fundedPct}% funded of ${formatCurrency(group.target)}`
+                          : `${group.percentage.toFixed(1)}% allocation`}
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
             <div className="grid gap-3 sm:grid-cols-2">
               {buckets.map((bucket) => (
                 <BucketCard

@@ -26,6 +26,7 @@ const profileUpdateSchema = z.object({
 
 const bucketSchema = z.object({
   name: z.string().min(1, 'Bucket name required').max(50),
+  group_name: z.string().max(50).nullable().optional(),
   percentage: z.number().min(0).max(100),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Invalid hex color'),
   priority: z.number().int().min(0),
@@ -35,6 +36,7 @@ const bucketSchema = z.object({
 
 const bucketUpdateSchema = z.object({
   name: z.string().min(1).max(50).optional(),
+  group_name: z.string().max(50).nullable().optional(),
   percentage: z.number().min(0).max(100).optional(),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   priority: z.number().int().min(0).optional(),

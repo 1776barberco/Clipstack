@@ -6,6 +6,7 @@ type BucketConfig = {
   id: string
   user_id: string
   name: string
+  group_name?: string | null
   percentage: number
   target_amount: number | null
   due_date: string | null
@@ -22,6 +23,7 @@ type BucketBalance = {
   bucket_id: string
   user_id: string
   bucket_name: string
+  group_name?: string | null
   color: string
   percentage: number
   total_deposits: number
@@ -36,6 +38,7 @@ const DEMO_BUCKETS: BucketConfig[] = [
     id: 'bucket-1',
     user_id: DEMO_USER.id,
     name: 'Tax Reserve',
+    group_name: 'Taxes',
     percentage: 25,
     target_amount: 10000,
     due_date: null,
@@ -51,6 +54,7 @@ const DEMO_BUCKETS: BucketConfig[] = [
     id: 'bucket-2',
     user_id: DEMO_USER.id,
     name: 'Savings',
+    group_name: 'Savings',
     percentage: 30,
     target_amount: 50000,
     due_date: null,
@@ -66,6 +70,7 @@ const DEMO_BUCKETS: BucketConfig[] = [
     id: 'bucket-3',
     user_id: DEMO_USER.id,
     name: 'Investments',
+    group_name: 'Business',
     percentage: 20,
     target_amount: 25000,
     due_date: null,
@@ -81,6 +86,7 @@ const DEMO_BUCKETS: BucketConfig[] = [
     id: 'bucket-4',
     user_id: DEMO_USER.id,
     name: 'Spending',
+    group_name: 'Personal',
     percentage: 25,
     target_amount: null,
     due_date: null,
@@ -100,6 +106,7 @@ const DEMO_BALANCES: BucketBalance[] = [
     bucket_id: 'bucket-1',
     user_id: DEMO_USER.id,
     bucket_name: 'Tax Reserve',
+    group_name: 'Taxes',
     color: '#ef4444',
     percentage: 25,
     total_deposits: 5000,
@@ -111,6 +118,7 @@ const DEMO_BALANCES: BucketBalance[] = [
     bucket_id: 'bucket-2',
     user_id: DEMO_USER.id,
     bucket_name: 'Savings',
+    group_name: 'Savings',
     color: '#22c55e',
     percentage: 30,
     total_deposits: 8000,
@@ -122,6 +130,7 @@ const DEMO_BALANCES: BucketBalance[] = [
     bucket_id: 'bucket-3',
     user_id: DEMO_USER.id,
     bucket_name: 'Investments',
+    group_name: 'Business',
     color: '#3b82f6',
     percentage: 20,
     total_deposits: 4000,
@@ -133,6 +142,7 @@ const DEMO_BALANCES: BucketBalance[] = [
     bucket_id: 'bucket-4',
     user_id: DEMO_USER.id,
     bucket_name: 'Spending',
+    group_name: 'Personal',
     color: '#a855f7',
     percentage: 25,
     total_deposits: 5000,
@@ -239,6 +249,7 @@ export function useBuckets(userId: string | undefined) {
         bucket_id: newBucket.id,
         user_id: bucket.user_id,
         bucket_name: bucket.name,
+        group_name: bucket.group_name,
         color: bucket.color,
         percentage: bucket.percentage,
         total_deposits: 0,
