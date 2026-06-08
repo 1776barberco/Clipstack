@@ -50,17 +50,17 @@ export default function DashboardPage() {
         <StreakCelebration />
         <StreakProtectedToast />
 
-        <div id="tour-daily-momentum">
-          <DailyMomentumCard />
+        {/* Bank Total — Overall financial position */}
+        <div id="tour-bank-total">
+          <BankTotalCard />
         </div>
 
         <div id="tour-plaid-jar-movement">
           <PlaidJarMovementCard />
         </div>
 
-        {/* Bank Total — Overall financial position */}
-        <div id="tour-bank-total">
-          <BankTotalCard />
+        <div id="tour-daily-momentum">
+          <DailyMomentumCard />
         </div>
 
         <DailyReminderNudge />

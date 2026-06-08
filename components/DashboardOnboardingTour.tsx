@@ -15,9 +15,9 @@ export const TOUR_STORAGE_KEY = 'tipjars-dashboard-tour-completed'
 
 const TOUR_STEPS: TourStep[] = [
   {
-    targetId: 'tour-daily-momentum',
-    title: 'This is your daily momentum board',
-    body: 'It shows today\'s progress at a glance, including your streak, your latest income check-in, and the jar with the most money sitting in it.',
+    targetId: 'tour-bank-total',
+    title: 'Your money across all accounts lives here',
+    body: 'This gives you a top-level view of all your money across connected accounts so you know your real position before you spend.',
   },
   {
     targetId: 'tour-plaid-jar-movement',
@@ -25,9 +25,9 @@ const TOUR_STEPS: TourStep[] = [
     body: 'After you connect your bank through Plaid, synced transactions show up here so you can review income, spending, and jar movement without manually entering everything.',
   },
   {
-    targetId: 'tour-bank-total',
-    title: 'Your money across all accounts lives here',
-    body: 'This gives you a top-level view of all your money across connected accounts so you know your real position before you spend.',
+    targetId: 'tour-daily-momentum',
+    title: 'This is your daily momentum board',
+    body: 'It shows today\'s progress at a glance, including your streak, your latest income check-in, and the jar with the most money sitting in it.',
   },
   {
     targetId: 'tour-weekly-summary',
