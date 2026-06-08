@@ -66,10 +66,10 @@ export function OnboardingForm() {
 
         if (!existingBuckets || existingBuckets.length === 0) {
           const bucketTemplates = [
-            { user_id: user.id, name: 'Essentials', percentage: 50, color: '#3b82f6', priority: 1, is_tax_bucket: false },
-            { user_id: user.id, name: 'Taxes', percentage: 25, color: '#ef4444', priority: 2, is_tax_bucket: true },
-            { user_id: user.id, name: 'Savings', percentage: 15, color: '#22c55e', priority: 3, is_tax_bucket: false },
-            { user_id: user.id, name: 'Fun', percentage: 10, color: '#f59e0b', priority: 4, is_tax_bucket: false },
+            { user_id: user.id, name: 'Essentials', group_name: 'Essentials', percentage: 50, color: '#3b82f6', priority: 1, is_tax_bucket: false },
+            { user_id: user.id, name: 'Taxes', group_name: 'Taxes', percentage: 25, color: '#ef4444', priority: 2, is_tax_bucket: true },
+            { user_id: user.id, name: 'Savings', group_name: 'Savings', percentage: 15, color: '#22c55e', priority: 3, is_tax_bucket: false },
+            { user_id: user.id, name: 'Fun', group_name: 'Personal', percentage: 10, color: '#f59e0b', priority: 4, is_tax_bucket: false },
           ]
 
           const { error: bucketsError } = await supabase
