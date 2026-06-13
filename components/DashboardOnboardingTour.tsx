@@ -40,19 +40,9 @@ const TOUR_STEPS: TourStep[] = [
     body: 'Use this to see how your income is trending so you can make better day-to-day spending decisions before the week gets away from you.',
   },
   {
-    targetId: 'tour-quick-income',
-    title: 'Log income every day',
-    body: 'This is the habit that makes TipJars work. Entering your daily income helps the app guide your spending and improve your splits over time.',
-  },
-  {
     targetId: 'tour-quick-add',
-    title: 'Quick Add lets you log income and expenses fast',
-    body: 'Use Quick Add for rapid check-ins. You can switch between income and expense, tap quick amounts, choose an account, and log without digging through screens.',
-  },
-  {
-    targetId: 'tour-stability-meter',
-    title: 'The stability meter shows how safe your cushion is',
-    body: 'This score tells you how stable your money situation is based on what you have saved relative to your average income.',
+    title: 'Log from the center tab',
+    body: 'Tap Log in the bottom nav for fast income and expense check-ins without digging through the dashboard.',
   },
   {
     targetId: 'tour-what-if',
@@ -91,8 +81,8 @@ const TOUR_STEPS: TourStep[] = [
   },
   {
     targetId: 'tour-settings',
-    title: 'Settings is where you tune the system',
-    body: 'From Settings you can update jars, reminders, tax rate, accounts, and replay the tour whenever you need another walkthrough.',
+    title: 'Settings moved to your profile menu',
+    body: 'Use the profile menu for account settings, reminders, security, and replaying this tour.',
   },
 ]
 

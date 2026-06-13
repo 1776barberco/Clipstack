@@ -1,91 +1,83 @@
 'use client'
 
-import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Home, Settings, Brain, Lock } from 'lucide-react'
-import { useAuthContext } from '@/providers/AuthProvider'
-import { useSubscription } from '@/hooks/useSubscription'
+import { usePathname } from 'next/navigation'
+import { BarChart3, Home, ListChecks, Plus, Wallet } from 'lucide-react'
+
+const navItems = [
+  { href: '/dashboard', label: 'Home', icon: Home },
+  { href: '/jars', label: 'Jars', icon: Wallet },
+  { href: '/activity', label: 'Activity', icon: ListChecks },
+  { href: '/insights', label: 'Insights', icon: BarChart3 },
+]
 
 export function BottomNav() {
   const pathname = usePathname()
-  const router = useRouter()
-  const { user } = useAuthContext()
-  const { isSubscribed } = useSubscription(user?.id)
 
-  const handleCoachTap = () => {
-    if (isSubscribed) {
-      router.push('/coach')
-    } else {
-      // Push to coach page which will show the paywall
-      router.push('/coach')
-    }
+  const openQuickLog = () => {
+    window.dispatchEvent(new Event('open-quick-log'))
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
-      <div className="mx-2 mb-2 flex items-center justify-around rounded-2xl border border-white/10 bg-background/80 backdrop-blur-2xl py-2 shadow-2xl">
-        {/* Dashboard */}
-        <Link
-          href="/dashboard"
-          className={`flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-all duration-300 ${
-            pathname === '/dashboard'
-              ? 'text-primary bg-primary/10 shadow-[0_0_20px_rgba(99,102,241,0.3)]'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Home className={`h-5 w-5 transition-transform duration-300 ${pathname === '/dashboard' ? 'scale-110' : ''}`} />
-          <span className="text-[10px] font-medium">Dashboard</span>
-        </Link>
+    <nav
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-background/95 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 shadow-2xl backdrop-blur-xl lg:hidden"
+      aria-label="Primary"
+    >
+      <div className="mx-auto grid max-w-md grid-cols-5 items-end gap-1">
+        {navItems.slice(0, 2).map((item) => {
+          const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
+          const Icon = item.icon
 
-        {/* Coach — always visible, locked for free users */}
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={active ? 'page' : undefined}
+              className={`flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl px-2 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                active
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              }`}
+            >
+              <Icon className="h-5 w-5" aria-hidden="true" />
+              <span>{item.label}</span>
+            </Link>
+          )
+        })}
+
         <button
-          onClick={handleCoachTap}
-          className={`relative flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-all duration-300 ${
-            isSubscribed
-              ? pathname === '/coach'
-                ? 'text-primary bg-primary/10 shadow-[0_0_20px_rgba(99,102,241,0.3)]'
-                : 'text-muted-foreground hover:text-foreground'
-              : 'text-muted-foreground/50'
-          }`}
+          id="tour-quick-add"
+          type="button"
+          onClick={openQuickLog}
+          className="relative -mt-5 flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl bg-primary px-2 text-[11px] font-semibold text-primary-foreground shadow-[0_12px_28px_rgba(99,102,241,0.35)] transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label="Log income or expense"
         >
-          <div className={`relative flex items-center justify-center h-8 w-8 rounded-full border ${
-            isSubscribed
-              ? 'bg-gradient-to-br from-purple-500/20 to-blue-500/20 border-primary/30'
-              : 'bg-muted/50 border-muted-foreground/20'
-          }`}>
-            <Brain className={`h-5 w-5 transition-transform duration-300 ${
-              isSubscribed ? 'text-primary' : 'text-muted-foreground/40'
-            } ${pathname === '/coach' && isSubscribed ? 'scale-110' : ''}`} />
-            {/* Lock badge for free users */}
-            {!isSubscribed && (
-              <div className="absolute -top-1 -right-1 flex items-center justify-center h-4 w-4 rounded-full bg-primary shadow-sm">
-                <Lock className="h-2.5 w-2.5 text-primary-foreground" />
-              </div>
-            )}
-          </div>
-          <span className={`text-[10px] font-medium ${!isSubscribed ? 'text-muted-foreground/50' : ''}`}>
-            Coach
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-foreground/15">
+            <Plus className="h-5 w-5" aria-hidden="true" />
           </span>
-          {/* Pro badge */}
-          {!isSubscribed && (
-            <span className="absolute -top-0.5 right-1 text-[8px] font-bold text-primary bg-primary/10 rounded-full px-1.5 py-0.5 border border-primary/20">
-              PRO
-            </span>
-          )}
+          <span>Log</span>
         </button>
 
-        {/* Settings */}
-        <Link
-          href="/settings"
-          className={`flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-all duration-300 ${
-            pathname === '/settings'
-              ? 'text-primary bg-primary/10 shadow-[0_0_20px_rgba(99,102,241,0.3)]'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Settings className={`h-5 w-5 transition-transform duration-300 ${pathname === '/settings' ? 'scale-110' : ''}`} />
-          <span className="text-[10px] font-medium">Settings</span>
-        </Link>
+        {navItems.slice(2).map((item) => {
+          const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
+          const Icon = item.icon
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={active ? 'page' : undefined}
+              className={`flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl px-2 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                active
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              }`}
+            >
+              <Icon className="h-5 w-5" aria-hidden="true" />
+              <span>{item.label}</span>
+            </Link>
+          )
+        })}
       </div>
     </nav>
   )

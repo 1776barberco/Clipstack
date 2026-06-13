@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Plus, X, Loader2, DollarSign, ArrowDownLeft, ArrowUpRight, Settings2, ArrowLeft, Landmark, PlusCircle, Check, ChevronDown } from 'lucide-react'
+import { X, Loader2, DollarSign, ArrowDownLeft, ArrowUpRight, Settings2, ArrowLeft, Landmark, PlusCircle, Check, ChevronDown } from 'lucide-react'
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useIncome } from '@/hooks/useIncome'
 import { useExpenses } from '@/hooks/useExpenses'
@@ -285,10 +285,12 @@ export function QuickAddFAB() {
   }
 
   return (
-    <div id="tour-quick-add">
+	    <div>
       {/* Overlay */}
       {open && (
-        <div
+        <button
+          type="button"
+          aria-label="Close quick log"
           className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
           onClick={resetAndClose}
         />
@@ -296,14 +298,19 @@ export function QuickAddFAB() {
 
       {/* Quick Add Sheet */}
       {open && (
-        <div className="fixed bottom-20 left-3 right-3 z-50 md:hidden animate-in slide-in-from-bottom-5 duration-300">
-          <div className="rounded-2xl border border-white/15 bg-background/95 backdrop-blur-2xl p-5 shadow-2xl space-y-4 max-h-[70vh] overflow-y-auto">
+        <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-3 right-3 z-50 animate-in slide-in-from-bottom-5 duration-300 md:hidden">
+          <div className="max-h-[72vh] space-y-4 overflow-y-auto overscroll-contain rounded-2xl border border-white/15 bg-background/95 p-5 shadow-2xl backdrop-blur-2xl">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {step === 'split' && (
-                  <button onClick={() => setStep('entry')} className="text-muted-foreground hover:text-foreground p-1">
-                    <ArrowLeft className="h-4 w-4" />
+                  <button
+                    type="button"
+                    aria-label="Back to amount entry"
+                    onClick={() => setStep('entry')}
+                    className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                   </button>
                 )}
                 <h3 className="font-semibold text-lg">{step === 'split' ? 'Split Income' : 'Quick Log'}</h3>
@@ -311,14 +318,21 @@ export function QuickAddFAB() {
               <div className="flex items-center gap-2">
                 {step === 'entry' && (
                   <button
+                    type="button"
+                    aria-label="Edit quick amounts"
                     onClick={() => setEditingAmounts(!editingAmounts)}
-                    className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-white/10 transition-colors"
+                    className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <Settings2 className="h-4 w-4" />
+                    <Settings2 className="h-4 w-4" aria-hidden="true" />
                   </button>
                 )}
-                <button onClick={resetAndClose} className="text-muted-foreground hover:text-foreground">
-                  <X className="h-5 w-5" />
+                <button
+                  type="button"
+                  aria-label="Close quick log"
+                  onClick={resetAndClose}
+                  className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <X className="h-5 w-5" aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -467,14 +481,13 @@ export function QuickAddFAB() {
 
                 {/* Inline Add Account form */}
                 {showAddAccount && (
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-3 space-y-2 animate-in slide-in-from-top-2 duration-200">
-                    <Input
-                      placeholder="Account name (e.g., Cash App)"
-                      value={newAccountName}
-                      onChange={(e) => setNewAccountName(e.target.value)}
-                      className="h-9 bg-white/5 border-white/10 text-sm"
-                      autoFocus
-                    />
+	                  <div className="rounded-xl border border-white/10 bg-white/5 p-3 space-y-2 animate-in slide-in-from-top-2 duration-200">
+	                    <Input
+	                      placeholder="Account name, e.g. Cash App…"
+	                      value={newAccountName}
+	                      onChange={(e) => setNewAccountName(e.target.value)}
+	                      className="h-9 bg-white/5 border-white/10 text-sm"
+	                    />
                     <div className="flex gap-2">
                       <select
                         value={newAccountType}
@@ -494,7 +507,7 @@ export function QuickAddFAB() {
                           type="number"
                           step="0.01"
                           min="0"
-                          placeholder="Balance"
+	                          placeholder="Balance…"
                           value={newAccountBalance}
                           onChange={(e) => setNewAccountBalance(e.target.value)}
                           className="h-9 pl-6 bg-white/5 border-white/10 text-sm"
@@ -563,8 +576,7 @@ export function QuickAddFAB() {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="pl-10 text-2xl h-14 bg-white/5 border-white/10"
-                autoFocus
-              />
+	              />
             </div>
 
             {/* Quick amounts or edit mode */}
@@ -586,7 +598,7 @@ export function QuickAddFAB() {
                   <Input
                     type="number"
                     min="1"
-                    placeholder="Add amount..."
+	                    placeholder="Add amount…"
                     value={amountInput}
                     onChange={(e) => setAmountInput(e.target.value)}
                     className="h-9 bg-white/5 border-white/10 text-sm"
@@ -612,8 +624,8 @@ export function QuickAddFAB() {
             )}
 
             {/* Note */}
-            <Input
-              placeholder={mode === 'income' ? 'Source (optional)' : 'Description (optional)'}
+	            <Input
+	              placeholder={mode === 'income' ? 'Source, optional…' : 'Description, optional…'}
               value={note}
               onChange={(e) => setNote(e.target.value)}
               className="h-10 bg-white/5 border-white/10 text-sm"
@@ -638,17 +650,6 @@ export function QuickAddFAB() {
         </div>
       )}
 
-      {/* FAB Button */}
-      <button
-        onClick={() => { setOpen(!open); setEditingAmounts(false); setStep('entry') }}
-        className={`fixed bottom-20 right-4 z-50 md:hidden h-14 w-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 active:scale-90 ${
-          open
-            ? 'bg-destructive text-destructive-foreground rotate-45'
-            : 'bg-primary text-primary-foreground shadow-[0_0_30px_rgba(99,102,241,0.4)]'
-        } border border-white/20 backdrop-blur-xl`}
-      >
-        <Plus className="h-6 w-6" />
-      </button>
-    </div>
-  )
-}
+	    </div>
+	  )
+	}

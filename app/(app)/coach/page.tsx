@@ -7,7 +7,6 @@ import { useSubscription } from '@/hooks/useSubscription'
 import { Brain, Sparkles, TrendingUp, Lightbulb, Shield, ArrowLeft, MessageCircle, Target, BarChart3, Palette, CheckCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { BottomNav } from '@/components/BottomNav'
 import { UserMenu } from '@/components/UserMenu'
 import { CoachChat } from '@/components/CoachChat'
 import { ToneSelector } from '@/components/ToneSelector'
@@ -58,7 +57,7 @@ export default function CoachPage() {
   // Subscribed users (or admins) get the full coach chat
   if (isSubscribed || isSuccess) {
     return (
-      <div className="flex flex-col h-screen bg-background">
+      <div className="flex min-h-[calc(100vh-6rem)] flex-col bg-background">
         <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
           <div className="container mx-auto flex h-14 items-center justify-between px-4">
             <div className="flex items-center gap-2">
@@ -93,7 +92,6 @@ export default function CoachPage() {
           <CoachChat tone={tone} userName={userName} />
         </div>
 
-        <BottomNav />
       </div>
     )
   }
@@ -232,7 +230,6 @@ export default function CoachPage() {
           </div>
         </div>
       </main>
-      <BottomNav />
     </div>
   )
 }

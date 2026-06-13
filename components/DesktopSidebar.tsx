@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Brain, Settings, Lock, Shield } from 'lucide-react'
+import { BarChart3, Brain, Home, ListChecks, Lock, Settings, Shield, Wallet } from 'lucide-react'
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useSubscription } from '@/hooks/useSubscription'
 import { useEffect, useState } from 'react'
@@ -11,8 +11,11 @@ import { supabase } from '@/lib/supabase/client'
 const ADMIN_EMAILS = ['apeltekci@gmail.com', 'vhugo9021@icloud.com']
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: Home },
-  { href: '/coach', label: 'Coach', icon: Brain, isPro: true },
+  { href: '/dashboard', label: 'Home', icon: Home },
+  { href: '/jars', label: 'Jars', icon: Wallet },
+  { href: '/activity', label: 'Activity', icon: ListChecks },
+  { href: '/insights', label: 'Insights', icon: BarChart3 },
+  { href: '/coach', label: 'Coach', icon: Brain },
   { href: '/settings', label: 'Settings', icon: Settings },
 ]
 
@@ -43,9 +46,9 @@ export function DesktopSidebar() {
       {/* Nav items */}
       <nav className="flex-1 px-3 py-4 space-y-1">
         {navItems.map((item) => {
-          const isActive = pathname === item.href
+          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
           const Icon = item.icon
-          const showLock = item.isPro && !isSubscribed
+          const showLock = item.href === '/coach' && !isSubscribed
 
           return (
             <Link
