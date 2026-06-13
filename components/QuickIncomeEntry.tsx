@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useIncome } from '@/hooks/useIncome'
 import { useExpenses, type Expense } from '@/hooks/useExpenses'
@@ -28,6 +28,13 @@ export function QuickIncomeEntry() {
   const [isNegative, setIsNegative] = useState(false)
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState<'entry' | 'split'>('entry')
+
+  useEffect(() => {
+    if (accounts.length > 0 && !selectedAccountId) {
+      const primary = accounts.find((account) => account.is_primary)
+      setSelectedAccountId(primary?.id ?? accounts[0].id)
+    }
+  }, [accounts, selectedAccountId])
 
   // Separate fixed vs percentage jars
   const fixedJars = buckets
@@ -282,7 +289,7 @@ export function QuickIncomeEntry() {
             ))}
           </div>
 
-          {/* Account selector (only when multiple accounts exist) */}
+          {/* Account selector */}
           {accounts.length > 0 && (
             <div className="space-y-2">
               <Label htmlFor="account" className="flex items-center gap-1">
@@ -291,22 +298,16 @@ export function QuickIncomeEntry() {
               </Label>
               <select
                 id="account"
-                value={selectedAccountId ?? ''}
+                value={selectedAccountId ?? accounts[0].id}
                 onChange={(e) => setSelectedAccountId(e.target.value || null)}
                 className="h-10 w-full rounded-md border bg-background px-3 text-sm"
               >
-                <option value="">
-                  {accounts.length === 1
-                    ? accounts[0].name
-                    : 'Select account (optional)'}
-                </option>
-                {accounts.length > 1 &&
-                  accounts.map((acct) => (
-                    <option key={acct.id} value={acct.id}>
-                      {acct.name}
-                      {acct.is_primary ? ' ★' : ''}
-                    </option>
-                  ))}
+                {accounts.map((acct) => (
+                  <option key={acct.id} value={acct.id}>
+                    {acct.name}
+                    {acct.is_primary ? ' ★' : ''}
+                  </option>
+                ))}
               </select>
             </div>
           )}

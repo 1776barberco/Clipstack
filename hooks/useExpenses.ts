@@ -7,11 +7,11 @@ export type Expense = {
   id: string
   user_id: string
   bucket_id: string | null
+  account_id?: string | null
   amount: number
   description: string | null
   category: string | null
   entry_date: string
-  account_id?: string | null
   created_at: string
   updated_at: string
   bucket_name?: string
