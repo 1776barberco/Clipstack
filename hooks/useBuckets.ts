@@ -214,9 +214,25 @@ export function useBuckets(userId: string | undefined) {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'bucket_transactions',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          fetchBuckets()
+        }
+      )
+      .subscribe()
+
+    const expensesSubscription = supabase
+      .channel(`expenses:${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'expenses',
           filter: `user_id=eq.${userId}`,
         },
         () => {
@@ -228,11 +244,14 @@ export function useBuckets(userId: string | undefined) {
     // Listen for manual refresh events (Realtime may miss SECURITY DEFINER changes)
     const handleManualRefresh = () => fetchBuckets()
     window.addEventListener('income-updated', handleManualRefresh)
+    window.addEventListener('expenses-updated', handleManualRefresh)
 
     return () => {
       configsSubscription.unsubscribe()
       transactionsSubscription.unsubscribe()
+      expensesSubscription.unsubscribe()
       window.removeEventListener('income-updated', handleManualRefresh)
+      window.removeEventListener('expenses-updated', handleManualRefresh)
     }
   }, [userId])
 

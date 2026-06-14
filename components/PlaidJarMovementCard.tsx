@@ -40,12 +40,15 @@ export function PlaidJarMovementCard() {
     const reviewTotal = reviewQueue.reduce((sum, transaction) => sum + Math.abs(transaction.amount), 0)
     const topReviewTransaction = [...reviewQueue].sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))[0]
     const assigned = transactions.filter((transaction) => transaction.review_status === 'assigned' || transaction.review_status === 'reviewed').length
-    const connectedBalance = accounts.reduce((sum, account) => sum + (account.current_balance ?? 0), 0)
-    const jarTarget = buckets.reduce((sum, bucket) => sum + Number(bucket.target_amount ?? 0), 0)
+    const connectedBalance = accounts.reduce((sum, account) => {
+      if (!account.is_active || account.type !== 'depository') return sum
+      return sum + Number(account.current_balance ?? account.available_balance ?? 0)
+    }, 0)
     const jarBalance = buckets.reduce((sum, bucket) => sum + Number(getBucketBalance(bucket.id) ?? 0), 0)
-    const allocationProgress = jarTarget > 0 ? Math.min(100, Math.round((jarBalance / jarTarget) * 100)) : 0
+    const allocationProgress = connectedBalance > 0 ? Math.min(100, Math.round((jarBalance / connectedBalance) * 100)) : 0
+    const jarDifference = jarBalance - connectedBalance
 
-    return { income, spending, net: income - spending, connectedBalance, jarTarget, jarBalance, allocationProgress, needsReview, reviewTotal, topReviewTransaction, assigned }
+    return { income, spending, net: income - spending, connectedBalance, jarBalance, jarDifference, allocationProgress, needsReview, reviewTotal, topReviewTransaction, assigned }
   }, [accounts, buckets, getBucketBalance, transactions])
 
   if (!loading && accounts.length === 0) {
@@ -125,13 +128,17 @@ export function PlaidJarMovementCard() {
 
         <div className="rounded-lg border p-3">
           <div className="mb-2 flex items-center justify-between text-sm">
-            <span className="font-medium">Jar plan funded</span>
-            <span className="text-muted-foreground">{currency.format(summary.jarBalance)} / {currency.format(summary.jarTarget)}</span>
+            <span className="font-medium">Jar allocation check</span>
+            <span className={summary.jarDifference > 0 ? 'text-amber-700' : summary.jarDifference < 0 ? 'text-red-600' : 'text-emerald-600'}>
+              {signedCurrency(summary.jarDifference)}
+            </span>
           </div>
           <Progress value={summary.allocationProgress} className="h-2" />
-          <p className="mt-2 text-xs text-muted-foreground">
-            Imported transactions show where money moved. Jar balances show how it should be allocated.
-          </p>
+          <div className="mt-2 grid gap-2 text-xs text-muted-foreground sm:grid-cols-3">
+            <span>In jars: {currency.format(summary.jarBalance)}</span>
+            <span>Bank seen: {currency.format(summary.connectedBalance)}</span>
+            <span>{summary.jarDifference === 0 ? 'Jars match the connected account.' : 'Assign review items to reconcile jars with the bank.'}</span>
+          </div>
         </div>
 
         <div className="flex justify-end">

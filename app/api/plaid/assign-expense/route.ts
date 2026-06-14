@@ -80,21 +80,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Could not create expense' }, { status: 500 })
   }
 
-  const { error: bucketTransactionError } = await adminSupabase
-    .from('bucket_transactions')
-    .insert({
-      user_id: user.id,
-      bucket_id: bucketId,
-      amount: -expenseAmount,
-      type: 'withdrawal',
-      description: `${description}: ${transaction.merchant_name ?? transaction.name ?? 'Imported transaction'}`,
-    })
-
-  if (bucketTransactionError) {
-    console.error('Plaid bucket withdrawal insert failed:', bucketTransactionError)
-    return NextResponse.json({ error: 'Could not update jar balance' }, { status: 500 })
-  }
-
   const { error: allocationError } = await adminSupabase
     .from('plaid_transaction_allocations')
     .insert({
