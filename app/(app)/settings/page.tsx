@@ -524,17 +524,19 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Bank Accounts */}
+        <PlaidConnectionCard userId={user?.id} />
+
+        {/* Manual Bank Accounts */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Landmark className="h-5 w-5" />
-                  Bank Accounts
+                  Manual Bank Accounts
                 </CardTitle>
                 <CardDescription>
-                  Manage your bank accounts. Set starting balances to track your total across all accounts.
+                  Use these only for cash, manual fallback balances, or accounts you have not connected through Plaid. Linked Plaid accounts and live balances are managed above.
                 </CardDescription>
               </div>
               <Button variant="outline" size="sm" onClick={() => setShowAddAccount(true)}>
@@ -1121,8 +1123,6 @@ export default function SettingsPage() {
             )}
           </CardContent>
         </Card>
-
-        <PlaidConnectionCard userId={user?.id} />
 
         <Card>
           <CardHeader>
