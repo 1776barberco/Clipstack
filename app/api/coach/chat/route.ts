@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { isAdminEmail } from '@/lib/admin'
+import { coachGatewayConfigError, isCoachGatewayConfigured, streamCoachText } from '@/lib/coach-ai'
+import type { ModelMessage } from 'ai'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 30
@@ -116,43 +118,23 @@ export async function POST(request: NextRequest) {
 
     const systemMessage = `${BASE_CONTEXT}\n\n${selectedTone.systemPrompt}\n\nThe user's name is ${userName}.${financialContext}`
 
-    // Use OpenAI API directly for streaming
-    const openaiKey = process.env.OPENAI_API_KEY
-    if (!openaiKey) {
-      return new Response(JSON.stringify({ error: 'AI not configured. Add OPENAI_API_KEY to Vercel env vars.' }), { status: 503 })
+    if (!isCoachGatewayConfigured()) {
+      return new Response(JSON.stringify({ error: coachGatewayConfigError() }), { status: 503 })
     }
 
-    const baseUrl = process.env.OPENAI_API_BASE_URL || 'https://api.openai.com/v1'
-    const model = process.env.COACH_MODEL || 'gpt-4o-mini'
-
-    const apiMessages = [
-      { role: 'system', content: systemMessage },
-      ...messages.slice(-20).map((m: { role: string; content: string }) => ({
+    const apiMessages: ModelMessage[] = messages.slice(-20)
+      .filter((m: { role: string; content: string }) => ['user', 'assistant'].includes(m.role) && m.content?.trim())
+      .map((m: { role: 'user' | 'assistant'; content: string }) => ({
         role: m.role,
         content: m.content,
-      })),
-    ]
+      }))
 
-    const openaiRes = await fetch(`${baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openaiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: apiMessages,
-        stream: true,
-        max_tokens: 1000,
-        temperature: 0.8,
-      }),
+    const { textStream } = await streamCoachText({
+      system: systemMessage,
+      messages: apiMessages,
+      userId: user.id,
+      signal: request.signal,
     })
-
-    if (!openaiRes.ok) {
-      const errBody = await openaiRes.text()
-      console.error('OpenAI error:', errBody)
-      return new Response(JSON.stringify({ error: 'AI service error' }), { status: 502 })
-    }
 
     // Save user message to DB
     const lastUserMessage = messages[messages.length - 1]
@@ -171,53 +153,10 @@ export async function POST(request: NextRequest) {
 
     const stream = new ReadableStream({
       async start(controller) {
-        const reader = openaiRes.body?.getReader()
-        if (!reader) {
-          controller.close()
-          return
-        }
-
-        const decoder = new TextDecoder()
-        let buffer = ''
-
         try {
-          while (true) {
-            const { done, value } = await reader.read()
-            if (done) break
-
-            buffer += decoder.decode(value, { stream: true })
-            const lines = buffer.split('\n')
-            buffer = lines.pop() || ''
-
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6).trim()
-                if (data === '[DONE]') {
-                  // Save assistant response
-                  if (fullResponse) {
-                    await supabase.from('coach_messages').insert({
-                      user_id: user.id,
-                      role: 'assistant',
-                      content: fullResponse,
-                      tone,
-                    })
-                  }
-                  controller.close()
-                  return
-                }
-
-                try {
-                  const parsed = JSON.parse(data)
-                  const content = parsed.choices?.[0]?.delta?.content
-                  if (content) {
-                    fullResponse += content
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`))
-                  }
-                } catch {
-                  // skip unparseable chunks
-                }
-              }
-            }
+          for await (const content of textStream) {
+            fullResponse += content
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`))
           }
         } catch (err) {
           console.error('Stream error:', err)

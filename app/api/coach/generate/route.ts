@@ -1,68 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { coachGatewayConfigError, generateCoachText, isCoachGatewayConfigured } from '@/lib/coach-ai'
 
-const getConfig = () => ({
-  apiUrl: `${(process.env.OPENAI_API_BASE_URL || 'https://api.openai.com/v1').trim()}/chat/completions`,
-  apiKey: (process.env.OPENAI_API_KEY || '').trim(),
-  model: (process.env.COACH_MODEL || 'gpt-4o-mini').trim(),
-})
+export const dynamic = 'force-dynamic'
+export const maxDuration = 30
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { prompt } = body
+    const { prompt, userId } = body
 
     if (!prompt) {
       return NextResponse.json({ error: 'No prompt provided' }, { status: 400 })
     }
 
-    const { apiUrl, apiKey, model } = getConfig()
-
-    if (!apiKey) {
-      return NextResponse.json({ error: 'AI not configured. Add OPENAI_API_KEY to Vercel env vars.' }, { status: 500 })
+    if (!userId) {
+      return NextResponse.json({ error: 'No user provided' }, { status: 400 })
     }
 
-    const aiResponse = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: 'You are a financial coach for barbers and stylists. Return only valid JSON.' },
-          { role: 'user', content: prompt },
-        ],
-        temperature: 0.7,
-        max_tokens: 1000,
-        stream: false,
-      }),
+    if (!isCoachGatewayConfigured()) {
+      return NextResponse.json({ error: coachGatewayConfigError() }, { status: 503 })
+    }
+
+    const { text, model } = await generateCoachText({
+      system: 'You are a financial coach for barbers and stylists. Return only valid JSON.',
+      prompt,
+      userId,
+      signal: request.signal,
     })
 
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text()
-      console.error('Coach AI error:', aiResponse.status, errorText)
-      return NextResponse.json({ error: 'Coach is temporarily unavailable', status: aiResponse.status, details: errorText.slice(0, 500) }, { status: 502 })
-    }
-
-    const aiData = await aiResponse.json()
-    const content = aiData.choices?.[0]?.message?.content
-
-    if (!content) {
+    if (!text) {
       return NextResponse.json({ error: 'No response from coach' }, { status: 502 })
     }
 
     let insights
     try {
-      const cleaned = content.replace(/```json?\n?/g, '').replace(/```/g, '').trim()
+      const cleaned = text.replace(/```json?\n?/g, '').replace(/```/g, '').trim()
       insights = JSON.parse(cleaned)
     } catch {
       return NextResponse.json({ error: 'Coach response was invalid' }, { status: 502 })
     }
 
-    return NextResponse.json({ insights })
+    return NextResponse.json({ insights, model })
   } catch (error) {
     console.error('Coach error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Coach is temporarily unavailable' }, { status: 502 })
   }
 }

@@ -1,31 +1,32 @@
 import { BankTotalCard } from '@/components/BankTotalCard'
-import { BoothRentCard } from '@/components/BoothRentCard'
 import { BucketBalances } from '@/components/BucketBalances'
-import { CoachCard } from '@/components/CoachCard'
 import { DailyMomentumCard } from '@/components/DailyMomentumCard'
 import { DailyReminderNudge } from '@/components/DailyReminderNudge'
 import { DashboardOnboardingTour } from '@/components/DashboardOnboardingTour'
 import { DashboardWelcomeModal } from '@/components/DashboardWelcomeModal'
 import { EveningStreakReminder } from '@/components/EveningStreakReminder'
 import { Footer } from '@/components/Footer'
-import { ForecastCard } from '@/components/ForecastCard'
 import { JarSnapshot } from '@/components/JarSnapshot'
 import { MilestoneToast } from '@/components/MilestoneToast'
 import { PlaidJarMovementCard } from '@/components/PlaidJarMovementCard'
 import { QuickExpenseEntry } from '@/components/QuickExpenseEntry'
 import { QuickIncomeEntry } from '@/components/QuickIncomeEntry'
-import { RecentTransactions } from '@/components/RecentTransactions'
-import { StabilityMeter } from '@/components/StabilityMeter'
 import { StreakCelebration } from '@/components/StreakCelebration'
 import { StreakProtectedToast } from '@/components/StreakProtectedToast'
-import { StreakRewardsCard } from '@/components/StreakRewardsCard'
-import { TaxEstimateCard } from '@/components/TaxEstimateCard'
 import { UserMenu } from '@/components/UserMenu'
-import { WeeklyChart } from '@/components/WeeklyChart'
 import { WeeklySummaryCard } from '@/components/WeeklySummaryCard'
-import { WhatIfCard } from '@/components/WhatIfCard'
-import { UpcomingBillsCard } from '@/components/UpcomingBillsCard'
 import { WithdrawButton } from '@/components/WithdrawButton'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { BarChart3, ListChecks, PiggyBank, Settings } from 'lucide-react'
+import Link from 'next/link'
+
+const nextSteps = [
+  { href: '/jars', label: 'Manage Jars', icon: PiggyBank },
+  { href: '/activity', label: 'Review Activity', icon: ListChecks },
+  { href: '/insights', label: 'Open Insights', icon: BarChart3 },
+  { href: '/settings', label: 'Settings', icon: Settings },
+]
 
 export default function DashboardPage() {
   return (
@@ -45,7 +46,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="container mx-auto max-w-7xl space-y-4 p-4 pb-4 md:space-y-6">
+      <main className="container mx-auto max-w-6xl space-y-4 p-4 pb-4 md:space-y-6">
         <MilestoneToast />
         <StreakCelebration />
         <StreakProtectedToast />
@@ -71,60 +72,41 @@ export default function DashboardPage() {
           <BucketBalances />
         </section>
 
-        <DailyReminderNudge />
-        <div className="hidden lg:block">
-          <EveningStreakReminder />
-        </div>
-
-        <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+        <section className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
           <div id="tour-weekly-summary">
             <WeeklySummaryCard />
           </div>
-          <div className="hidden lg:block">
-            <ForecastCard />
-          </div>
+          <Card>
+            <CardContent className="space-y-3">
+              <div>
+                <p className="text-sm font-semibold">Next</p>
+                <p className="text-sm text-muted-foreground">Jump into the deeper views when you need them.</p>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {nextSteps.map((item) => (
+                  <Button key={item.href} asChild variant="outline" className="h-11 justify-start">
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      {item.label}
+                    </Link>
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </section>
 
-        <section className="hidden gap-6 lg:grid lg:grid-cols-2">
+        <section className="hidden gap-4 lg:grid lg:grid-cols-2">
           <div id="tour-quick-income">
             <QuickIncomeEntry />
           </div>
           <QuickExpenseEntry />
         </section>
 
-        <section className="hidden gap-6 lg:grid lg:grid-cols-2">
-          <div id="tour-stability-meter">
-            <StabilityMeter />
-          </div>
-          <WeeklyChart />
-        </section>
-
-        <section className="hidden lg:block" id="tour-what-if">
-          <WhatIfCard />
-        </section>
-
-        <section className="hidden lg:block" id="tour-recent-transactions">
-          <RecentTransactions />
-        </section>
-
-        <section className="hidden lg:block" id="tour-upcoming-bills">
-          <UpcomingBillsCard />
-        </section>
-
-        <section className="hidden lg:block" id="tour-ai-coach">
-          <CoachCard />
-        </section>
-
-        <section className="hidden lg:block" id="tour-streak-rewards">
-          <StreakRewardsCard />
-        </section>
-
-        <section className="hidden gap-6 lg:grid lg:grid-cols-2">
-          <BoothRentCard />
-          <div id="tour-tax-estimate">
-            <TaxEstimateCard />
-          </div>
-        </section>
+        <DailyReminderNudge />
+        <div className="hidden lg:block">
+          <EveningStreakReminder />
+        </div>
       </main>
 
       <Footer />
