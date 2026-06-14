@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { isAdminEmail } from '@/lib/admin'
-import { coachGatewayConfigError, generateCoachText, isCoachGatewayConfigured } from '@/lib/coach-ai'
+import { coachAIErrorMessage, coachGatewayConfigError, generateCoachText, isCoachGatewayConfigured } from '@/lib/coach-ai'
 import type { ModelMessage } from 'ai'
 
 export const dynamic = 'force-dynamic'
@@ -188,6 +188,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Coach chat error:', error)
-    return new Response(JSON.stringify({ error: 'Coach is temporarily unavailable' }), { status: 502 })
+    return new Response(JSON.stringify({ error: coachAIErrorMessage(error) }), { status: 502 })
   }
 }

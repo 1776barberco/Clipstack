@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { coachGatewayConfigError, generateCoachText, isCoachGatewayConfigured } from '@/lib/coach-ai'
+import { coachAIErrorMessage, coachGatewayConfigError, generateCoachText, isCoachGatewayConfigured } from '@/lib/coach-ai'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 30
@@ -43,6 +43,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ insights, model })
   } catch (error) {
     console.error('Coach error:', error)
-    return NextResponse.json({ error: 'Coach is temporarily unavailable' }, { status: 502 })
+    return NextResponse.json({ error: coachAIErrorMessage(error) }, { status: 502 })
   }
 }

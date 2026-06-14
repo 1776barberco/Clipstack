@@ -10,11 +10,24 @@ const FALLBACK_MODELS = (process.env.COACH_FALLBACK_MODELS || 'openai/gpt-5.4,go
 const models = Array.from(new Set([COACH_MODEL, ...FALLBACK_MODELS]))
 
 export function isCoachGatewayConfigured() {
-  return Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || process.env.VERCEL)
+  return Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN)
 }
 
 export function coachGatewayConfigError() {
-  return 'AI Gateway is not configured. Enable Vercel AI Gateway for this project or add AI_GATEWAY_API_KEY.'
+  return 'AI Gateway credentials are missing. Add AI_GATEWAY_API_KEY in Vercel env or enable Vercel OIDC for AI Gateway.'
+}
+
+export function coachAIErrorMessage(error: unknown) {
+  if (!isCoachGatewayConfigured()) {
+    return coachGatewayConfigError()
+  }
+
+  const message = error instanceof Error ? error.message : String(error)
+  if (/unauthorized|forbidden|api key|credential|authentication|oidc/i.test(message)) {
+    return 'AI Gateway rejected the request. Check AI_GATEWAY_API_KEY or Vercel AI Gateway project access.'
+  }
+
+  return 'Coach is temporarily unavailable.'
 }
 
 export async function generateCoachText({
@@ -50,7 +63,11 @@ export async function generateCoachText({
       return { text: result.text, model }
     } catch (error) {
       lastError = error
-      console.error(`Coach model failed (${model}):`, error)
+      console.error(`Coach model failed (${model}):`, {
+        message: error instanceof Error ? error.message : String(error),
+        hasGatewayKey: Boolean(process.env.AI_GATEWAY_API_KEY),
+        hasOidcToken: Boolean(process.env.VERCEL_OIDC_TOKEN),
+      })
     }
   }
 
