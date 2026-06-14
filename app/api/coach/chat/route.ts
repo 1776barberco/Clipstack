@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { isAdminEmail } from '@/lib/admin'
-import { coachGatewayConfigError, isCoachGatewayConfigured, streamCoachText } from '@/lib/coach-ai'
+import { coachGatewayConfigError, generateCoachText, isCoachGatewayConfigured } from '@/lib/coach-ai'
 import type { ModelMessage } from 'ai'
 
 export const dynamic = 'force-dynamic'
@@ -129,9 +129,14 @@ export async function POST(request: NextRequest) {
         content: m.content,
       }))
 
-    const { textStream } = await streamCoachText({
+    const lastUserPrompt = [...apiMessages].reverse().find((message) => message.role === 'user')?.content
+    if (typeof lastUserPrompt !== 'string' || !lastUserPrompt.trim()) {
+      return new Response(JSON.stringify({ error: 'No message provided' }), { status: 400 })
+    }
+
+    const { text } = await generateCoachText({
       system: systemMessage,
-      messages: apiMessages,
+      prompt: apiMessages.map((message) => `${message.role}: ${message.content}`).join('\n\n'),
       userId: user.id,
       signal: request.signal,
     })
@@ -147,31 +152,30 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Stream the response and collect for saving
     const encoder = new TextEncoder()
-    let fullResponse = ''
 
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          for await (const content of textStream) {
-            fullResponse += content
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`))
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: text })}\n\n`))
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+
+          if (text) {
+            await supabase.from('coach_messages').insert({
+              user_id: user.id,
+              role: 'assistant',
+              content: text,
+              tone,
+            })
           }
         } catch (err) {
-          console.error('Stream error:', err)
+          console.error('Coach chat save/stream error:', err)
+          if (text) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: text })}\n\n`))
+          }
+        } finally {
+          controller.close()
         }
-
-        // Save whatever we got if stream ended without [DONE]
-        if (fullResponse) {
-          await supabase.from('coach_messages').insert({
-            user_id: user.id,
-            role: 'assistant',
-            content: fullResponse,
-            tone,
-          })
-        }
-        controller.close()
       },
     })
 
@@ -184,6 +188,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Coach chat error:', error)
-    return new Response(JSON.stringify({ error: 'Internal error' }), { status: 500 })
+    return new Response(JSON.stringify({ error: 'Coach is temporarily unavailable' }), { status: 502 })
   }
 }

@@ -18,6 +18,9 @@ const STARTER_PROMPTS = [
   "Tips for slow weeks",
 ]
 
+const COACH_TIMEOUT_MS = 45_000
+const COACH_FALLBACK_MESSAGE = "Coach is having trouble responding right now. Try again in a moment."
+
 interface CoachChatProps {
   tone: string
   userName?: string
@@ -57,14 +60,18 @@ export function CoachChat({ tone, userName }: CoachChatProps) {
     setMessages((prev) => [...prev, { id: assistantId, role: 'assistant', content: '' }])
 
     try {
+      const controller = new AbortController()
+      const timeoutId = window.setTimeout(() => controller.abort(), COACH_TIMEOUT_MS)
       const res = await fetch('/api/coach/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           messages: newMessages.map((m) => ({ role: m.role, content: m.content })),
           tone,
         }),
       })
+      window.clearTimeout(timeoutId)
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
@@ -77,6 +84,7 @@ export function CoachChat({ tone, userName }: CoachChatProps) {
 
       const decoder = new TextDecoder()
       let buffer = ''
+      let receivedContent = false
 
       while (true) {
         const { done, value } = await reader.read()
@@ -94,6 +102,7 @@ export function CoachChat({ tone, userName }: CoachChatProps) {
             try {
               const parsed = JSON.parse(data)
               if (parsed.content) {
+                receivedContent = true
                 setMessages((prev) =>
                   prev.map((m) =>
                     m.id === assistantId
@@ -108,12 +117,16 @@ export function CoachChat({ tone, userName }: CoachChatProps) {
           }
         }
       }
+
+      if (!receivedContent) {
+        throw new Error('Coach returned an empty response')
+      }
     } catch (err) {
       console.error('Chat error:', err)
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantId
-            ? { ...m, content: "Sorry, I couldn't respond right now. Try again in a moment." }
+            ? { ...m, content: COACH_FALLBACK_MESSAGE }
             : m
         )
       )
