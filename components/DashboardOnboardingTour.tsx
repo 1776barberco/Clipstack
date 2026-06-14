@@ -22,7 +22,7 @@ const TOUR_STEPS: TourStep[] = [
   {
     targetId: 'tour-plaid-jar-movement',
     title: 'Review bank activity in your jar plan',
-    body: 'After you connect your bank through Plaid, synced transactions show up here so you can review income, spending, and jar movement without manually entering everything.',
+    body: 'After you connect your bank through Plaid, this shows the synced money movement summary and sends transactions that need jar action to the Review Inbox.',
   },
   {
     targetId: 'tour-buckets',

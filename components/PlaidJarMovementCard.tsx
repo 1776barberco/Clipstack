@@ -1,14 +1,15 @@
 'use client'
 
 import { useMemo } from 'react'
-import { ArrowDownLeft, ArrowUpRight, Landmark, PiggyBank } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowDownLeft, ArrowUpRight, CheckCircle2, Landmark, ListChecks, PiggyBank } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useBuckets } from '@/hooks/useBuckets'
 import { usePlaidConnections } from '@/hooks/usePlaidConnections'
-import { PlaidTransactionReview } from '@/components/PlaidTransactionReview'
 
 const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
 
@@ -23,7 +24,7 @@ function signedCurrency(amount: number) {
 export function PlaidJarMovementCard() {
   const { user } = useAuthContext()
   const { buckets, getBucketBalance } = useBuckets(user?.id)
-  const { accounts, transactions, loading, syncing, sync, reload } = usePlaidConnections(user?.id)
+  const { accounts, transactions, loading, syncing, sync } = usePlaidConnections(user?.id)
 
   const summary = useMemo(() => {
     const income = transactions
@@ -34,14 +35,17 @@ export function PlaidJarMovementCard() {
       .filter((transaction) => transaction.transaction_type === 'expense')
       .reduce((sum, transaction) => sum + Math.abs(transaction.amount), 0)
 
-    const needsReview = transactions.filter((transaction) => transaction.review_status === 'needs_review' || transaction.review_status === 'pending').length
+    const reviewQueue = transactions.filter((transaction) => transaction.review_status === 'needs_review' || transaction.review_status === 'pending')
+    const needsReview = reviewQueue.length
+    const reviewTotal = reviewQueue.reduce((sum, transaction) => sum + Math.abs(transaction.amount), 0)
+    const topReviewTransaction = [...reviewQueue].sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))[0]
     const assigned = transactions.filter((transaction) => transaction.review_status === 'assigned' || transaction.review_status === 'reviewed').length
     const connectedBalance = accounts.reduce((sum, account) => sum + (account.current_balance ?? 0), 0)
     const jarTarget = buckets.reduce((sum, bucket) => sum + Number(bucket.target_amount ?? 0), 0)
     const jarBalance = buckets.reduce((sum, bucket) => sum + Number(getBucketBalance(bucket.id) ?? 0), 0)
     const allocationProgress = jarTarget > 0 ? Math.min(100, Math.round((jarBalance / jarTarget) * 100)) : 0
 
-    return { income, spending, net: income - spending, connectedBalance, jarTarget, jarBalance, allocationProgress, needsReview, assigned }
+    return { income, spending, net: income - spending, connectedBalance, jarTarget, jarBalance, allocationProgress, needsReview, reviewTotal, topReviewTransaction, assigned }
   }, [accounts, buckets, getBucketBalance, transactions])
 
   if (!loading && accounts.length === 0) {
@@ -70,26 +74,33 @@ export function PlaidJarMovementCard() {
               Bank activity
             </CardTitle>
             <CardDescription>
-              Clear view of synced bank activity against your TipJars plan. Review income, spending, and jar movement without manually entering every transaction. No money is moved.
+              Synced bank activity against your TipJars plan. Keep the dashboard clean, then review imported transactions in the inbox when they need a jar action.
             </CardDescription>
           </div>
           <Badge variant="secondary">Read-only bank sync</Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {user?.id && (
-          <PlaidTransactionReview
-            userId={user.id}
-            transactions={transactions}
-            buckets={buckets.map((bucket) => ({
-              id: bucket.id,
-              name: bucket.name,
-              percentage: bucket.percentage,
-              current_balance: getBucketBalance(bucket.id),
-            }))}
-            onAssigned={reload}
-          />
-        )}
+        <div className="rounded-lg border bg-muted/30 p-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${summary.needsReview ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                {summary.needsReview ? <ListChecks className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+              </div>
+              <div>
+                <p className="font-semibold">{summary.needsReview ? `${summary.needsReview} transactions need review` : 'Transaction review is clear'}</p>
+                <p className="text-sm text-muted-foreground">
+                  {summary.needsReview
+                    ? `${currency.format(summary.reviewTotal)} waiting in the review inbox${summary.topReviewTransaction ? `, including ${summary.topReviewTransaction.merchant_name ?? summary.topReviewTransaction.name}` : ''}.`
+                    : 'New Plaid imports will appear in the review inbox when they need a jar action.'}
+                </p>
+              </div>
+            </div>
+            <Button asChild className="shrink-0">
+              <Link href="/review">Open review inbox</Link>
+            </Button>
+          </div>
+        </div>
 
         <div className="grid gap-3 sm:grid-cols-4">
           <div className="rounded-lg border bg-muted/30 p-3">
@@ -123,39 +134,17 @@ export function PlaidJarMovementCard() {
           </p>
         </div>
 
-        {transactions.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Latest synced movement</h3>
-              <button
-                type="button"
-                onClick={() => sync().catch(() => undefined)}
-                disabled={syncing}
-                className="text-xs font-medium text-primary hover:underline disabled:opacity-50"
-              >
-                {syncing ? 'Syncing...' : 'Sync now'}
-              </button>
-            </div>
-            <div className="divide-y rounded-lg border">
-              {transactions.slice(0, 6).map((transaction) => {
-                const amount = transaction.transaction_type === 'income' ? Math.abs(transaction.amount) : -Math.abs(transaction.amount)
-                return (
-                  <div key={transaction.id} className="flex items-center justify-between gap-3 p-3 text-sm">
-                    <div>
-                      <p className="font-medium">{transaction.merchant_name ?? transaction.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(`${transaction.date}T00:00:00`).toLocaleDateString()} • {transaction.primary_category ?? transaction.transaction_type}
-                      </p>
-                    </div>
-                    <p className={`font-semibold ${amount >= 0 ? 'text-emerald-600' : 'text-slate-900'}`}>
-                      {signedCurrency(amount)}
-                    </p>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => sync().catch(() => undefined)}
+            disabled={syncing}
+          >
+            {syncing ? 'Syncing...' : 'Sync bank activity'}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )

@@ -18,10 +18,11 @@ import { WeeklySummaryCard } from '@/components/WeeklySummaryCard'
 import { WithdrawButton } from '@/components/WithdrawButton'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { BarChart3, ListChecks, PiggyBank, Settings } from 'lucide-react'
+import { BarChart3, Inbox, ListChecks, PiggyBank, Settings } from 'lucide-react'
 import Link from 'next/link'
 
 const nextSteps = [
+  { href: '/review', label: 'Review Inbox', icon: Inbox },
   { href: '/jars', label: 'Manage Jars', icon: PiggyBank },
   { href: '/activity', label: 'Review Activity', icon: ListChecks },
   { href: '/insights', label: 'Open Insights', icon: BarChart3 },

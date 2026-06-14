@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BarChart3, Brain, Home, ListChecks, Lock, Settings, Shield, Wallet } from 'lucide-react'
+import { BarChart3, Brain, Home, Inbox, ListChecks, Lock, Settings, Shield, Wallet } from 'lucide-react'
 import { useAuthContext } from '@/providers/AuthProvider'
 import { useSubscription } from '@/hooks/useSubscription'
 import { useEffect, useState } from 'react'
@@ -12,6 +12,7 @@ const ADMIN_EMAILS = ['apeltekci@gmail.com', 'vhugo9021@icloud.com']
 
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: Home },
+  { href: '/review', label: 'Review', icon: Inbox },
   { href: '/jars', label: 'Jars', icon: Wallet },
   { href: '/activity', label: 'Activity', icon: ListChecks },
   { href: '/insights', label: 'Insights', icon: BarChart3 },
