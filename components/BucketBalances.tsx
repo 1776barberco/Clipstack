@@ -93,7 +93,7 @@ export function BucketBalances() {
                   <Layers3 className="h-4 w-4" />
                   Jar groups
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   {multiJarGroups.map((group) => {
                     const fundedPct = group.target > 0 ? Math.min(100, Math.round((group.balance / group.target) * 100)) : null
                     return (
@@ -128,7 +128,7 @@ export function BucketBalances() {
                 <Wallet className="h-4 w-4" />
                 Individual jars
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {buckets.map((bucket) => (
                   <BucketCard
                     key={bucket.id}

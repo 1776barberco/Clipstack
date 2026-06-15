@@ -47,36 +47,65 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="container mx-auto max-w-6xl space-y-4 p-4 pb-4 md:space-y-6">
+      <main className="container mx-auto max-w-7xl space-y-4 p-4 pb-4 md:space-y-6">
         <MilestoneToast />
         <StreakCelebration />
         <StreakProtectedToast />
 
-        <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
+        <section id="tour-daily-momentum">
+          <DailyMomentumCard />
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-2">
           <div id="tour-bank-total">
             <BankTotalCard />
           </div>
-          <div id="tour-daily-momentum">
-            <DailyMomentumCard />
-          </div>
-        </section>
-
-        <div id="tour-plaid-jar-movement">
-          <PlaidJarMovementCard />
-        </div>
-
-        <section className="lg:hidden">
-          <JarSnapshot />
-        </section>
-
-        <section className="hidden lg:block" id="tour-buckets">
-          <BucketBalances />
-        </section>
-
-        <section className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
           <div id="tour-weekly-summary">
             <WeeklySummaryCard />
           </div>
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start xl:grid-cols-[minmax(0,1fr)_380px]">
+          <div className="min-w-0 space-y-4 md:space-y-6">
+            <div id="tour-plaid-jar-movement">
+              <PlaidJarMovementCard />
+            </div>
+
+            <section className="lg:hidden">
+              <JarSnapshot />
+            </section>
+
+            <section className="hidden lg:block" id="tour-buckets">
+              <BucketBalances />
+            </section>
+          </div>
+
+          <aside className="hidden min-w-0 space-y-4 lg:sticky lg:top-24 lg:block lg:max-h-[calc(100svh-7rem)] lg:overflow-y-auto lg:pr-1">
+            <QuickIncomeEntry />
+            <QuickExpenseEntry />
+            <EveningStreakReminder />
+            <Card>
+              <CardContent className="space-y-3">
+                <div>
+                  <p className="text-sm font-semibold">Next</p>
+                  <p className="text-sm text-muted-foreground">Jump into the deeper views when you need them.</p>
+                </div>
+                <div className="grid gap-2">
+                  {nextSteps.map((item) => (
+                    <Button key={item.href} asChild variant="outline" className="h-11 justify-start">
+                      <Link href={item.href}>
+                        <item.icon className="h-4 w-4" />
+                        {item.label}
+                      </Link>
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </aside>
+        </section>
+
+        <section className="grid gap-4 lg:hidden">
           <Card>
             <CardContent className="space-y-3">
               <div>
@@ -97,17 +126,7 @@ export default function DashboardPage() {
           </Card>
         </section>
 
-        <section className="hidden gap-4 lg:grid lg:grid-cols-2">
-          <div id="tour-quick-income">
-            <QuickIncomeEntry />
-          </div>
-          <QuickExpenseEntry />
-        </section>
-
         <DailyReminderNudge />
-        <div className="hidden lg:block">
-          <EveningStreakReminder />
-        </div>
       </main>
 
       <Footer />

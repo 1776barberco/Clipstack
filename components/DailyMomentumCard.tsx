@@ -32,8 +32,8 @@ export function DailyMomentumCard() {
   return (
     <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/15 via-purple-500/10 to-transparent">
       <CardContent className="p-5">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="min-w-0">
             <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-background/40 px-3 py-1 text-xs font-medium text-primary backdrop-blur">
               <Sparkles className="h-3.5 w-3.5" />
               Daily Momentum
@@ -46,7 +46,7 @@ export function DailyMomentumCard() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 md:min-w-[360px]">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:min-w-[360px]">
             <div className="rounded-2xl border border-white/10 bg-background/40 p-3 backdrop-blur">
               <div className="mb-1 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
                 <TrendingUp className="h-3.5 w-3.5" />
