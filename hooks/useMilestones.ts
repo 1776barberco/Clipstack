@@ -50,17 +50,21 @@ export function useMilestones(userId: string | undefined) {
 
   useEffect(() => {
     if (!userId) {
-      setLoading(false)
-      return
+      const frame = requestAnimationFrame(() => setLoading(false))
+      return () => cancelAnimationFrame(frame)
     }
 
     if (DEMO_MODE) {
-      setNewMilestones(DEMO_MILESTONES)
-      setLoading(false)
-      return
+      const frame = requestAnimationFrame(() => {
+        setNewMilestones(DEMO_MILESTONES)
+        setLoading(false)
+      })
+      return () => cancelAnimationFrame(frame)
     }
 
-    if (bucketsLoading) return
+    if (bucketsLoading) {
+      return
+    }
 
     const seen = getSeenMilestones(userId)
     const milestones: Milestone[] = []
@@ -89,8 +93,12 @@ export function useMilestones(userId: string | undefined) {
       }
     }
 
-    setNewMilestones(milestones)
-    setLoading(false)
+    const frame = requestAnimationFrame(() => {
+      setNewMilestones(milestones)
+      setLoading(false)
+    })
+
+    return () => cancelAnimationFrame(frame)
   }, [userId, buckets, balances, bucketsLoading])
 
   const markSeen = useCallback(

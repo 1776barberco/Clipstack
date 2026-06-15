@@ -5,6 +5,32 @@ import Stripe from 'stripe'
 
 export const dynamic = 'force-dynamic'
 
+type SubscriptionWithPeriods = Stripe.Subscription & {
+  current_period_start?: number
+  current_period_end?: number
+  items?: {
+    data?: Array<{
+      current_period_start?: number
+      current_period_end?: number
+    }>
+  }
+}
+
+type InvoiceWithSubscription = Stripe.Invoice & {
+  subscription?: string | Stripe.Subscription | null
+}
+
+function getSubscriptionPeriod(subscription: SubscriptionWithPeriods) {
+  return {
+    periodStart: subscription.current_period_start ?? subscription.items?.data?.[0]?.current_period_start,
+    periodEnd: subscription.current_period_end ?? subscription.items?.data?.[0]?.current_period_end,
+  }
+}
+
+function getSubscriptionId(invoice: InvoiceWithSubscription) {
+  return typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id
+}
+
 // Use service_role to bypass RLS — only webhooks can write to subscriptions
 function getAdminSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -75,19 +101,18 @@ export async function POST(request: NextRequest) {
 
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object as any
+        const session = event.data.object as Stripe.Checkout.Session
         const userId = session.metadata?.user_id
         console.log('[Webhook] checkout.session.completed — userId:', userId, 'subscription:', session.subscription)
         if (!userId) break
 
         if (session.subscription) {
           try {
-            const sub = await stripe.subscriptions.retrieve(session.subscription as string) as any
+            const sub = await stripe.subscriptions.retrieve(session.subscription as string) as SubscriptionWithPeriods
             console.log('[Webhook] Retrieved subscription:', sub.id, 'status:', sub.status)
             
             // Handle both old and new Stripe API shapes for period fields
-            const periodStart = sub.current_period_start || sub.items?.data?.[0]?.current_period_start
-            const periodEnd = sub.current_period_end || sub.items?.data?.[0]?.current_period_end
+            const { periodStart, periodEnd } = getSubscriptionPeriod(sub)
             
             await upsertSubscription(userId, {
               stripe_customer_id: session.customer as string,
@@ -108,16 +133,15 @@ export async function POST(request: NextRequest) {
       }
 
       case 'invoice.paid': {
-        const invoice = event.data.object as any
-        const subId = invoice.subscription as string
+        const invoice = event.data.object as InvoiceWithSubscription
+        const subId = getSubscriptionId(invoice)
         if (!subId) break
 
-        const sub = await stripe.subscriptions.retrieve(subId) as any
+        const sub = await stripe.subscriptions.retrieve(subId) as SubscriptionWithPeriods
         const userId = sub.metadata?.user_id
         if (!userId) break
 
-        const periodStart = sub.current_period_start || sub.items?.data?.[0]?.current_period_start
-        const periodEnd = sub.current_period_end || sub.items?.data?.[0]?.current_period_end
+        const { periodStart, periodEnd } = getSubscriptionPeriod(sub)
 
         await upsertSubscription(userId, {
           status: 'active',
@@ -130,11 +154,11 @@ export async function POST(request: NextRequest) {
       }
 
       case 'invoice.payment_failed': {
-        const invoice = event.data.object as any
-        const subId = invoice.subscription as string
+        const invoice = event.data.object as InvoiceWithSubscription
+        const subId = getSubscriptionId(invoice)
         if (!subId) break
 
-        const sub = await stripe.subscriptions.retrieve(subId) as any
+        const sub = await stripe.subscriptions.retrieve(subId) as SubscriptionWithPeriods
         const userId = sub.metadata?.user_id
         if (!userId) break
 
@@ -143,7 +167,7 @@ export async function POST(request: NextRequest) {
       }
 
       case 'customer.subscription.deleted': {
-        const sub = event.data.object as any
+        const sub = event.data.object as Stripe.Subscription
         const userId = sub.metadata?.user_id
         if (!userId) break
 
@@ -152,7 +176,7 @@ export async function POST(request: NextRequest) {
       }
 
       case 'customer.subscription.updated': {
-        const sub = event.data.object as any
+        const sub = event.data.object as SubscriptionWithPeriods
         const userId = sub.metadata?.user_id
         if (!userId) break
 
@@ -163,8 +187,7 @@ export async function POST(request: NextRequest) {
         else if (status === 'canceled' || status === 'unpaid') status = 'canceled'
         else status = 'inactive'
 
-        const periodStart = sub.current_period_start || sub.items?.data?.[0]?.current_period_start
-        const periodEnd = sub.current_period_end || sub.items?.data?.[0]?.current_period_end
+        const { periodStart, periodEnd } = getSubscriptionPeriod(sub)
 
         await upsertSubscription(userId, {
           status,

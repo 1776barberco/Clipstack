@@ -87,23 +87,25 @@ const TOUR_STEPS: TourStep[] = [
 ]
 
 export function DashboardOnboardingTour() {
-  const [mounted, setMounted] = useState(false)
   const [open, setOpen] = useState(false)
   const [stepIndex, setStepIndex] = useState(0)
 
   useEffect(() => {
-    setMounted(true)
     if (typeof window === 'undefined') return
 
-    const completed = window.localStorage.getItem(TOUR_STORAGE_KEY)
-    const shouldOpen = window.localStorage.getItem('tipjars-force-tour-open') === 'true'
+    const frame = window.requestAnimationFrame(() => {
+      const completed = window.localStorage.getItem(TOUR_STORAGE_KEY)
+      const shouldOpen = window.localStorage.getItem('tipjars-force-tour-open') === 'true'
 
-    if (!completed || shouldOpen) {
-      setOpen(true)
-      if (shouldOpen) {
-        window.localStorage.removeItem('tipjars-force-tour-open')
+      if (!completed || shouldOpen) {
+        setOpen(true)
+        if (shouldOpen) {
+          window.localStorage.removeItem('tipjars-force-tour-open')
+        }
       }
-    }
+    })
+
+    return () => window.cancelAnimationFrame(frame)
   }, [])
 
   const currentStep = useMemo(() => TOUR_STEPS[stepIndex], [stepIndex])
@@ -147,7 +149,7 @@ export function DashboardOnboardingTour() {
     setOpen(false)
   }
 
-  if (!mounted || !open || !currentStep) return null
+  if (!open || !currentStep) return null
 
   return (
     <div className="fixed inset-x-0 bottom-20 z-[100] px-4 md:bottom-6">

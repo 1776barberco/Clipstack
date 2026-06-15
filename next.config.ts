@@ -1,12 +1,18 @@
 import type { NextConfig } from 'next'
 import withPWA from '@ducanh2912/next-pwa'
+import { dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const rootDir = dirname(fileURLToPath(import.meta.url))
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   images: {
     unoptimized: true,
   },
-  turbopack: {},
+  turbopack: {
+    root: rootDir,
+  },
 }
 
 const withPWAConfig = withPWA({

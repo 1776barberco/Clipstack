@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { format } from 'date-fns'
 import { BellRing, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -15,14 +15,11 @@ export function DailyReminderNudge() {
   const { user } = useAuthContext()
   const { entries, loading } = useIncome(user?.id)
   const { preferences } = useNotificationPreferences(user?.id)
-  const [dismissed, setDismissed] = useState(false)
-
   const today = format(new Date(), 'yyyy-MM-dd')
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    setDismissed(window.localStorage.getItem(`${DISMISS_PREFIX}${today}`) === 'true')
-  }, [today])
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.localStorage.getItem(`${DISMISS_PREFIX}${today}`) === 'true'
+  })
 
   const hasLoggedToday = useMemo(() => {
     return entries.some((entry) => entry.entry_date === today && Number(entry.amount) > 0)

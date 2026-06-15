@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true })
   }
 
-  const supabase = await createClient() as any
+  const supabase = await createClient()
 
   if (payload.webhook_code === 'ERROR') {
     await supabase

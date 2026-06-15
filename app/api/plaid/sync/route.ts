@@ -1,8 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { RemovedTransaction, Transaction } from 'plaid'
 import { createClient } from '@/lib/supabase/server'
+import type { Database, Json } from '@/types/supabase'
 
-type SupabaseClient = Awaited<ReturnType<typeof createClient>> & { from: (relation: string) => any }
+type SupabaseClient = Awaited<ReturnType<typeof createClient>>
+type PlaidTransactionInsert = Database['public']['Tables']['plaid_transactions']['Insert']
 import { assertPlaidConfigured, plaidClient } from '@/lib/plaid'
 
 export const dynamic = 'force-dynamic'
@@ -71,37 +73,43 @@ async function syncItem(supabase: SupabaseClient, userId: string, item: { id: st
   const accountIdByPlaidId = new Map((accounts ?? []).map((account: { plaid_account_id: string; id: string }) => [account.plaid_account_id, account.id]))
 
   if (allTransactions.length) {
+    const transactionRows: PlaidTransactionInsert[] = allTransactions.flatMap((transaction) => {
+      const plaidAccountId = accountIdByPlaidId.get(transaction.account_id)
+      if (!plaidAccountId) return []
+
+      const transactionType: PlaidTransactionInsert['transaction_type'] = transaction.amount < 0
+        ? 'income'
+        : (transaction.personal_finance_category?.primary === 'TRANSFER_IN' ? 'transfer' : 'expense')
+
+      return [{
+        user_id: userId,
+        plaid_item_id: item.id,
+        plaid_account_id: plaidAccountId,
+        plaid_transaction_id: transaction.transaction_id,
+        name: transaction.name,
+        merchant_name: transaction.merchant_name ?? null,
+        amount: transaction.amount,
+        iso_currency_code: transaction.iso_currency_code ?? 'USD',
+        unofficial_currency_code: transaction.unofficial_currency_code ?? null,
+        date: transaction.date,
+        authorized_date: transaction.authorized_date ?? null,
+        pending: transaction.pending,
+        pending_transaction_id: transaction.pending_transaction_id ?? null,
+        payment_channel: transaction.payment_channel ?? null,
+        category: transaction.category ?? [],
+        category_id: transaction.category_id ?? null,
+        primary_category: transaction.personal_finance_category?.primary ?? transaction.category?.[0] ?? null,
+        detailed_category: transaction.personal_finance_category?.detailed ?? transaction.category?.[1] ?? null,
+        transaction_type: transactionType,
+        personal_finance_category: transaction.personal_finance_category as unknown as Json,
+        location: transaction.location as unknown as Json,
+        raw: transaction as unknown as Json,
+      }]
+    })
+
     const { error: upsertError } = await supabase
       .from('plaid_transactions')
-      .upsert(allTransactions.flatMap((transaction) => {
-        const plaidAccountId = accountIdByPlaidId.get(transaction.account_id)
-        if (!plaidAccountId) return []
-
-        return [{
-          user_id: userId,
-          plaid_item_id: item.id,
-          plaid_account_id: plaidAccountId,
-          plaid_transaction_id: transaction.transaction_id,
-          name: transaction.name,
-          merchant_name: transaction.merchant_name ?? null,
-          amount: transaction.amount,
-          iso_currency_code: transaction.iso_currency_code ?? 'USD',
-          unofficial_currency_code: transaction.unofficial_currency_code ?? null,
-          date: transaction.date,
-          authorized_date: transaction.authorized_date ?? null,
-          pending: transaction.pending,
-          pending_transaction_id: transaction.pending_transaction_id ?? null,
-          payment_channel: transaction.payment_channel ?? null,
-          category: transaction.category ?? [],
-          category_id: transaction.category_id ?? null,
-          primary_category: transaction.personal_finance_category?.primary ?? transaction.category?.[0] ?? null,
-          detailed_category: transaction.personal_finance_category?.detailed ?? transaction.category?.[1] ?? null,
-          transaction_type: transaction.amount < 0 ? 'income' : (transaction.personal_finance_category?.primary === 'TRANSFER_IN' ? 'transfer' : 'expense'),
-          personal_finance_category: transaction.personal_finance_category ?? null,
-          location: transaction.location ?? null,
-          raw: transaction,
-        }]
-      }), { onConflict: 'plaid_transaction_id' })
+      .upsert(transactionRows, { onConflict: 'plaid_transaction_id' })
 
     if (upsertError) throw upsertError
   }

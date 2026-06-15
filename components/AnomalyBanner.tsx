@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Badge } from '@/components/ui/badge'
 import { X } from 'lucide-react'
 
 interface AnomalyBannerProps {

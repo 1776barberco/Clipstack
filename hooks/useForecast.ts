@@ -3,7 +3,7 @@ import { useIncome } from '@/hooks/useIncome'
 import { useExpenses } from '@/hooks/useExpenses'
 import { useBuckets } from '@/hooks/useBuckets'
 import { useProfile } from '@/hooks/useProfile'
-import { addWeeks, format } from 'date-fns'
+import { addWeeks } from 'date-fns'
 
 interface BucketProjection {
   bucketName: string

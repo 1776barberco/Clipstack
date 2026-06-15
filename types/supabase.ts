@@ -267,6 +267,294 @@ export interface Database {
         }
         Relationships: []
       }
+      coaching_insights: {
+        Row: {
+          id: string
+          user_id: string
+          insight_type: 'weekly_recap' | 'jar_recommendation' | 'seasonal_forecast' | 'spending_alert' | 'money_tip'
+          title: string
+          body: string
+          data: Json
+          read: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          insight_type: 'weekly_recap' | 'jar_recommendation' | 'seasonal_forecast' | 'spending_alert' | 'money_tip'
+          title: string
+          body: string
+          data?: Json
+          read?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          insight_type?: 'weekly_recap' | 'jar_recommendation' | 'seasonal_forecast' | 'spending_alert' | 'money_tip'
+          title?: string
+          body?: string
+          data?: Json
+          read?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'inactive'
+          current_period_start: string | null
+          current_period_end: string | null
+          trial_end: string | null
+          cancel_at_period_end: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          status?: 'active' | 'trialing' | 'past_due' | 'canceled' | 'inactive'
+          current_period_start?: string | null
+          current_period_end?: string | null
+          trial_end?: string | null
+          cancel_at_period_end?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          status?: 'active' | 'trialing' | 'past_due' | 'canceled' | 'inactive'
+          current_period_start?: string | null
+          current_period_end?: string | null
+          trial_end?: string | null
+          cancel_at_period_end?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      plaid_items: {
+        Row: {
+          id: string
+          user_id: string
+          plaid_item_id: string
+          access_token: string
+          institution_id: string | null
+          institution_name: string | null
+          products: string[]
+          available_products: string[] | null
+          billed_products: string[] | null
+          transactions_cursor: string | null
+          status: 'active' | 'error' | 'revoked' | 'removed'
+          error_code: string | null
+          error_message: string | null
+          last_synced_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          plaid_item_id: string
+          access_token: string
+          institution_id?: string | null
+          institution_name?: string | null
+          products?: string[]
+          available_products?: string[] | null
+          billed_products?: string[] | null
+          transactions_cursor?: string | null
+          status?: 'active' | 'error' | 'revoked' | 'removed'
+          error_code?: string | null
+          error_message?: string | null
+          last_synced_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          plaid_item_id?: string
+          access_token?: string
+          institution_id?: string | null
+          institution_name?: string | null
+          products?: string[]
+          available_products?: string[] | null
+          billed_products?: string[] | null
+          transactions_cursor?: string | null
+          status?: 'active' | 'error' | 'revoked' | 'removed'
+          error_code?: string | null
+          error_message?: string | null
+          last_synced_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      plaid_accounts: {
+        Row: {
+          id: string
+          user_id: string
+          plaid_item_id: string
+          plaid_account_id: string
+          bank_account_id: string | null
+          name: string
+          official_name: string | null
+          mask: string | null
+          type: string | null
+          subtype: string | null
+          verification_status: string | null
+          current_balance: number | null
+          available_balance: number | null
+          iso_currency_code: string | null
+          unofficial_currency_code: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          plaid_item_id: string
+          plaid_account_id: string
+          bank_account_id?: string | null
+          name: string
+          official_name?: string | null
+          mask?: string | null
+          type?: string | null
+          subtype?: string | null
+          verification_status?: string | null
+          current_balance?: number | null
+          available_balance?: number | null
+          iso_currency_code?: string | null
+          unofficial_currency_code?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          plaid_item_id?: string
+          plaid_account_id?: string
+          bank_account_id?: string | null
+          name?: string
+          official_name?: string | null
+          mask?: string | null
+          type?: string | null
+          subtype?: string | null
+          verification_status?: string | null
+          current_balance?: number | null
+          available_balance?: number | null
+          iso_currency_code?: string | null
+          unofficial_currency_code?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      plaid_transactions: {
+        Row: {
+          id: string
+          user_id: string
+          plaid_item_id: string
+          plaid_account_id: string
+          plaid_transaction_id: string
+          name: string
+          merchant_name: string | null
+          amount: number
+          iso_currency_code: string | null
+          unofficial_currency_code: string | null
+          date: string
+          authorized_date: string | null
+          pending: boolean
+          pending_transaction_id: string | null
+          payment_channel: string | null
+          category: string[] | null
+          category_id: string | null
+          primary_category: string | null
+          detailed_category: string | null
+          transaction_type: 'income' | 'expense' | 'transfer'
+          personal_finance_category: Json
+          location: Json
+          raw: Json
+          ignored: boolean
+          matched_bucket_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          plaid_item_id: string
+          plaid_account_id: string
+          plaid_transaction_id: string
+          name: string
+          merchant_name?: string | null
+          amount: number
+          iso_currency_code?: string | null
+          unofficial_currency_code?: string | null
+          date: string
+          authorized_date?: string | null
+          pending?: boolean
+          pending_transaction_id?: string | null
+          payment_channel?: string | null
+          category?: string[] | null
+          category_id?: string | null
+          primary_category?: string | null
+          detailed_category?: string | null
+          transaction_type?: 'income' | 'expense' | 'transfer'
+          personal_finance_category?: Json
+          location?: Json
+          raw?: Json
+          ignored?: boolean
+          matched_bucket_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          plaid_item_id?: string
+          plaid_account_id?: string
+          plaid_transaction_id?: string
+          name?: string
+          merchant_name?: string | null
+          amount?: number
+          iso_currency_code?: string | null
+          unofficial_currency_code?: string | null
+          date?: string
+          authorized_date?: string | null
+          pending?: boolean
+          pending_transaction_id?: string | null
+          payment_channel?: string | null
+          category?: string[] | null
+          category_id?: string | null
+          primary_category?: string | null
+          detailed_category?: string | null
+          transaction_type?: 'income' | 'expense' | 'transfer'
+          personal_finance_category?: Json
+          location?: Json
+          raw?: Json
+          ignored?: boolean
+          matched_bucket_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       bucket_balances: {

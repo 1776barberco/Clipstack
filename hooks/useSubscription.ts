@@ -25,6 +25,7 @@ export function useSubscription(userId: string | undefined) {
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [trialDaysLeft, setTrialDaysLeft] = useState(0)
 
   const fetchSubscription = useCallback(async () => {
     if (!userId || !supabase) {
@@ -44,21 +45,28 @@ export function useSubscription(userId: string | undefined) {
       .eq('user_id', userId)
       .maybeSingle()
 
-    setSubscription(data as Subscription | null)
+    const nextSubscription = data as Subscription | null
+    setSubscription(nextSubscription)
+    setTrialDaysLeft(
+      nextSubscription?.trial_end
+        ? Math.max(0, Math.ceil((new Date(nextSubscription.trial_end).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+        : 0
+    )
     setLoading(false)
   }, [userId])
 
   useEffect(() => {
-    fetchSubscription()
+    const timeout = window.setTimeout(() => {
+      void fetchSubscription()
+    }, 0)
+
+    return () => window.clearTimeout(timeout)
   }, [fetchSubscription])
 
   const hasActiveSubscription = subscription?.status === 'active' || subscription?.status === 'trialing'
   const isSubscribed = hasActiveSubscription || isAdmin
   const isTrialing = subscription?.status === 'trialing'
   const isPastDue = subscription?.status === 'past_due'
-  const trialDaysLeft = subscription?.trial_end
-    ? Math.max(0, Math.ceil((new Date(subscription.trial_end).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
-    : 0
 
   return {
     subscription,

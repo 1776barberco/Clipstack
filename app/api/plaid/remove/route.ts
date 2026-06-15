@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing Plaid item id' }, { status: 400 })
     }
 
-    const supabase = await createClient() as Awaited<ReturnType<typeof createClient>> & { from: (relation: string) => any }
+    const supabase = await createClient()
     const { data: { user }, error: userError } = await supabase.auth.getUser()
 
     if (userError || !user) {

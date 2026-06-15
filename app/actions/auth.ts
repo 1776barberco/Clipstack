@@ -340,12 +340,12 @@ export async function deleteBucketAction(id: string) {
 
     if (remainingBuckets && remainingBuckets.length > 0) {
       // Calculate sum of remaining percentages
-      const totalPercentage = remainingBuckets.reduce((sum: number, b: any) => sum + (b.percentage || 0), 0)
+      const totalPercentage = remainingBuckets.reduce((sum, bucket) => sum + (bucket.percentage || 0), 0)
 
       // Only rebalance if we have remaining percentage-based buckets
       if (totalPercentage > 0 && totalPercentage !== 100) {
         // Rebalance: scale each bucket proportionally
-        const updates = remainingBuckets.map((bucket: any, index: number) => {
+        const updates = remainingBuckets.map((bucket, index) => {
           let newPercentage = (bucket.percentage / totalPercentage) * 100
 
           // Ensure we don't exceed 100% due to rounding
@@ -353,7 +353,7 @@ export async function deleteBucketAction(id: string) {
             // Last bucket: adjust to ensure total = 100%
             const sumOfOthers = remainingBuckets
               .slice(0, -1)
-              .reduce((sum: number, b: any) => sum + Math.round((b.percentage / totalPercentage) * 100 * 100) / 100, 0)
+              .reduce((sum, bucket) => sum + Math.round((bucket.percentage / totalPercentage) * 100 * 100) / 100, 0)
             newPercentage = Math.round((100 - sumOfOthers) * 100) / 100
           } else {
             newPercentage = Math.round(newPercentage * 100) / 100

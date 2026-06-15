@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 
 // Vercel Cron handler — invokes the Supabase edge function hourly
 // Protected by CRON_SECRET to prevent unauthorized calls
-export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {

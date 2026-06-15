@@ -349,7 +349,6 @@ export function QuickAddFAB() {
                 <div className="space-y-3">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Fixed Jars</p>
                   {fixedJars.map((b) => {
-                    const allocated = parseFloat(fixedAllocations[b.id] || '0') || 0
                     return (
                       <div key={b.id} className="flex items-center gap-3">
                         <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: b.color }} />

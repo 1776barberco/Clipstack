@@ -18,8 +18,8 @@ import { toast } from 'sonner'
 
 export function RecentTransactions() {
   const { user } = useAuthContext()
-  const { entries: incomeEntries, loading: incomeLoading, deleteIncome } = useIncome(user?.id)
-  const { expenses, loading: expensesLoading, deleteExpense } = useExpenses(user?.id)
+  const { entries: incomeEntries, loading: incomeLoading } = useIncome(user?.id)
+  const { expenses, loading: expensesLoading } = useExpenses(user?.id)
   const { isAnomalous, getAnomalyInfo, anomalyCount } = useAnomalies(user?.id)
   const [expandedAnomaly, setExpandedAnomaly] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
@@ -42,7 +42,7 @@ export function RecentTransactions() {
       toast.success(`${type === 'income' ? 'Income' : 'Expense'} deleted successfully`)
       window.dispatchEvent(new Event('income-updated'))
       if (typeof window !== 'undefined') window.location.reload()
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete transaction')
     } finally {
       setIsDeleting(null)
@@ -67,7 +67,7 @@ export function RecentTransactions() {
       toast.success('All income, expenses, and jar balances reset')
       window.dispatchEvent(new Event('income-updated'))
       if (typeof window !== 'undefined') window.location.reload()
-    } catch (error) {
+    } catch {
       toast.error('Failed to clear transactions')
     } finally {
       setIsDeleting(null)

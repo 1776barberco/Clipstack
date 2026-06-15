@@ -176,7 +176,7 @@ export function IncomeSplitStep({
       {/* Over budget warning */}
       {isOverBudget && (
         <p className="text-sm text-red-500 text-center font-medium">
-          You've allocated ${Math.abs(remaining).toFixed(2)} more than your income!
+          You&apos;ve allocated ${Math.abs(remaining).toFixed(2)} more than your income!
         </p>
       )}
 

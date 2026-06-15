@@ -26,14 +26,18 @@ export function DashboardWelcomeModal() {
   useEffect(() => {
     if (typeof window === 'undefined' || loading) return
 
-    const dismissed = window.localStorage.getItem(WELCOME_STORAGE_KEY)
-    const createdAt = profile?.created_at ? new Date(profile.created_at) : null
-    const accountAgeMs = createdAt ? Date.now() - createdAt.getTime() : Number.MAX_SAFE_INTEGER
-    const isBrandNewUser = accountAgeMs < 1000 * 60 * 60 * 24 * 3
+    const frame = window.requestAnimationFrame(() => {
+      const dismissed = window.localStorage.getItem(WELCOME_STORAGE_KEY)
+      const createdAt = profile?.created_at ? new Date(profile.created_at) : null
+      const accountAgeMs = createdAt ? Date.now() - createdAt.getTime() : Number.MAX_SAFE_INTEGER
+      const isBrandNewUser = accountAgeMs < 1000 * 60 * 60 * 24 * 3
 
-    if (!dismissed && isBrandNewUser) {
-      setOpen(true)
-    }
+      if (!dismissed && isBrandNewUser) {
+        setOpen(true)
+      }
+    })
+
+    return () => window.cancelAnimationFrame(frame)
   }, [loading, profile?.created_at])
 
   const handleStartTour = () => {

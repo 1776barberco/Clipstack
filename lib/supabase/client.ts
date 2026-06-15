@@ -28,7 +28,9 @@ export function getSupabaseClient() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('Missing Supabase credentials')
+    if (typeof window !== 'undefined') {
+      console.error('Missing Supabase credentials')
+    }
     return null as unknown as ReturnType<typeof createBrowserClient>
   }
 

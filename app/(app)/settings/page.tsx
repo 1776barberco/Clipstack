@@ -228,7 +228,6 @@ export default function SettingsPage() {
 
   const toggleAllocationType = (bucketId: string) => {
     const fixed = isFixedAmount(bucketId)
-    const bucket = buckets.find(b => b.id === bucketId)
 
     if (fixed) {
       // Switching FROM fixed TO percentage
@@ -260,9 +259,6 @@ export default function SettingsPage() {
     } else {
       // Switching FROM percentage TO fixed
       // Remove this jar's percentage and redistribute to remaining % jars
-      const thisPct = editedBuckets[bucketId]?.percentage !== undefined
-        ? parseFloat(editedBuckets[bucketId]!.percentage!)
-        : (bucket?.percentage || 0)
       const otherPctBuckets = buckets.filter(b => b.id !== bucketId && !isFixedAmount(b.id))
       const otherTotal = otherPctBuckets.reduce((sum, b) => {
         const edited = editedBuckets[b.id]

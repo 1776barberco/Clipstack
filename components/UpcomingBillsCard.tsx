@@ -9,8 +9,6 @@ import { Button } from '@/components/ui/button'
 import {
   Calendar,
   List,
-  Clock,
-  AlertCircle,
   CheckCircle,
   ChevronLeft,
   ChevronRight,
@@ -19,6 +17,7 @@ import {
   DollarSign,
   Repeat,
   Plus,
+  SkipForward,
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import {
@@ -525,6 +524,15 @@ function BillRow({
           title="Mark as paid"
         >
           <DollarSign className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted"
+          onClick={onSkip}
+          title="Skip this cycle"
+        >
+          <SkipForward className="h-3.5 w-3.5" />
         </Button>
         <Button
           variant="ghost"

@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import {
   Users, DollarSign, TrendingUp, AlertTriangle,
   Search, Shield, ShieldCheck, ShieldX, ArrowLeft,
-  UserPlus, UserMinus, RefreshCw, Zap, Loader2
+  UserPlus, RefreshCw, Zap, Loader2
 } from 'lucide-react'
 import { toast } from 'sonner'
 

@@ -86,7 +86,6 @@ async function createVapidJwt(
   } else {
     // DER encoded
     const rLen = sigBytes[3]
-    const rStart = 4 + (rLen - 32 > 0 ? rLen - 32 : 0)
     r = sigBytes.slice(4, 4 + rLen)
     if (r.length > 32) r = r.slice(r.length - 32)
     const sOffset = 4 + rLen

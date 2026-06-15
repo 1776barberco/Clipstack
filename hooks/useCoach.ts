@@ -23,8 +23,6 @@ interface CoachContext {
   userName: string
 }
 
-const COACH_API_URL = process.env.NEXT_PUBLIC_COACH_API_URL || '/api/coach/generate'
-
 export function useCoach(userId: string | undefined) {
   const [insights, setInsights] = useState<Insight[]>([])
   const [loading, setLoading] = useState(true)
@@ -35,7 +33,7 @@ export function useCoach(userId: string | undefined) {
     if (!userId) return
     setLoading(true)
     const { data } = await supabase
-      .from('coaching_insights' as any)
+      .from('coaching_insights')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
@@ -156,7 +154,7 @@ Generate coaching insights as JSON with keys: weekly_recap (title, body), jar_re
         ].filter(i => i.title && i.body)
 
         for (const insight of insightsToStore) {
-          await supabase.from('coaching_insights' as any).insert({
+          await supabase.from('coaching_insights').insert({
             user_id: userId,
             insight_type: insight.type,
             title: insight.title,
@@ -176,7 +174,7 @@ Generate coaching insights as JSON with keys: weekly_recap (title, body), jar_re
 
   const markRead = useCallback(async (insightId: string) => {
     await supabase
-      .from('coaching_insights' as any)
+      .from('coaching_insights')
       .update({ read: true })
       .eq('id', insightId)
     setInsights(prev => prev.map(i => i.id === insightId ? { ...i, read: true } : i))

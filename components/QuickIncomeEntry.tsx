@@ -336,13 +336,13 @@ export function QuickIncomeEntry() {
               </>
             ) : fixedJars.length > 0 ? (
               <>
-                Next: Split Today's Income
+                Next: Split Today&apos;s Income
                 <DollarSign className="ml-2 h-4 w-4" />
               </>
             ) : (
               <>
                 <Plus className="mr-2 h-4 w-4" />
-                Log Today's Income
+                Log Today&apos;s Income
               </>
             )}
           </Button>

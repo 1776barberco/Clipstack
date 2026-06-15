@@ -114,7 +114,7 @@ export function StabilityMeter() {
             <p className="font-medium">What this means:</p>
             <p className="text-muted-foreground">
               Your stability score shows how many weeks of average income you have saved. 
-              You're working toward 4+ weeks of coverage — that's financial freedom territory.
+              You&apos;re working toward 4+ weeks of coverage, that&apos;s financial freedom territory.
             </p>
           </div>
         </div>
