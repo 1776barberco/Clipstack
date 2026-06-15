@@ -36,6 +36,7 @@ export function BucketBalances() {
     percentage: number
     count: number
     color: string
+    jars: string[]
   }>>((groups, bucket) => {
     const name = bucket.group_name?.trim() || 'Ungrouped'
     const existing = groups.find((group) => group.name === name)
@@ -48,6 +49,7 @@ export function BucketBalances() {
       existing.target += target
       existing.percentage += percentage
       existing.count += 1
+      existing.jars.push(bucket.name)
       return groups
     }
 
@@ -58,6 +60,7 @@ export function BucketBalances() {
       percentage,
       count: 1,
       color: bucket.color,
+      jars: [bucket.name],
     })
     return groups
   }, [])
@@ -98,7 +101,7 @@ export function BucketBalances() {
                         <div className="mb-2 flex items-center justify-between gap-2">
                           <div className="flex min-w-0 items-center gap-2">
                             <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: group.color }} />
-                            <p className="truncate text-sm font-semibold">{group.name}</p>
+                            <p className="truncate text-sm font-semibold">{group.name} group</p>
                           </div>
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Layers3 className="h-3 w-3" />
@@ -106,6 +109,9 @@ export function BucketBalances() {
                           </span>
                         </div>
                         <p className="text-xl font-bold">{formatCurrency(group.balance)}</p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          Includes {group.jars.join(' + ')}
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           {group.target > 0
                             ? `${fundedPct}% funded of ${formatCurrency(group.target)}`
