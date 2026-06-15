@@ -61,6 +61,7 @@ export function BucketBalances() {
     })
     return groups
   }, [])
+  const multiJarGroups = jarGroups.filter((group) => group.count > 1)
 
   return (
     <Card>
@@ -80,46 +81,58 @@ export function BucketBalances() {
         ) : (
           <>
             <div className="mb-4 text-center">
-              <p className="text-sm text-muted-foreground">Total Balance</p>
+              <p className="text-sm text-muted-foreground">Total in jars</p>
               <p className="text-3xl font-bold">{formatCurrency(totalBalance)}</p>
             </div>
-            {jarGroups.length > 0 && (
-              <div className="mb-5 grid gap-3 sm:grid-cols-2">
-                {jarGroups.map((group) => {
-                  const fundedPct = group.target > 0 ? Math.min(100, Math.round((group.balance / group.target) * 100)) : null
-                  return (
-                    <div key={group.name} className="rounded-lg border bg-muted/30 p-3">
-                      <div className="mb-2 flex items-center justify-between gap-2">
-                        <div className="flex min-w-0 items-center gap-2">
-                          <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: group.color }} />
-                          <p className="truncate text-sm font-semibold">{group.name}</p>
+            {multiJarGroups.length > 0 && (
+              <section className="mb-5 space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Layers3 className="h-4 w-4" />
+                  Jar groups
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {multiJarGroups.map((group) => {
+                    const fundedPct = group.target > 0 ? Math.min(100, Math.round((group.balance / group.target) * 100)) : null
+                    return (
+                      <div key={group.name} className="rounded-lg border bg-muted/30 p-3">
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: group.color }} />
+                            <p className="truncate text-sm font-semibold">{group.name}</p>
+                          </div>
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Layers3 className="h-3 w-3" />
+                            {group.count} jars
+                          </span>
                         </div>
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Layers3 className="h-3 w-3" />
-                          {group.count}
-                        </span>
+                        <p className="text-xl font-bold">{formatCurrency(group.balance)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {group.target > 0
+                            ? `${fundedPct}% funded of ${formatCurrency(group.target)}`
+                            : `${group.percentage.toFixed(1)}% allocation`}
+                        </p>
                       </div>
-                      <p className="text-xl font-bold">{formatCurrency(group.balance)}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {group.target > 0
-                          ? `${fundedPct}% funded of ${formatCurrency(group.target)}`
-                          : `${group.percentage.toFixed(1)}% allocation`}
-                      </p>
-                    </div>
-                  )
-                })}
-              </div>
+                    )
+                  })}
+                </div>
+              </section>
             )}
-            <div className="grid gap-3 sm:grid-cols-2">
-              {buckets.map((bucket) => (
-                <BucketCard
-                  key={bucket.id}
-                  bucket={bucket}
-                  balance={getBucketBalance(bucket.id)}
-                  totalBalance={totalBalance}
-                />
-              ))}
-            </div>
+            <section className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Wallet className="h-4 w-4" />
+                Individual jars
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {buckets.map((bucket) => (
+                  <BucketCard
+                    key={bucket.id}
+                    bucket={bucket}
+                    balance={getBucketBalance(bucket.id)}
+                    totalBalance={totalBalance}
+                  />
+                ))}
+              </div>
+            </section>
           </>
         )}
       </CardContent>
