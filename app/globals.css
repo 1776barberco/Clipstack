@@ -137,9 +137,11 @@
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* Smooth transitions for all interactive elements */
+/* Smooth transitions for interactive elements */
 button, a, input, [role="button"] {
-  transition: all 0.2s ease;
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: 0.2s;
+  transition-timing-function: ease;
 }
 
 /* Glow effect for active states */

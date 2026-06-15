@@ -150,11 +150,11 @@ export function PlaidConnectionCard({ userId }: PlaidConnectionCardProps) {
         <div className="grid gap-3 sm:grid-cols-4">
           <div className="rounded-lg border bg-white p-3">
             <p className="text-xs text-muted-foreground">Connected accounts</p>
-            <p className="text-2xl font-semibold">{loading ? '...' : connectedCount}</p>
+            <p className="text-2xl font-semibold">{loading ? '…' : connectedCount}</p>
           </div>
           <div className="rounded-lg border bg-white p-3">
             <p className="text-xs text-muted-foreground">Transactions imported</p>
-            <p className="text-2xl font-semibold">{loading ? '...' : totalTransactions}</p>
+            <p className="text-2xl font-semibold">{loading ? '…' : totalTransactions}</p>
             <p className="text-xs text-amber-700">{needsReviewCount} need jar review</p>
           </div>
           <div className="rounded-lg border bg-white p-3">
@@ -184,17 +184,17 @@ export function PlaidConnectionCard({ userId }: PlaidConnectionCardProps) {
         {accounts.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold">Connected accounts</h3>
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-2">
               {accounts.map((account) => {
                 const parentItem = items.find((item) => item.id === account.plaid_item_id)
 
                 return (
                   <div key={account.id} className="rounded-lg border bg-white p-3">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-center gap-3">
+                    <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+                      <div className="flex min-w-0 items-start gap-3">
                         {account.type === 'credit' ? <CreditCard className="h-4 w-4 text-muted-foreground" /> : <Banknote className="h-4 w-4 text-muted-foreground" />}
-                        <div>
-                          <p className="font-medium">{account.name}</p>
+                        <div className="min-w-0">
+                          <p className="break-words font-medium leading-snug">{account.name}</p>
                           <p className="text-xs text-muted-foreground">
                             {[account.subtype, account.mask ? `••${account.mask}` : null].filter(Boolean).join(' • ')}
                           </p>
@@ -203,8 +203,8 @@ export function PlaidConnectionCard({ userId }: PlaidConnectionCardProps) {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between gap-3 sm:justify-end">
-                        <div className="space-y-1 text-right">
+                      <div className="grid gap-3 sm:justify-items-end">
+                        <div className="space-y-1 sm:text-right">
                           {account.available_balance != null && account.available_balance !== account.current_balance ? (
                             <>
                               <div>
@@ -227,10 +227,10 @@ export function PlaidConnectionCard({ userId }: PlaidConnectionCardProps) {
                           size="sm"
                           onClick={() => setItemToDisconnect(account.plaid_item_id)}
                           disabled={disconnectingId === account.plaid_item_id}
-                          className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                          className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
                         >
                           <Trash2 className="mr-2 h-3.5 w-3.5" />
-                          {disconnectingId === account.plaid_item_id ? 'Disconnecting...' : 'Disconnect'}
+                          {disconnectingId === account.plaid_item_id ? 'Disconnecting…' : 'Disconnect'}
                         </Button>
                       </div>
                     </div>
@@ -247,13 +247,13 @@ export function PlaidConnectionCard({ userId }: PlaidConnectionCardProps) {
             <div className="divide-y rounded-lg border bg-white">
               {transactions.slice(0, 8).map((transaction) => (
                 <div key={transaction.id} className="flex items-center justify-between gap-3 p-3">
-                  <div>
-                    <p className="font-medium">{transaction.merchant_name ?? transaction.name}</p>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{transaction.merchant_name ?? transaction.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {new Date(`${transaction.date}T00:00:00`).toLocaleDateString()} • {transaction.primary_category ?? transaction.transaction_type}
                     </p>
                   </div>
-                  <p className={`font-semibold ${transaction.transaction_type === 'income' ? 'text-green-600' : 'text-slate-900'}`}>
+                  <p className={`shrink-0 font-semibold ${transaction.transaction_type === 'income' ? 'text-green-600' : 'text-slate-900'}`}>
                     {formatTransactionAmount(transaction.amount, transaction.transaction_type)}
                   </p>
                 </div>
@@ -277,7 +277,7 @@ export function PlaidConnectionCard({ userId }: PlaidConnectionCardProps) {
             Cancel
           </Button>
           <Button variant="destructive" onClick={handleDisconnect} disabled={Boolean(disconnectingId)}>
-            {disconnectingId ? 'Disconnecting...' : 'Disconnect bank'}
+            {disconnectingId ? 'Disconnecting…' : 'Disconnect bank'}
           </Button>
         </DialogFooter>
       </DialogContent>

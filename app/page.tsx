@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
+import { ArrowRight, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Footer } from '@/components/Footer'
 import { HeroAnimation } from '@/components/HeroAnimation'
@@ -50,27 +51,39 @@ export default function HomePage() {
       </nav>
 
       {/* Hero */}
-      <section className="px-6 pt-28 pb-32 text-center max-w-3xl mx-auto">
+      <section className="relative min-h-[calc(100svh-5rem)] overflow-hidden px-6 py-24 text-center sm:py-28">
         <HeroAnimation />
-        <h1 className="text-5xl sm:text-7xl font-bold tracking-tight leading-[1.1] mb-6">
-          Your money,
-          <br />
-          organized.
-        </h1>
-        <p className="text-lg sm:text-xl text-zinc-500 dark:text-zinc-400 mb-10 max-w-xl mx-auto">
-          Know exactly where every dollar goes. Built for barbers, stylists, and independent professionals &mdash; not spreadsheets.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link href="/login">
-            <Button className="bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 rounded-full px-8 h-12 text-base">
-              Get Started
-            </Button>
-          </Link>
-          <a href="#features">
-            <Button variant="outline" className="border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-full px-8 h-12 text-base">
-              Learn More
-            </Button>
-          </a>
+        <div className="relative z-10 mx-auto flex min-h-[calc(100svh-13rem)] max-w-4xl flex-col items-center justify-center">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/90 px-3 py-1.5 text-xs font-semibold text-zinc-600 shadow-sm backdrop-blur">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+            Read-only bank sync, jar tracking, and AI coaching
+          </div>
+          <h1 className="mb-6 max-w-3xl text-5xl font-black leading-[1.02] tracking-tight text-zinc-950 text-balance sm:text-7xl">
+            Run your money like a booked-out business.
+          </h1>
+          <p className="mx-auto mb-10 max-w-2xl text-lg leading-8 text-zinc-600 text-pretty sm:text-xl">
+            TipJars turns uneven income into clear jars for taxes, bills, savings, and real life. Built for barbers, stylists, and independent pros who need decisions faster than spreadsheets.
+          </p>
+          <div className="flex flex-col justify-center gap-3 sm:flex-row">
+            <Link href="/login">
+              <Button className="h-12 rounded-full bg-zinc-950 px-8 text-base text-white hover:bg-zinc-800">
+                Get Started
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <a href="#features">
+              <Button variant="outline" className="h-12 rounded-full border-zinc-300 bg-white/80 px-8 text-base text-zinc-700 backdrop-blur hover:bg-white">
+                See How It Works
+              </Button>
+            </a>
+          </div>
+          <div className="mt-10 grid w-full max-w-2xl gap-2 text-xs text-zinc-500 sm:grid-cols-3 sm:text-sm">
+            {['Split tips automatically', 'Review bank activity', 'Know what is safe to spend'].map((item) => (
+              <div key={item} className="rounded-2xl border border-zinc-200 bg-white/80 px-3 py-2 text-center font-medium shadow-sm backdrop-blur">
+                {item}
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

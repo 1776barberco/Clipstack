@@ -416,7 +416,7 @@ export default function SettingsPage() {
   if (profileLoading || bucketsLoading || accountsLoading || plaidLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">Loading settings...</p>
+        <p className="text-muted-foreground">Loading settings…</p>
       </div>
     )
   }
@@ -440,7 +440,7 @@ export default function SettingsPage() {
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')}>
+            <Button variant="ghost" size="icon" aria-label="Back to dashboard" onClick={() => router.push('/dashboard')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-2">
@@ -523,7 +523,7 @@ export default function SettingsPage() {
             <Separator />
             <Button onClick={handleSaveProfile} disabled={savingProfile}>
               <Save className="mr-2 h-4 w-4" />
-              {savingProfile ? 'Saving...' : 'Save Profile'}
+              {savingProfile ? 'Saving…' : 'Save Profile'}
             </Button>
           </CardContent>
         </Card>
@@ -556,8 +556,10 @@ export default function SettingsPage() {
                 <p className="text-sm font-medium">Add New Account</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label className="text-xs">Account Name</Label>
+                    <Label className="text-xs" htmlFor="newAccountName">Account Name</Label>
                     <Input
+                      id="newAccountName"
+                      name="newAccountName"
                       placeholder="e.g. Chase Checking"
                       value={newAccountName}
                       onChange={(e) => setNewAccountName(e.target.value)}
@@ -565,8 +567,10 @@ export default function SettingsPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Type</Label>
+                    <Label className="text-xs" htmlFor="newAccountType">Type</Label>
                     <select
+                      id="newAccountType"
+                      name="newAccountType"
                       value={newAccountType}
                       onChange={(e) => setNewAccountType(e.target.value)}
                       className="h-10 w-full rounded-md border bg-background px-3 text-sm"
@@ -581,10 +585,12 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Starting Balance</Label>
+                  <Label className="text-xs" htmlFor="newAccountBalance">Starting Balance</Label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
+                      id="newAccountBalance"
+                      name="newAccountBalance"
                       type="number"
                       step="0.01"
                       min={0}
@@ -643,6 +649,7 @@ export default function SettingsPage() {
                       size="icon"
                       onClick={() => setAccountCarouselIndex(Math.max(0, accountCarouselIndex - 1))}
                       disabled={accountCarouselIndex === 0}
+                      aria-label="Previous manual account"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -650,6 +657,7 @@ export default function SettingsPage() {
                       {accounts.map((_, i) => (
                         <button
                           key={i}
+                          aria-label={`Show manual account ${i + 1}`}
                           className={`h-2 w-2 rounded-full transition-colors ${
                             i === accountCarouselIndex ? 'bg-primary' : 'bg-muted-foreground/30'
                           }`}
@@ -662,6 +670,7 @@ export default function SettingsPage() {
                       size="icon"
                       onClick={() => setAccountCarouselIndex(Math.min(accounts.length - 1, accountCarouselIndex + 1))}
                       disabled={accountCarouselIndex >= accounts.length - 1}
+                      aria-label="Next manual account"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
@@ -707,6 +716,7 @@ export default function SettingsPage() {
                           <Button
                             variant="ghost"
                             size="icon"
+                            aria-label={`Delete ${account.name}`}
                             onClick={() => handleDeleteAccount(account.id, account.name)}
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
@@ -785,7 +795,7 @@ export default function SettingsPage() {
                     disabled={savingAccounts || Object.keys(editedAccounts).length === 0}
                   >
                     <Save className="mr-2 h-4 w-4" />
-                    {savingAccounts ? 'Saving...' : 'Save Accounts'}
+                    {savingAccounts ? 'Saving…' : 'Save Accounts'}
                   </Button>
                 </div>
               </>
@@ -861,12 +871,14 @@ export default function SettingsPage() {
                   {/* Row 1: Color + Name + Delete */}
                   <div className="flex items-center gap-3">
                     <input
+                      aria-label={`${bucket.name} color`}
                       type="color"
                       value={getBucketField(bucket.id, 'color', bucket.color)}
                       onChange={(e) => setBucketField(bucket.id, 'color', e.target.value)}
                       className="h-8 w-8 cursor-pointer rounded border-0 p-0 shrink-0"
                     />
                     <Input
+                      aria-label={`${bucket.name} name`}
                       ref={isNewBucket ? newBucketNameRef : undefined}
                       value={getBucketField(bucket.id, 'name', bucket.name)}
                       onChange={(e) => setBucketField(bucket.id, 'name', e.target.value)}
@@ -877,6 +889,7 @@ export default function SettingsPage() {
                       variant="ghost"
                       size="icon"
                       className="shrink-0"
+                      aria-label={`Delete ${bucket.name}`}
                       onClick={() => handleDeleteBucket(bucket.id, bucket.name)}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
@@ -885,8 +898,9 @@ export default function SettingsPage() {
 
                   <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
                     <div className="space-y-1.5">
-                      <Label className="text-xs text-muted-foreground">Group</Label>
+                      <Label className="text-xs text-muted-foreground" htmlFor={`bucket-group-${bucket.id}`}>Group</Label>
                       <Input
+                        id={`bucket-group-${bucket.id}`}
                         list="jar-group-suggestions"
                         value={getBucketField(bucket.id, 'group_name', bucket.group_name ?? '')}
                         onChange={(e) => setBucketField(bucket.id, 'group_name', e.target.value)}
@@ -903,6 +917,7 @@ export default function SettingsPage() {
                         onClick={() => toggleAllocationType(bucket.id)}
                         className="text-xs font-medium px-2 py-1 rounded border hover:bg-accent transition-colors shrink-0"
                         title={fixed ? 'Switch to percentage' : 'Switch to fixed dollar amount'}
+                        aria-label={fixed ? `Switch ${bucket.name} to percentage` : `Switch ${bucket.name} to fixed dollar amount`}
                       >
                         {fixed ? '$' : '%'}
                       </button>
@@ -910,6 +925,7 @@ export default function SettingsPage() {
                         <div className="flex items-center gap-1">
                           <span className="text-sm text-muted-foreground">$</span>
                           <Input
+                            aria-label={`${bucket.name} fixed amount`}
                             type="number"
                             min={0}
                             step="0.01"
@@ -922,6 +938,7 @@ export default function SettingsPage() {
                       ) : (
                         <div className="flex items-center gap-1">
                           <Input
+                            aria-label={`${bucket.name} percentage`}
                             type="number"
                             min={0}
                             max={100}
@@ -934,8 +951,9 @@ export default function SettingsPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <Label className="text-xs text-muted-foreground whitespace-nowrap">Due</Label>
+                      <Label className="text-xs text-muted-foreground whitespace-nowrap" htmlFor={`bucket-due-${bucket.id}`}>Due</Label>
                       <Input
+                        id={`bucket-due-${bucket.id}`}
                         type="date"
                         value={getBucketField(bucket.id, 'due_date', bucket.due_date ?? '')}
                         onChange={(e) => setBucketField(bucket.id, 'due_date', e.target.value)}
@@ -967,6 +985,7 @@ export default function SettingsPage() {
                     </label>
                     {getBucketField(bucket.id, 'is_recurring', String(bucket.is_recurring ?? false)) === 'true' && (
                       <select
+                        aria-label={`${bucket.name} recurring interval`}
                         value={getBucketField(bucket.id, 'recurring_interval', bucket.recurring_interval ?? 'monthly')}
                         onChange={(e) => setBucketField(bucket.id, 'recurring_interval', e.target.value)}
                         className="h-8 rounded border bg-background px-2 text-xs"
@@ -1012,7 +1031,7 @@ export default function SettingsPage() {
                 <div className="flex justify-end">
                   <Button onClick={handleSaveBuckets} disabled={savingBuckets || (percentageBuckets.length > 0 && Math.abs(totalPercentage - 100) > 0.1)}>
                     <Save className="mr-2 h-4 w-4" />
-                    {savingBuckets ? 'Saving...' : 'Save Jars'}
+                    {savingBuckets ? 'Saving…' : 'Save Jars'}
                   </Button>
                 </div>
               </div>
@@ -1055,6 +1074,7 @@ export default function SettingsPage() {
                   notifPrefs?.daily_tracking_reminder ? 'bg-primary' : 'bg-muted'
                 }`}
                 disabled={notifLoading}
+                aria-label="Toggle daily tracking reminders"
               >
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -1114,6 +1134,7 @@ export default function SettingsPage() {
                           }
                         }}
                         disabled={subscribing || pushState === 'denied'}
+                        aria-label="Toggle push notifications"
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                           pushState === 'subscribed' ? 'bg-primary' : 'bg-muted'
                         } ${pushState === 'denied' ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -1193,7 +1214,7 @@ export default function SettingsPage() {
             </div>
             <Button onClick={handleChangePassword} disabled={savingPassword}>
               <Lock className="mr-2 h-4 w-4" />
-              {savingPassword ? 'Updating...' : 'Update Password'}
+              {savingPassword ? 'Updating…' : 'Update Password'}
             </Button>
           </CardContent>
         </Card>
