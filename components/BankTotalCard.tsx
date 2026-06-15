@@ -79,7 +79,7 @@ export function BankTotalCard() {
             )}
           </div>
           <div className="text-right space-y-1">
-            {startingBalance > 0 && (
+            {(startingBalance > 0 || plaidAccounts.length > 0) && (
               <div>
                 <p className="text-xs text-muted-foreground">
                   {plaidAccounts.length > 0 ? `Current balance (${plaidAccounts.filter((a) => a.is_active && a.type === 'depository').length} accts)` : accounts.length > 1 ? `Starting (${accounts.length} accts)` : 'Starting'}

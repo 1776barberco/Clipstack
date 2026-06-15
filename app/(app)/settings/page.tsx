@@ -6,6 +6,7 @@ import { useAuthContext } from '@/providers/AuthProvider'
 import { useProfile } from '@/hooks/useProfile'
 import { useBuckets } from '@/hooks/useBuckets'
 import { useBankAccounts, BankAccount } from '@/hooks/useBankAccounts'
+import { usePlaidConnections } from '@/hooks/usePlaidConnections'
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences'
 import { usePushSubscription } from '@/hooks/usePushSubscription'
 import { updateProfileAction } from '@/app/actions/auth'
@@ -46,6 +47,7 @@ export default function SettingsPage() {
   const { profile, loading: profileLoading } = useProfile(user?.id)
   const { buckets, loading: bucketsLoading, createBucket, updateBucket, deleteBucket } = useBuckets(user?.id)
   const { accounts, loading: accountsLoading, createAccount, updateAccount, deleteAccount } = useBankAccounts(user?.id)
+  const { accounts: plaidAccounts, loading: plaidLoading } = usePlaidConnections(user?.id)
   const { preferences: notifPrefs, loading: notifLoading, updatePreferences: updateNotifPrefs } = useNotificationPreferences(user?.id)
   const { pushState, subscribing, subscribe: subscribePush, unsubscribe: unsubscribePush, isSupported: pushSupported } = usePushSubscription(user?.id)
 
@@ -73,6 +75,8 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [savingPassword, setSavingPassword] = useState(false)
   const [showJarCalculator, setShowJarCalculator] = useState(false)
+
+  const activePlaidAccounts = plaidAccounts.filter((account) => account.is_active)
 
   // Auto-focus newly created jar name input
   useEffect(() => {
@@ -174,8 +178,8 @@ export default function SettingsPage() {
   }
 
   const handleDeleteAccount = async (id: string, name: string) => {
-    if (accounts.length <= 1) {
-      toast.error('You must have at least one account.')
+    if (accounts.length <= 1 && activePlaidAccounts.length === 0) {
+      toast.error('You must have at least one manual or connected account.')
       return
     }
     const { error } = await deleteAccount(id)
@@ -409,7 +413,7 @@ export default function SettingsPage() {
     }))
   }
 
-  if (profileLoading || bucketsLoading || accountsLoading) {
+  if (profileLoading || bucketsLoading || accountsLoading || plaidLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p className="text-muted-foreground">Loading settings...</p>
@@ -616,11 +620,15 @@ export default function SettingsPage() {
             {accounts.length === 0 && !showAddAccount && (
               <div className="rounded-lg border border-dashed p-6 text-center space-y-2">
                 <Landmark className="h-8 w-8 mx-auto text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">No bank accounts yet.</p>
-                <p className="text-xs text-muted-foreground">Add your first account to start tracking your bank totals.</p>
+                <p className="text-sm text-muted-foreground">No manual accounts yet.</p>
+                <p className="text-xs text-muted-foreground">
+                  {activePlaidAccounts.length > 0
+                    ? 'Your connected Plaid accounts are already tracking live bank totals.'
+                    : 'Add a manual account only if you have cash or an account that is not connected through Plaid.'}
+                </p>
                 <Button variant="outline" size="sm" onClick={() => setShowAddAccount(true)}>
                   <Plus className="mr-2 h-4 w-4" />
-                  Add Your First Account
+                  Add Manual Account
                 </Button>
               </div>
             )}
