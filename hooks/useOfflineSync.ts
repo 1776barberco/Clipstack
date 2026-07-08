@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { REFRESH_EVENTS, dispatchRefreshEvent } from '@/lib/refresh-events'
 import { supabase } from '@/lib/supabase/client'
 
 interface QueuedAction {
@@ -11,6 +12,14 @@ interface QueuedAction {
 
 const QUEUE_KEY = 'tipjars_offline_queue'
 const LAST_SYNC_KEY = 'tipjars_last_sync'
+
+function normalizeQueuedAmount(data: Record<string, unknown>) {
+  const amount = Math.abs(Number(data.amount))
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return null
+  }
+  return { ...data, amount }
+}
 
 export function useOfflineSync(userId: string | undefined) {
   const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true)
@@ -66,32 +75,43 @@ export function useOfflineSync(userId: string | undefined) {
         let result
 
         switch (action.type) {
-          case 'income':
+          case 'income': {
+            const data = normalizeQueuedAmount(action.data)
+            if (!data) throw new Error('Queued income amount must be greater than 0')
             result = await supabase.from('income_entries').insert({
-              ...action.data,
+              ...data,
               user_id: userId,
             })
             break
-          case 'withdrawal':
+          }
+          case 'withdrawal': {
+            const data = normalizeQueuedAmount(action.data)
+            if (!data) throw new Error('Queued withdrawal amount must be greater than 0')
             result = await supabase.from('bucket_transactions').insert({
-              ...action.data,
+              ...data,
               user_id: userId,
               type: 'withdrawal',
             })
             break
-          case 'transfer':
+          }
+          case 'transfer': {
+            const data = normalizeQueuedAmount(action.data)
+            if (!data) throw new Error('Queued transfer amount must be greater than 0')
             result = await supabase.from('bucket_transactions').insert({
-              ...action.data,
+              ...data,
               user_id: userId,
               type: 'transfer',
             })
             break
+          }
         }
 
         if (result?.error) {
           throw result.error
         }
-      } catch {
+        dispatchRefreshEvent(REFRESH_EVENTS.incomeUpdated)
+      } catch (error) {
+        console.error('Offline sync action failed:', error)
         if (action.retryCount < 3) {
           failedActions.push({
             ...action,

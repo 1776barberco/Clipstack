@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { REFRESH_EVENTS, dispatchRefreshEvents } from '@/lib/refresh-events'
 import { supabase } from '@/lib/supabase/client'
 import type { PlaidTransaction } from '@/hooks/usePlaidConnections'
 
@@ -59,6 +60,8 @@ export function PlaidTransactionReview({ userId, transactions, buckets, onAssign
   }
 
   const assignIncome = async (transaction: PlaidTransaction) => {
+    if (busyId) return
+
     const allocations: Record<string, number> = {}
     Object.entries(incomeSplits[transaction.id] ?? {}).forEach(([bucketId, value]) => {
       const amount = Number(value)
@@ -70,55 +73,72 @@ export function PlaidTransactionReview({ userId, transactions, buckets, onAssign
       return
     }
 
-    setBusyId(transaction.id)
-    const { error } = await supabase.rpc('assign_plaid_income_to_buckets', {
-      p_user_id: userId,
-      p_transaction_id: transaction.id,
-      p_allocations: allocations,
-      p_note: 'Assigned from transaction review',
-    })
-    setBusyId(null)
+    try {
+      setBusyId(transaction.id)
+      const { error } = await supabase.rpc('assign_plaid_income_to_buckets', {
+        p_user_id: userId,
+        p_transaction_id: transaction.id,
+        p_allocations: allocations,
+        p_note: 'Assigned from transaction review',
+      })
 
-    if (error) {
-      toast.error(error.message)
-      return
+      if (error) {
+        toast.error(error.message)
+        return
+      }
+
+      toast.success('Income split into jars')
+      dispatchRefreshEvents([REFRESH_EVENTS.incomeUpdated, REFRESH_EVENTS.expensesUpdated])
+      await onAssigned?.()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not assign income')
+    } finally {
+      setBusyId(null)
     }
-
-    toast.success('Income split into jars')
-    window.dispatchEvent(new Event('income-updated'))
-    window.dispatchEvent(new Event('expenses-updated'))
-    await onAssigned?.()
   }
 
   const assignExpense = async (transaction: PlaidTransaction) => {
+    if (busyId) return
+
     const bucketId = expenseBuckets[transaction.id]
     if (!bucketId) {
       toast.error('Choose the jar that paid for this expense')
       return
     }
 
-    setBusyId(transaction.id)
-    const response = await fetch('/api/plaid/assign-expense', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        transactionId: transaction.id,
-        bucketId,
-        amount: Math.abs(transaction.amount),
-        note: `Synced expense: ${transaction.merchant_name ?? transaction.name}`,
-      }),
-    })
-    setBusyId(null)
-
-    if (!response.ok) {
-      const result = await response.json().catch(() => ({ error: 'Could not assign expense' }))
-      toast.error(result.error ?? 'Could not assign expense')
+    const amount = Math.abs(Number(transaction.amount))
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error('Transaction amount is not valid')
       return
     }
 
-    toast.success('Expense subtracted from jar')
-    window.dispatchEvent(new Event('expenses-updated'))
-    await onAssigned?.()
+    try {
+      setBusyId(transaction.id)
+      const response = await fetch('/api/plaid/assign-expense', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transactionId: transaction.id,
+          bucketId,
+          amount,
+          note: `Synced expense: ${transaction.merchant_name ?? transaction.name}`,
+        }),
+      })
+
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({ error: 'Could not assign expense' }))
+        toast.error(result.error ?? 'Could not assign expense')
+        return
+      }
+
+      toast.success('Expense subtracted from jar')
+      dispatchRefreshEvents([REFRESH_EVENTS.expensesUpdated, REFRESH_EVENTS.incomeUpdated])
+      await onAssigned?.()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not assign expense')
+    } finally {
+      setBusyId(null)
+    }
   }
 
   return (
