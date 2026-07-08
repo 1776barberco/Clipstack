@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase, DEMO_MODE, DEMO_USER } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { startOfWeek, endOfWeek, format, subWeeks } from 'date-fns'
+import { REFRESH_EVENTS, subscribeToUserRefresh } from '@/lib/refresh-events'
 
 type IncomeEntry = {
   id: string
@@ -129,37 +130,28 @@ export function useIncome(userId: string | undefined) {
 
     fetchIncome()
 
-    // Subscribe to realtime changes
-    const subscription = supabase
-      .channel(`income_entries:${userId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'income_entries',
-          filter: `user_id=eq.${userId}`,
-        },
-        () => {
-          fetchIncome()
-        }
-      )
-      .subscribe()
-
-    // Listen for manual refresh events (Realtime may miss SECURITY DEFINER changes)
-    const handleManualRefresh = () => fetchIncome()
-    window.addEventListener('income-updated', handleManualRefresh)
-
-    return () => {
-      subscription.unsubscribe()
-      window.removeEventListener('income-updated', handleManualRefresh)
-    }
+    return subscribeToUserRefresh({
+      client: supabase,
+      userId,
+      tables: [{ table: 'income_entries' }],
+      events: [REFRESH_EVENTS.incomeUpdated],
+      refresh: fetchIncome,
+    })
   }, [userId])
 
   const addIncome = async (income: Omit<IncomeEntry, 'id' | 'created_at' | 'updated_at'>) => {
+    const normalizedIncome = {
+      ...income,
+      amount: Math.abs(Number(income.amount)),
+    }
+
+    if (!Number.isFinite(normalizedIncome.amount) || normalizedIncome.amount <= 0) {
+      return { data: null, error: new Error('Income amount must be greater than 0') }
+    }
+
     if (DEMO_MODE) {
       const newIncome: IncomeEntry = {
-        ...income,
+        ...normalizedIncome,
         id: `income-${Date.now()}`,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -176,7 +168,7 @@ export function useIncome(userId: string | undefined) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('id')
-      .eq('id', income.user_id)
+      .eq('id', normalizedIncome.user_id)
       .maybeSingle()
 
     if (!profile) {
@@ -187,7 +179,7 @@ export function useIncome(userId: string | undefined) {
 
     const { data, error } = await supabase
       .from('income_entries')
-      .insert(income)
+      .insert(normalizedIncome)
       .select()
       .single()
 

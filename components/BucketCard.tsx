@@ -21,6 +21,7 @@ import { MinusCircle, Loader2, Receipt, CalendarClock, RefreshCw, CheckCircle2 }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { format, differenceInDays, parseISO } from 'date-fns'
+import { REFRESH_EVENTS, dispatchRefreshEvents } from '@/lib/refresh-events'
 
 interface BucketCardProps {
   bucket: {
@@ -81,6 +82,11 @@ const RISK_LABEL: Record<'green' | 'yellow' | 'red', string> = {
   red: 'Needs attention',
 }
 
+function parsePositiveAmount(value: string) {
+  const amount = Math.abs(Number(value))
+  return Number.isFinite(amount) && amount > 0 ? amount : null
+}
+
 export function BucketCard({ bucket, balance, totalBalance, onExpenseAdded }: BucketCardProps) {
   const { user } = useAuthContext()
   const { addExpense } = useExpenses(user?.id)
@@ -99,6 +105,7 @@ export function BucketCard({ bucket, balance, totalBalance, onExpenseAdded }: Bu
 
   const percentage = totalBalance > 0 ? (balance / totalBalance) * 100 : 0
   const riskLevel = getRiskLevel(balance, bucket.target_amount, bucket.due_date)
+  const parsedExpenseAmount = parsePositiveAmount(expenseAmount)
 
   const handleMarkPaid = async (e: React.MouseEvent) => {
     e.stopPropagation() // prevent opening the expense dialog
@@ -118,7 +125,7 @@ export function BucketCard({ bucket, balance, totalBalance, onExpenseAdded }: Bu
       } else {
         toast.success(`${bucket.name} marked as paid! Next due: ${data.newDueDate}`)
         // Trigger a data refresh
-        window.dispatchEvent(new Event('income-updated'))
+        dispatchRefreshEvents([REFRESH_EVENTS.incomeUpdated, REFRESH_EVENTS.expensesUpdated])
         onExpenseAdded?.()
       }
     } catch {
@@ -130,13 +137,19 @@ export function BucketCard({ bucket, balance, totalBalance, onExpenseAdded }: Bu
 
   const handleQuickExpense = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!expenseAmount || !user) return
+    if (!user || loading) return
+
+    const amount = parsePositiveAmount(expenseAmount)
+    if (!amount) {
+      toast.error('Enter an amount greater than $0')
+      return
+    }
 
     setLoading(true)
     const expenseData: Record<string, unknown> = {
       user_id: user.id,
       bucket_id: bucket.id,
-      amount: parseFloat(expenseAmount),
+      amount,
       description: expenseDescription || null,
       category: null,
       entry_date: format(new Date(), 'yyyy-MM-dd'),
@@ -155,6 +168,7 @@ export function BucketCard({ bucket, balance, totalBalance, onExpenseAdded }: Bu
       setExpenseAmount('')
       setExpenseDescription('')
       setDialogOpen(false)
+      dispatchRefreshEvents([REFRESH_EVENTS.expensesUpdated, REFRESH_EVENTS.incomeUpdated])
       onExpenseAdded?.()
     }
   }
@@ -327,11 +341,11 @@ export function BucketCard({ bucket, balance, totalBalance, onExpenseAdded }: Bu
             />
           </div>
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={!expenseAmount || parseFloat(expenseAmount) > balance || loading}
-          >
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={!parsedExpenseAmount || parsedExpenseAmount > balance || loading}
+            >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (

@@ -15,6 +15,7 @@ import { format, parseISO } from 'date-fns'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { REFRESH_EVENTS, dispatchRefreshEvents } from '@/lib/refresh-events'
 
 export function RecentTransactions() {
   const { user } = useAuthContext()
@@ -25,6 +26,7 @@ export function RecentTransactions() {
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
 
   const handleDelete = async (id: string, type: 'income' | 'expense') => {
+    if (isDeleting) return
     if (!confirm(`Are you sure you want to delete this ${type}? This will also reverse any changes to your jars and bank balance.`)) {
       return
     }
@@ -37,19 +39,27 @@ export function RecentTransactions() {
         body: JSON.stringify({ id, type }),
       })
 
-      if (!response.ok) throw new Error('Failed to delete')
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({ error: 'Failed to delete' }))
+        throw new Error(result.error ?? 'Failed to delete')
+      }
 
       toast.success(`${type === 'income' ? 'Income' : 'Expense'} deleted successfully`)
-      window.dispatchEvent(new Event('income-updated'))
+      dispatchRefreshEvents(
+        type === 'expense'
+          ? [REFRESH_EVENTS.expensesUpdated, REFRESH_EVENTS.incomeUpdated]
+          : [REFRESH_EVENTS.incomeUpdated]
+      )
       if (typeof window !== 'undefined') window.location.reload()
-    } catch {
-      toast.error('Failed to delete transaction')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to delete transaction')
     } finally {
       setIsDeleting(null)
     }
   }
 
   const handleClearAll = async () => {
+    if (isDeleting) return
     if (!confirm('Delete all logged income and expenses? This will reset jar balances to $0 and bank accounts back to starting balances.')) {
       return
     }
@@ -62,13 +72,16 @@ export function RecentTransactions() {
         body: JSON.stringify({ scope: 'all' }),
       })
 
-      if (!response.ok) throw new Error('Failed to clear transactions')
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({ error: 'Failed to clear transactions' }))
+        throw new Error(result.error ?? 'Failed to clear transactions')
+      }
 
       toast.success('All income, expenses, and jar balances reset')
-      window.dispatchEvent(new Event('income-updated'))
+      dispatchRefreshEvents([REFRESH_EVENTS.incomeUpdated, REFRESH_EVENTS.expensesUpdated])
       if (typeof window !== 'undefined') window.location.reload()
-    } catch {
-      toast.error('Failed to clear transactions')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to clear transactions')
     } finally {
       setIsDeleting(null)
     }

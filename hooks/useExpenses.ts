@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase, DEMO_MODE, DEMO_USER } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { startOfWeek, endOfWeek, format, subWeeks } from 'date-fns'
+import { REFRESH_EVENTS, subscribeToUserRefresh } from '@/lib/refresh-events'
 
 export type Expense = {
   id: string
@@ -146,31 +147,13 @@ export function useExpenses(userId: string | undefined) {
 
     fetchExpenses()
 
-    // Subscribe to realtime changes
-    const subscription = supabase
-      .channel(`expenses:${userId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'expenses',
-          filter: `user_id=eq.${userId}`,
-        },
-        () => {
-          fetchExpenses()
-        }
-      )
-      .subscribe()
-
-    // Listen for manual refresh events (Realtime may miss changes)
-    const handleManualRefresh = () => fetchExpenses()
-    window.addEventListener('income-updated', handleManualRefresh)
-
-    return () => {
-      subscription.unsubscribe()
-      window.removeEventListener('income-updated', handleManualRefresh)
-    }
+    return subscribeToUserRefresh({
+      client: supabase,
+      userId,
+      tables: [{ table: 'expenses' }],
+      events: [REFRESH_EVENTS.incomeUpdated, REFRESH_EVENTS.expensesUpdated],
+      refresh: fetchExpenses,
+    })
   }, [userId])
 
   const getJarlessExpenses = () => {

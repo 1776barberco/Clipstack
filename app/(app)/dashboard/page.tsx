@@ -9,7 +9,6 @@ import { Footer } from '@/components/Footer'
 import { JarSnapshot } from '@/components/JarSnapshot'
 import { MilestoneToast } from '@/components/MilestoneToast'
 import { PlaidJarMovementCard } from '@/components/PlaidJarMovementCard'
-import { QuickExpenseEntry } from '@/components/QuickExpenseEntry'
 import { QuickIncomeEntry } from '@/components/QuickIncomeEntry'
 import { StreakCelebration } from '@/components/StreakCelebration'
 import { StreakProtectedToast } from '@/components/StreakProtectedToast'
@@ -82,7 +81,6 @@ export default function DashboardPage() {
 
           <aside className="hidden min-w-0 space-y-4 lg:sticky lg:top-24 lg:block lg:max-h-[calc(100svh-7rem)] lg:overflow-y-auto lg:pr-1">
             <QuickIncomeEntry />
-            <QuickExpenseEntry />
             <EveningStreakReminder />
             <Card>
               <CardContent className="space-y-3">

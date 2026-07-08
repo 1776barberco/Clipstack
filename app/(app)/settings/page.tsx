@@ -1,45 +1,30 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { ArrowLeft, Bell, Landmark, Lock, User, Wallet } from 'lucide-react'
 import { useAuthContext } from '@/providers/AuthProvider'
-import { useProfile } from '@/hooks/useProfile'
-import { useBuckets } from '@/hooks/useBuckets'
-import { useBankAccounts, BankAccount } from '@/hooks/useBankAccounts'
-import { usePlaidConnections } from '@/hooks/usePlaidConnections'
-import { useNotificationPreferences } from '@/hooks/useNotificationPreferences'
-import { usePushSubscription } from '@/hooks/usePushSubscription'
 import { updateProfileAction } from '@/app/actions/auth'
 import { supabase } from '@/lib/supabase/client'
+import { useBankAccounts, type BankAccount } from '@/hooks/useBankAccounts'
+import { useBuckets } from '@/hooks/useBuckets'
+import { useNotificationPreferences } from '@/hooks/useNotificationPreferences'
+import { usePlaidConnections } from '@/hooks/usePlaidConnections'
+import { useProfile } from '@/hooks/useProfile'
+import { usePushSubscription } from '@/hooks/usePushSubscription'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { UserMenu } from '@/components/UserMenu'
-import {
-  ArrowLeft,
-  User,
-  DollarSign,
-  Calendar,
-  Save,
-  Plus,
-  Trash2,
-  Lock,
-  Landmark,
-  RefreshCw,
-  CreditCard,
-  Star,
-  ChevronLeft,
-  ChevronRight,
-  Bell,
-  Clock,
-  Calculator,
-  Compass,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { JarSplitCalculator } from '@/components/JarSplitCalculator'
 import { PlaidConnectionCard } from '@/components/PlaidConnectionCard'
+import { GuidedTourSection } from '@/components/settings/GuidedTourSection'
+import { JarCalculatorSection } from '@/components/settings/JarCalculatorSection'
+import { JarsSettingsSection } from '@/components/settings/JarsSettingsSection'
+import { ManualAccountsSection } from '@/components/settings/ManualAccountsSection'
+import { PasswordSettingsSection } from '@/components/settings/PasswordSettingsSection'
+import { ProfileSettingsSection } from '@/components/settings/ProfileSettingsSection'
+import { ReminderSettingsSection } from '@/components/settings/ReminderSettingsSection'
+import type { BucketField, BucketTotals, EditedAccount, EditedBucket } from '@/components/settings/types'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -57,8 +42,7 @@ export default function SettingsPage() {
   const [taxRate, setTaxRate] = useState<string | null>(null)
   const [savingProfile, setSavingProfile] = useState(false)
 
-  // Bank accounts state
-  const [editedAccounts, setEditedAccounts] = useState<Record<string, { name?: string; type?: string; starting_balance?: string }>>({})
+  const [editedAccounts, setEditedAccounts] = useState<Record<string, EditedAccount>>({})
   const [savingAccounts, setSavingAccounts] = useState(false)
   const [showAddAccount, setShowAddAccount] = useState(false)
   const [newAccountName, setNewAccountName] = useState('')
@@ -66,7 +50,7 @@ export default function SettingsPage() {
   const [newAccountBalance, setNewAccountBalance] = useState('')
   const [accountCarouselIndex, setAccountCarouselIndex] = useState(0)
 
-  const [editedBuckets, setEditedBuckets] = useState<Record<string, { name?: string; group_name?: string; percentage?: string; color?: string; target_amount?: string; due_date?: string; is_recurring?: string; recurring_interval?: string }>>({})
+  const [editedBuckets, setEditedBuckets] = useState<Record<string, EditedBucket>>({})
   const [savingBuckets, setSavingBuckets] = useState(false)
   const [newBucketId, setNewBucketId] = useState<string | null>(null)
   const newBucketNameRef = useRef<HTMLInputElement>(null)
@@ -78,7 +62,6 @@ export default function SettingsPage() {
 
   const activePlaidAccounts = plaidAccounts.filter((account) => account.is_active)
 
-  // Auto-focus newly created jar name input
   useEffect(() => {
     if (newBucketId && newBucketNameRef.current) {
       newBucketNameRef.current.focus()
@@ -122,7 +105,6 @@ export default function SettingsPage() {
     }
   }
 
-  // ── Bank Accounts ──
   const handleAddAccount = async () => {
     if (!newAccountName.trim()) {
       toast.error('Account name is required.')
@@ -182,6 +164,7 @@ export default function SettingsPage() {
       toast.error('You must have at least one manual or connected account.')
       return
     }
+
     const { error } = await deleteAccount(id)
     if (error) {
       toast.error(`Failed to delete ${name}.`)
@@ -216,7 +199,6 @@ export default function SettingsPage() {
     }))
   }
 
-  // Determine if a bucket uses fixed dollar amount
   const isFixedAmount = (bucketId: string) => {
     const edited = editedBuckets[bucketId]
     if (edited?.target_amount !== undefined) {
@@ -230,21 +212,18 @@ export default function SettingsPage() {
     const fixed = isFixedAmount(bucketId)
 
     if (fixed) {
-      // Switching FROM fixed TO percentage
-      // Give this jar an equal share with the other percentage jars
       const otherPctBuckets = buckets.filter(b => b.id !== bucketId && !isFixedAmount(b.id))
       const otherTotal = otherPctBuckets.reduce((sum, b) => {
         const edited = editedBuckets[b.id]
         const pct = edited?.percentage !== undefined ? parseFloat(edited.percentage) : b.percentage
         return sum + (pct || 0)
       }, 0)
-      // This jar gets an equal share: if others total 80% across 4 jars, this one gets ~20%
       const evenShare = otherPctBuckets.length > 0
         ? Math.round((otherTotal / otherPctBuckets.length) * 10) / 10
         : 100
       const newTotal = otherTotal + evenShare
-      // Scale everything so it totals 100%
       const scale = newTotal > 0 ? 100 / newTotal : 1
+
       setEditedBuckets(prev => {
         const next = {
           ...prev,
@@ -256,29 +235,28 @@ export default function SettingsPage() {
         }
         return next
       })
-    } else {
-      // Switching FROM percentage TO fixed
-      // Remove this jar's percentage and redistribute to remaining % jars
-      const otherPctBuckets = buckets.filter(b => b.id !== bucketId && !isFixedAmount(b.id))
-      const otherTotal = otherPctBuckets.reduce((sum, b) => {
-        const edited = editedBuckets[b.id]
-        const pct = edited?.percentage !== undefined ? parseFloat(edited.percentage) : b.percentage
-        return sum + (pct || 0)
-      }, 0)
-      const scale = otherTotal > 0 ? 100 / otherTotal : 1
-      setEditedBuckets(prev => {
-        const next = {
-          ...prev,
-          [bucketId]: { ...prev[bucketId], target_amount: '100', percentage: '0' },
-        }
-        // Scale remaining % jars up to total 100%
-        for (const b of otherPctBuckets) {
-          const pct = prev[b.id]?.percentage !== undefined ? parseFloat(prev[b.id]!.percentage!) : b.percentage
-          next[b.id] = { ...next[b.id], percentage: String(Math.round(pct * scale * 10) / 10) }
-        }
-        return next
-      })
+      return
     }
+
+    const otherPctBuckets = buckets.filter(b => b.id !== bucketId && !isFixedAmount(b.id))
+    const otherTotal = otherPctBuckets.reduce((sum, b) => {
+      const edited = editedBuckets[b.id]
+      const pct = edited?.percentage !== undefined ? parseFloat(edited.percentage) : b.percentage
+      return sum + (pct || 0)
+    }, 0)
+    const scale = otherTotal > 0 ? 100 / otherTotal : 1
+
+    setEditedBuckets(prev => {
+      const next = {
+        ...prev,
+        [bucketId]: { ...prev[bucketId], target_amount: '100', percentage: '0' },
+      }
+      for (const b of otherPctBuckets) {
+        const pct = prev[b.id]?.percentage !== undefined ? parseFloat(prev[b.id]!.percentage!) : b.percentage
+        next[b.id] = { ...next[b.id], percentage: String(Math.round(pct * scale * 10) / 10) }
+      }
+      return next
+    })
   }
 
   const handleSaveBuckets = async () => {
@@ -287,7 +265,6 @@ export default function SettingsPage() {
       return
     }
 
-    // Only validate percentage total for percentage-based jars
     const percentageBuckets = buckets.filter(b => !isFixedAmount(b.id))
     const totalPercentage = percentageBuckets.reduce((sum, b) => {
       const edited = editedBuckets[b.id]
@@ -312,19 +289,13 @@ export default function SettingsPage() {
         const amt = parseFloat(changes.target_amount)
         updates.target_amount = amt > 0 ? amt : null
       }
-      if (changes.due_date !== undefined) {
-        updates.due_date = changes.due_date || null
-      }
-      if (changes.is_recurring !== undefined) {
-        updates.is_recurring = changes.is_recurring === 'true'
-      }
-      if (changes.recurring_interval !== undefined) {
-        updates.recurring_interval = changes.recurring_interval || null
-      }
+      if (changes.due_date !== undefined) updates.due_date = changes.due_date || null
+      if (changes.is_recurring !== undefined) updates.is_recurring = changes.is_recurring === 'true'
+      if (changes.recurring_interval !== undefined) updates.recurring_interval = changes.recurring_interval || null
 
       const result = await updateBucket(id, updates)
       if (result.error) {
-        toast.error(`Failed to update jar.`)
+        toast.error('Failed to update jar.')
         setSavingBuckets(false)
         return
       }
@@ -373,6 +344,17 @@ export default function SettingsPage() {
     }
   }
 
+  const getBucketField = (id: string, field: BucketField, fallback: string) => {
+    return editedBuckets[id]?.[field] ?? fallback
+  }
+
+  const setBucketField = (id: string, field: BucketField, value: string) => {
+    setEditedBuckets((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], [field]: value },
+    }))
+  }
+
   const handleChangePassword = async () => {
     if (!supabase) return
     if (!newPassword || newPassword.length < 6) {
@@ -397,27 +379,14 @@ export default function SettingsPage() {
     }
   }
 
-  const getBucketField = (id: string, field: 'name' | 'group_name' | 'percentage' | 'color' | 'target_amount' | 'due_date' | 'is_recurring' | 'recurring_interval', fallback: string) => {
-    return editedBuckets[id]?.[field] ?? fallback
-  }
-
-  const setBucketField = (id: string, field: 'name' | 'group_name' | 'percentage' | 'color' | 'target_amount' | 'due_date' | 'is_recurring' | 'recurring_interval', value: string) => {
-    // Direct edit — user controls their own splits
-    setEditedBuckets((prev) => ({
-      ...prev,
-      [id]: { ...prev[id], [field]: value },
-    }))
-  }
-
   if (profileLoading || bucketsLoading || accountsLoading || plaidLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">Loading settings…</p>
+        <p className="text-muted-foreground">Loading settings...</p>
       </div>
     )
   }
 
-  // Calculate totals for display
   const percentageBuckets = buckets.filter(b => !isFixedAmount(b.id))
   const fixedBuckets = buckets.filter(b => isFixedAmount(b.id))
   const totalPercentage = percentageBuckets.reduce((sum, b) => {
@@ -430,6 +399,7 @@ export default function SettingsPage() {
     const amt = edited?.target_amount !== undefined ? parseFloat(edited.target_amount) : (b.target_amount || 0)
     return sum + (amt || 0)
   }, 0)
+  const bucketTotals: BucketTotals = { percentageBuckets, fixedBuckets, totalPercentage, totalFixed }
 
   return (
     <div className="min-h-screen bg-background">
@@ -447,723 +417,52 @@ export default function SettingsPage() {
         </div>
       </header>
 
-      <main className="container mx-auto max-w-2xl space-y-6 p-4">
-        {/* Profile */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
+      <main className="container mx-auto max-w-4xl p-4">
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-5">
+            <TabsTrigger value="profile" className="min-h-11">
+              <User className="h-4 w-4" />
               Profile
-            </CardTitle>
-            <CardDescription>Update your personal information.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" value={user?.email || ''} disabled />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input
-                id="fullName"
-                placeholder="Jane Doe"
-                value={displayName}
-                onChange={(e) => setFullName(e.target.value)}
-              />
-            </div>
-            <Separator />
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="boothRent">Booth Rent ($)</Label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="boothRent"
-                    type="number"
-                    placeholder="150"
-                    value={displayBoothRent}
-                    onChange={(e) => setBoothRent(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="dueDay">Rent Due Day</Label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="dueDay"
-                    type="number"
-                    min={1}
-                    max={31}
-                    placeholder="1"
-                    value={displayDueDay}
-                    onChange={(e) => setDueDay(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="taxRate">Tax Rate (%)</Label>
-              <Input
-                id="taxRate"
-                type="number"
-                min={0}
-                max={100}
-                placeholder="25"
-                value={displayTaxRate}
-                onChange={(e) => setTaxRate(e.target.value)}
-              />
-            </div>
-            <Separator />
-            <Button onClick={handleSaveProfile} disabled={savingProfile}>
-              <Save className="mr-2 h-4 w-4" />
-              {savingProfile ? 'Saving…' : 'Save Profile'}
-            </Button>
-          </CardContent>
-        </Card>
+            </TabsTrigger>
+            <TabsTrigger value="money" className="min-h-11">
+              <Landmark className="h-4 w-4" />
+              Money
+            </TabsTrigger>
+            <TabsTrigger value="jars" className="min-h-11">
+              <Wallet className="h-4 w-4" />
+              Jars
+            </TabsTrigger>
+            <TabsTrigger value="reminders" className="min-h-11">
+              <Bell className="h-4 w-4" />
+              Reminders
+            </TabsTrigger>
+            <TabsTrigger value="security" className="min-h-11">
+              <Lock className="h-4 w-4" />
+              Security
+            </TabsTrigger>
+          </TabsList>
 
-        <PlaidConnectionCard userId={user?.id} />
+          <TabsContent value="profile" className="space-y-6">
+            <ProfileSettingsSection
+              value={{
+                email: user?.email || '',
+                fullName: displayName,
+                boothRent: displayBoothRent,
+                dueDay: displayDueDay,
+                taxRate: displayTaxRate,
+              }}
+              saving={savingProfile}
+              onChange={(field, value) => {
+                if (field === 'fullName') setFullName(value)
+                if (field === 'boothRent') setBoothRent(value)
+                if (field === 'dueDay') setDueDay(value)
+                if (field === 'taxRate') setTaxRate(value)
+              }}
+              onSave={handleSaveProfile}
+            />
 
-        {/* Manual Bank Accounts */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Landmark className="h-5 w-5" />
-                  Manual Bank Accounts
-                </CardTitle>
-                <CardDescription>
-                  Use these only for cash, manual fallback balances, or accounts you have not connected through Plaid. Linked Plaid accounts and live balances are managed above.
-                </CardDescription>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => setShowAddAccount(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Add Account Form */}
-            {showAddAccount && (
-              <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-4 space-y-3">
-                <p className="text-sm font-medium">Add New Account</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs" htmlFor="newAccountName">Account Name</Label>
-                    <Input
-                      id="newAccountName"
-                      name="newAccountName"
-                      placeholder="e.g. Chase Checking"
-                      value={newAccountName}
-                      onChange={(e) => setNewAccountName(e.target.value)}
-                      autoFocus
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs" htmlFor="newAccountType">Type</Label>
-                    <select
-                      id="newAccountType"
-                      name="newAccountType"
-                      value={newAccountType}
-                      onChange={(e) => setNewAccountType(e.target.value)}
-                      className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-                    >
-                      <option value="checking">Checking</option>
-                      <option value="savings">Savings</option>
-                      <option value="cash">Cash</option>
-                      <option value="cashapp">Cash App</option>
-                      <option value="venmo">Venmo</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs" htmlFor="newAccountBalance">Starting Balance</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="newAccountBalance"
-                      name="newAccountBalance"
-                      type="number"
-                      step="0.01"
-                      min={0}
-                      placeholder="0.00"
-                      value={newAccountBalance}
-                      onChange={(e) => setNewAccountBalance(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-2 justify-end">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setShowAddAccount(false)
-                      setNewAccountName('')
-                      setNewAccountType('checking')
-                      setNewAccountBalance('')
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button size="sm" onClick={handleAddAccount}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Account
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Account List / Carousel */}
-            {accounts.length === 0 && !showAddAccount && (
-              <div className="rounded-lg border border-dashed p-6 text-center space-y-2">
-                <Landmark className="h-8 w-8 mx-auto text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">No manual accounts yet.</p>
-                <p className="text-xs text-muted-foreground">
-                  {activePlaidAccounts.length > 0
-                    ? 'Your connected Plaid accounts are already tracking live bank totals.'
-                    : 'Add a manual account only if you have cash or an account that is not connected through Plaid.'}
-                </p>
-                <Button variant="outline" size="sm" onClick={() => setShowAddAccount(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Manual Account
-                </Button>
-              </div>
-            )}
-
-            {accounts.length > 0 && (
-              <>
-                {/* Carousel navigation for multiple accounts */}
-                {accounts.length > 1 && (
-                  <div className="flex items-center justify-between">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setAccountCarouselIndex(Math.max(0, accountCarouselIndex - 1))}
-                      disabled={accountCarouselIndex === 0}
-                      aria-label="Previous manual account"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <div className="flex gap-1">
-                      {accounts.map((_, i) => (
-                        <button
-                          key={i}
-                          aria-label={`Show manual account ${i + 1}`}
-                          className={`h-2 w-2 rounded-full transition-colors ${
-                            i === accountCarouselIndex ? 'bg-primary' : 'bg-muted-foreground/30'
-                          }`}
-                          onClick={() => setAccountCarouselIndex(i)}
-                        />
-                      ))}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setAccountCarouselIndex(Math.min(accounts.length - 1, accountCarouselIndex + 1))}
-                      disabled={accountCarouselIndex >= accounts.length - 1}
-                      aria-label="Next manual account"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-
-                {/* Current account card */}
-                {accounts[accountCarouselIndex] && (() => {
-                  const account = accounts[accountCarouselIndex]
-                  const accountTypeLabels: Record<string, string> = {
-                    checking: 'Checking',
-                    savings: 'Savings',
-                    cash: 'Cash',
-                    cashapp: 'Cash App',
-                    venmo: 'Venmo',
-                    other: 'Other',
-                  }
-                  return (
-                    <div className="rounded-lg border p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <CreditCard className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm font-medium">
-                            {accountTypeLabels[account.type] || account.type}
-                          </span>
-                          {account.is_primary && (
-                            <span className="flex items-center gap-1 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                              <Star className="h-3 w-3" /> Primary
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {!account.is_primary && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-xs"
-                              onClick={() => handleSetPrimary(account.id)}
-                            >
-                              Set Primary
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`Delete ${account.name}`}
-                            onClick={() => handleDeleteAccount(account.id, account.name)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-xs">Account Name</Label>
-                        <Input
-                          value={getAccountField(account.id, 'name', account.name)}
-                          onChange={(e) => setAccountField(account.id, 'name', e.target.value)}
-                          placeholder="Account name"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-2">
-                          <Label className="text-xs">Type</Label>
-                          <select
-                            value={getAccountField(account.id, 'type', account.type)}
-                            onChange={(e) => setAccountField(account.id, 'type', e.target.value)}
-                            className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-                          >
-                            <option value="checking">Checking</option>
-                            <option value="savings">Savings</option>
-                            <option value="cash">Cash</option>
-                            <option value="cashapp">Cash App</option>
-                            <option value="venmo">Venmo</option>
-                            <option value="other">Other</option>
-                          </select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-xs">Starting Balance</Label>
-                          <div className="relative">
-                            <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                              type="number"
-                              step="0.01"
-                              min={0}
-                              placeholder="0.00"
-                              value={getAccountField(account.id, 'starting_balance', account.starting_balance.toString())}
-                              onChange={(e) => setAccountField(account.id, 'starting_balance', e.target.value)}
-                              className="pl-10"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="text-xs text-muted-foreground">
-                          Current Balance: <span className="font-medium text-foreground">${Number(account.current_balance).toFixed(2)}</span>
-                        </p>
-                      </div>
-                    </div>
-                  )
-                })()}
-
-                {/* Account summary */}
-                {accounts.length > 1 && (
-                  <div className="rounded-xl p-3 border bg-emerald-500/10 border-emerald-500/20 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-emerald-400">
-                        Total across {accounts.length} accounts
-                      </span>
-                      <span className="font-bold text-emerald-400">
-                        ${accounts.reduce((sum, a) => sum + Number(a.current_balance || 0), 0).toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex justify-end">
-                  <Button
-                    onClick={handleSaveAccounts}
-                    disabled={savingAccounts || Object.keys(editedAccounts).length === 0}
-                  >
-                    <Save className="mr-2 h-4 w-4" />
-                    {savingAccounts ? 'Saving…' : 'Save Accounts'}
-                  </Button>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Jar Split Calculator */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Calculator className="h-5 w-5" />
-                  Jar Split Calculator
-                </CardTitle>
-                <CardDescription>
-                  Not sure how to split your jars? Enter your income and bills — we&apos;ll calculate the percentages for you.
-                </CardDescription>
-              </div>
-              <Button
-                variant={showJarCalculator ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setShowJarCalculator(!showJarCalculator)}
-              >
-                {showJarCalculator ? 'Close' : 'Open'}
-              </Button>
-            </div>
-          </CardHeader>
-          {showJarCalculator && (
-            <CardContent>
-              <JarSplitCalculator
-                mode="settings"
-                onComplete={() => {
-                  setShowJarCalculator(false)
-                  toast.success('Jars recalculated!')
-                }}
-              />
-            </CardContent>
-          )}
-        </Card>
-
-        {/* Buckets */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
-                  Jars
-                </CardTitle>
-                <CardDescription>Configure how income is split. Use % for percentage-based or $ for fixed dollar amounts.</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" onClick={handleAddBucket}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <datalist id="jar-group-suggestions">
-              <option value="Personal" />
-              <option value="Business" />
-              <option value="Taxes" />
-              <option value="Savings" />
-              <option value="Bills" />
-            </datalist>
-            {buckets.map((bucket) => {
-              const fixed = isFixedAmount(bucket.id)
-              const isNewBucket = bucket.id === newBucketId
-              return (
-                <div key={bucket.id} className="rounded-lg border p-3 space-y-3">
-                  {/* Row 1: Color + Name + Delete */}
-                  <div className="flex items-center gap-3">
-                    <input
-                      aria-label={`${bucket.name} color`}
-                      type="color"
-                      value={getBucketField(bucket.id, 'color', bucket.color)}
-                      onChange={(e) => setBucketField(bucket.id, 'color', e.target.value)}
-                      className="h-8 w-8 cursor-pointer rounded border-0 p-0 shrink-0"
-                    />
-                    <Input
-                      aria-label={`${bucket.name} name`}
-                      ref={isNewBucket ? newBucketNameRef : undefined}
-                      value={getBucketField(bucket.id, 'name', bucket.name)}
-                      onChange={(e) => setBucketField(bucket.id, 'name', e.target.value)}
-                      placeholder="Jar name"
-                      className="flex-1 font-medium"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="shrink-0"
-                      aria-label={`Delete ${bucket.name}`}
-                      onClick={() => handleDeleteBucket(bucket.id, bucket.name)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-
-                  <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-muted-foreground" htmlFor={`bucket-group-${bucket.id}`}>Group</Label>
-                      <Input
-                        id={`bucket-group-${bucket.id}`}
-                        list="jar-group-suggestions"
-                        value={getBucketField(bucket.id, 'group_name', bucket.group_name ?? '')}
-                        onChange={(e) => setBucketField(bucket.id, 'group_name', e.target.value)}
-                        placeholder="Personal, Business, Taxes..."
-                      />
-                    </div>
-                    <span className="pb-2 text-xs text-muted-foreground">Optional</span>
-                  </div>
-
-                  {/* Row 2: Allocation + Due Date */}
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => toggleAllocationType(bucket.id)}
-                        className="text-xs font-medium px-2 py-1 rounded border hover:bg-accent transition-colors shrink-0"
-                        title={fixed ? 'Switch to percentage' : 'Switch to fixed dollar amount'}
-                        aria-label={fixed ? `Switch ${bucket.name} to percentage` : `Switch ${bucket.name} to fixed dollar amount`}
-                      >
-                        {fixed ? '$' : '%'}
-                      </button>
-                      {fixed ? (
-                        <div className="flex items-center gap-1">
-                          <span className="text-sm text-muted-foreground">$</span>
-                          <Input
-                            aria-label={`${bucket.name} fixed amount`}
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            value={getBucketField(bucket.id, 'target_amount', (bucket.target_amount || 0).toString())}
-                            onChange={(e) => setBucketField(bucket.id, 'target_amount', e.target.value)}
-                            placeholder="0"
-                            className="w-24 text-center"
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1">
-                          <Input
-                            aria-label={`${bucket.name} percentage`}
-                            type="number"
-                            min={0}
-                            max={100}
-                            value={getBucketField(bucket.id, 'percentage', bucket.percentage.toString())}
-                            onChange={(e) => setBucketField(bucket.id, 'percentage', e.target.value)}
-                            className="w-20 text-center"
-                          />
-                          <span className="text-sm text-muted-foreground">%</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-xs text-muted-foreground whitespace-nowrap" htmlFor={`bucket-due-${bucket.id}`}>Due</Label>
-                      <Input
-                        id={`bucket-due-${bucket.id}`}
-                        type="date"
-                        value={getBucketField(bucket.id, 'due_date', bucket.due_date ?? '')}
-                        onChange={(e) => setBucketField(bucket.id, 'due_date', e.target.value)}
-                        className="w-36 text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Row 3: Recurring toggle + interval */}
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={getBucketField(bucket.id, 'is_recurring', String(bucket.is_recurring ?? false)) === 'true'}
-                        onChange={(e) => {
-                          setBucketField(bucket.id, 'is_recurring', String(e.target.checked))
-                          if (!e.target.checked) {
-                            setBucketField(bucket.id, 'recurring_interval', '')
-                          } else if (!getBucketField(bucket.id, 'recurring_interval', bucket.recurring_interval ?? '')) {
-                            setBucketField(bucket.id, 'recurring_interval', 'monthly')
-                          }
-                        }}
-                        className="h-4 w-4 rounded border-gray-300 accent-blue-500"
-                      />
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <RefreshCw className="h-3 w-3" />
-                        Recurring
-                      </span>
-                    </label>
-                    {getBucketField(bucket.id, 'is_recurring', String(bucket.is_recurring ?? false)) === 'true' && (
-                      <select
-                        aria-label={`${bucket.name} recurring interval`}
-                        value={getBucketField(bucket.id, 'recurring_interval', bucket.recurring_interval ?? 'monthly')}
-                        onChange={(e) => setBucketField(bucket.id, 'recurring_interval', e.target.value)}
-                        className="h-8 rounded border bg-background px-2 text-xs"
-                      >
-                        <option value="weekly">Weekly</option>
-                        <option value="biweekly">Bi-weekly</option>
-                        <option value="monthly">Monthly</option>
-                        <option value="quarterly">Quarterly</option>
-                      </select>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-            {buckets.length > 0 && (
-              <div className="space-y-3">
-                {/* Total indicator */}
-                {percentageBuckets.length > 0 && (
-                  <div className={`rounded-xl p-3 border text-sm ${
-                    Math.abs(totalPercentage - 100) < 0.1
-                      ? 'bg-green-500/10 border-green-500/20 text-green-400'
-                      : totalPercentage > 100
-                        ? 'bg-red-500/10 border-red-500/20 text-red-400'
-                        : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'
-                  }`}>
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">Total: {totalPercentage.toFixed(1)}%</span>
-                      {Math.abs(totalPercentage - 100) < 0.1 ? (
-                        <span>✓ Balanced</span>
-                      ) : totalPercentage > 100 ? (
-                        <span>{(totalPercentage - 100).toFixed(1)}% over</span>
-                      ) : (
-                        <span>{(100 - totalPercentage).toFixed(1)}% remaining</span>
-                      )}
-                    </div>
-                  </div>
-                )}
-                {fixedBuckets.length > 0 && (
-                  <div className="text-sm text-muted-foreground">
-                    Fixed amount jars: ${totalFixed.toFixed(2)} per income
-                  </div>
-                )}
-                <div className="flex justify-end">
-                  <Button onClick={handleSaveBuckets} disabled={savingBuckets || (percentageBuckets.length > 0 && Math.abs(totalPercentage - 100) > 0.1)}>
-                    <Save className="mr-2 h-4 w-4" />
-                    {savingBuckets ? 'Saving…' : 'Save Jars'}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Daily Reminders */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              Daily Tracking Reminders
-            </CardTitle>
-            <CardDescription>Get a daily nudge to log your income and expenses.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-sm font-medium">Enable gentle daily reminders</Label>
-                <p className="text-xs text-muted-foreground">
-                  {`We&apos;ll send a light nudge if you haven&apos;t logged your income yet.`}
-                </p>
-              </div>
-              <button
-                onClick={async () => {
-                  const newVal = !notifPrefs?.daily_tracking_reminder
-                  const result = await updateNotifPrefs({ daily_tracking_reminder: newVal })
-                  if (result.error) {
-                    console.error('Notification pref error:', result.error)
-                    const msg = result.error && typeof result.error === 'object' && 'message' in result.error
-                      ? (result.error as { message: string }).message
-                      : 'Unknown error'
-                    toast.error(`Failed to update reminders: ${msg}`)
-                  } else {
-                    toast.success(newVal ? 'Daily reminders enabled!' : 'Daily reminders disabled')
-                  }
-                }}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  notifPrefs?.daily_tracking_reminder ? 'bg-primary' : 'bg-muted'
-                }`}
-                disabled={notifLoading}
-                aria-label="Toggle daily tracking reminders"
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    notifPrefs?.daily_tracking_reminder ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </div>
-
-            {notifPrefs?.daily_tracking_reminder && (
-              <div className="space-y-3 rounded-lg border border-dashed border-primary/20 bg-primary/5 p-3">
-                <div className="flex items-center gap-3">
-                  <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <div className="flex-1 space-y-1">
-                    <Label className="text-xs">Reminder time</Label>
-                    <Input
-                      type="time"
-                      value={notifPrefs?.reminder_time || '18:00'}
-                      onChange={async (e) => {
-                        const result = await updateNotifPrefs({ reminder_time: e.target.value })
-                        if (result.error) toast.error('Failed to update reminder time')
-                      }}
-                      className="w-32"
-                    />
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Timezone: {notifPrefs?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone}
-                </p>
-
-                {/* Push Notification Toggle */}
-                {pushSupported && (
-                  <div className="mt-3 pt-3 border-t border-primary/10">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-xs font-medium">Push notifications</Label>
-                        <p className="text-xs text-muted-foreground">
-                          {pushState === 'denied'
-                            ? 'Notifications blocked - enable in browser settings.'
-                            : pushState === 'subscribed'
-                            ? "You'll get daily and streak-warning push reminders on this device."
-                            : 'Get push reminders even when the app is closed, including streak warnings in the evening.'}
-                        </p>
-                      </div>
-                      <button
-                        onClick={async () => {
-                          if (pushState === 'subscribed') {
-                            await unsubscribePush()
-                            toast.success('Push notifications disabled')
-                          } else {
-                            await subscribePush()
-                            if (Notification.permission === 'granted') {
-                              toast.success('Push notifications enabled! 🔔')
-                            } else if (Notification.permission === 'denied') {
-                              toast.error('Notifications blocked by browser')
-                            }
-                          }
-                        }}
-                        disabled={subscribing || pushState === 'denied'}
-                        aria-label="Toggle push notifications"
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          pushState === 'subscribed' ? 'bg-primary' : 'bg-muted'
-                        } ${pushState === 'denied' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            pushState === 'subscribed' ? 'translate-x-6' : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Compass className="h-5 w-5" />
-              Guided Tour
-            </CardTitle>
-            <CardDescription>Replay the onboarding tour anytime from settings.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              If you want another walkthrough of the daily income flow, jars, forecast, and weekly summary, you can launch it again here.
-            </p>
-            <Button
-              variant="outline"
-              onClick={() => {
+            <GuidedTourSection
+              onReplay={() => {
                 if (typeof window !== 'undefined') {
                   window.localStorage.setItem('tipjars-force-tour-open', 'true')
                   window.localStorage.removeItem('tipjars-dashboard-tour-completed')
@@ -1171,49 +470,86 @@ export default function SettingsPage() {
                 }
                 router.push('/dashboard')
               }}
-            >
-              <Compass className="mr-2 h-4 w-4" />
-              Replay Tour
-            </Button>
-          </CardContent>
-        </Card>
+            />
+          </TabsContent>
 
-        {/* Change Password */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lock className="h-5 w-5" />
-              Change Password
-            </CardTitle>
-            <CardDescription>Update your account password.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="newPassword">New Password</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                placeholder="At least 6 characters"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="Confirm new password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </div>
-            <Button onClick={handleChangePassword} disabled={savingPassword}>
-              <Lock className="mr-2 h-4 w-4" />
-              {savingPassword ? 'Updating…' : 'Update Password'}
-            </Button>
-          </CardContent>
-        </Card>
+          <TabsContent value="money" className="space-y-6">
+            <PlaidConnectionCard userId={user?.id} />
+
+            <ManualAccountsSection
+              accounts={accounts}
+              activePlaidAccountCount={activePlaidAccounts.length}
+              editedAccounts={editedAccounts}
+              saving={savingAccounts}
+              showAddAccount={showAddAccount}
+              newAccountName={newAccountName}
+              newAccountType={newAccountType}
+              newAccountBalance={newAccountBalance}
+              carouselIndex={accountCarouselIndex}
+              onShowAddAccountChange={setShowAddAccount}
+              onNewAccountNameChange={setNewAccountName}
+              onNewAccountTypeChange={setNewAccountType}
+              onNewAccountBalanceChange={setNewAccountBalance}
+              onCarouselIndexChange={setAccountCarouselIndex}
+              onAddAccount={handleAddAccount}
+              onSaveAccounts={handleSaveAccounts}
+              onDeleteAccount={handleDeleteAccount}
+              onSetPrimary={handleSetPrimary}
+              getAccountField={getAccountField}
+              setAccountField={setAccountField}
+            />
+          </TabsContent>
+
+          <TabsContent value="jars" className="space-y-6">
+            <JarCalculatorSection
+              open={showJarCalculator}
+              onOpenChange={setShowJarCalculator}
+              onComplete={() => {
+                setShowJarCalculator(false)
+                toast.success('Jars recalculated!')
+              }}
+            />
+
+            <JarsSettingsSection
+              buckets={buckets}
+              totals={bucketTotals}
+              saving={savingBuckets}
+              newBucketId={newBucketId}
+              newBucketNameRef={newBucketNameRef}
+              isFixedAmount={isFixedAmount}
+              getBucketField={getBucketField}
+              setBucketField={setBucketField}
+              onToggleAllocationType={toggleAllocationType}
+              onAddBucket={handleAddBucket}
+              onDeleteBucket={handleDeleteBucket}
+              onSaveBuckets={handleSaveBuckets}
+            />
+          </TabsContent>
+
+          <TabsContent value="reminders" className="space-y-6">
+            <ReminderSettingsSection
+              preferences={notifPrefs}
+              loading={notifLoading}
+              pushState={pushState}
+              pushSupported={pushSupported}
+              subscribing={subscribing}
+              onUpdatePreferences={updateNotifPrefs}
+              onSubscribePush={subscribePush}
+              onUnsubscribePush={unsubscribePush}
+            />
+          </TabsContent>
+
+          <TabsContent value="security" className="space-y-6">
+            <PasswordSettingsSection
+              newPassword={newPassword}
+              confirmPassword={confirmPassword}
+              saving={savingPassword}
+              onNewPasswordChange={setNewPassword}
+              onConfirmPasswordChange={setConfirmPassword}
+              onSave={handleChangePassword}
+            />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   )

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase, DEMO_MODE, DEMO_USER } from '@/lib/supabase/client'
 import { fetchBucketsAction } from '@/app/actions/auth'
+import { REFRESH_EVENTS, subscribeToUserRefresh } from '@/lib/refresh-events'
 
-type BucketConfig = {
+export type BucketConfig = {
   id: string
   user_id: string
   name: string
@@ -19,7 +20,7 @@ type BucketConfig = {
   updated_at: string
 }
 
-type BucketBalance = {
+export type BucketBalance = {
   bucket_id: string
   user_id: string
   bucket_name: string
@@ -192,67 +193,17 @@ export function useBuckets(userId: string | undefined) {
 
     fetchBuckets()
 
-    // Subscribe to realtime changes
-    const configsSubscription = supabase
-      .channel(`bucket_configs:${userId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'bucket_configs',
-          filter: `user_id=eq.${userId}`,
-        },
-        () => {
-          fetchBuckets()
-        }
-      )
-      .subscribe()
-
-    const transactionsSubscription = supabase
-      .channel(`bucket_transactions:${userId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'bucket_transactions',
-          filter: `user_id=eq.${userId}`,
-        },
-        () => {
-          fetchBuckets()
-        }
-      )
-      .subscribe()
-
-    const expensesSubscription = supabase
-      .channel(`expenses:${userId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'expenses',
-          filter: `user_id=eq.${userId}`,
-        },
-        () => {
-          fetchBuckets()
-        }
-      )
-      .subscribe()
-
-    // Listen for manual refresh events (Realtime may miss SECURITY DEFINER changes)
-    const handleManualRefresh = () => fetchBuckets()
-    window.addEventListener('income-updated', handleManualRefresh)
-    window.addEventListener('expenses-updated', handleManualRefresh)
-
-    return () => {
-      configsSubscription.unsubscribe()
-      transactionsSubscription.unsubscribe()
-      expensesSubscription.unsubscribe()
-      window.removeEventListener('income-updated', handleManualRefresh)
-      window.removeEventListener('expenses-updated', handleManualRefresh)
-    }
+    return subscribeToUserRefresh({
+      client: supabase,
+      userId,
+      tables: [
+        { table: 'bucket_configs' },
+        { table: 'bucket_transactions' },
+        { table: 'expenses' },
+      ],
+      events: [REFRESH_EVENTS.incomeUpdated, REFRESH_EVENTS.expensesUpdated],
+      refresh: fetchBuckets,
+    })
   }, [userId])
 
   const createBucket = async (bucket: Omit<BucketConfig, 'id' | 'created_at' | 'updated_at'>) => {

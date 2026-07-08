@@ -25,7 +25,13 @@ import {
 } from '@/components/ui/select'
 import { AlertCircle, ArrowDownLeft } from 'lucide-react'
 import { toast } from 'sonner'
+import { REFRESH_EVENTS, dispatchRefreshEvent } from '@/lib/refresh-events'
 import { formatCurrency } from '@/lib/utils'
+
+function parsePositiveAmount(value: string) {
+  const amount = Math.abs(Number(value))
+  return Number.isFinite(amount) && amount > 0 ? amount : null
+}
 
 export function WithdrawButton() {
   const { user } = useAuthContext()
@@ -40,35 +46,47 @@ export function WithdrawButton() {
 
   const handleAmountChange = (value: string) => {
     setAmount(value)
-    if (bucketId && value) {
+    const parsedAmount = parsePositiveAmount(value)
+    if (bucketId && parsedAmount) {
       const result = checkAffordability({
         fromBucketId: bucketId,
-        amount: parseFloat(value) || 0,
+        amount: parsedAmount,
       })
       setCheckResult(result)
+    } else {
+      setCheckResult(null)
     }
   }
 
   const handleBucketChange = (value: string) => {
     setBucketId(value)
-    if (amount) {
+    const parsedAmount = parsePositiveAmount(amount)
+    if (parsedAmount) {
       const result = checkAffordability({
         fromBucketId: value,
-        amount: parseFloat(amount) || 0,
+        amount: parsedAmount,
       })
       setCheckResult(result)
+    } else {
+      setCheckResult(null)
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user || !bucketId || !amount || !supabase) return
+    if (!user || !bucketId || !supabase || loading) return
+
+    const parsedAmount = parsePositiveAmount(amount)
+    if (!parsedAmount) {
+      toast.error('Enter an amount greater than $0')
+      return
+    }
 
     setLoading(true)
     const { error } = await supabase.from('bucket_transactions').insert({
       user_id: user.id,
       bucket_id: bucketId,
-      amount: parseFloat(amount),
+      amount: parsedAmount,
       type: 'withdrawal',
       description: description || 'Withdrawal',
     })
@@ -83,6 +101,7 @@ export function WithdrawButton() {
       setBucketId('')
       setDescription('')
       setCheckResult(null)
+      dispatchRefreshEvent(REFRESH_EVENTS.incomeUpdated)
     }
   }
 
