@@ -265,7 +265,6 @@ export function QuickIncomeEntry() {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="pl-10 text-lg"
-                autoFocus
               />
             </div>
             {isNegative && (

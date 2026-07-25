@@ -1,20 +1,43 @@
 import { generateText, streamText, type ModelMessage } from 'ai'
+import { createOpenAI } from '@ai-sdk/openai'
 
-export const COACH_MODEL = (process.env.COACH_MODEL || 'anthropic/claude-sonnet-4.6').trim()
+const DEFAULT_OPENAI_BASE_URL = 'https://openai.kainotomic.com/v1'
+const DEFAULT_OPENAI_API_KEY = 'change-me-to-a-strong-key'
 
-const FALLBACK_MODELS = (process.env.COACH_FALLBACK_MODELS || 'openai/gpt-5.4,google/gemini-2.5-flash')
+export const COACH_MODEL = (process.env.COACH_MODEL || 'gpt-5.4-mini').trim()
+
+const FALLBACK_MODELS = (process.env.COACH_FALLBACK_MODELS || '')
   .split(',')
   .map((model) => model.trim())
   .filter(Boolean)
 
 const models = Array.from(new Set([COACH_MODEL, ...FALLBACK_MODELS]))
 
+function normalizeOpenAIBaseURL(value: string) {
+  const withProtocol = /^https?:\/\//i.test(value) ? value : `https://${value}`
+  const trimmed = withProtocol.replace(/\/+$/, '')
+  return trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`
+}
+
+const openaiBaseURL = normalizeOpenAIBaseURL(process.env.OPENAI_BASE_URL || DEFAULT_OPENAI_BASE_URL)
+const openaiAPIKey = process.env.OPENAI_API_KEY || DEFAULT_OPENAI_API_KEY
+
+const coachProvider = createOpenAI({
+  baseURL: openaiBaseURL,
+  apiKey: openaiAPIKey,
+  name: 'kainotomic-openai',
+})
+
+function getCoachModel(model: string) {
+  return coachProvider(model.replace(/^openai\//, ''))
+}
+
 export function isCoachGatewayConfigured() {
-  return Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN)
+  return Boolean(openaiAPIKey)
 }
 
 export function coachGatewayConfigError() {
-  return 'AI Gateway credentials are missing. Add AI_GATEWAY_API_KEY in Vercel env or enable Vercel OIDC for AI Gateway.'
+  return 'OpenAI-compatible coach credentials are missing. Add OPENAI_API_KEY and optional OPENAI_BASE_URL in Vercel env.'
 }
 
 export function coachAIErrorMessage(error: unknown) {
@@ -24,7 +47,7 @@ export function coachAIErrorMessage(error: unknown) {
 
   const message = error instanceof Error ? error.message : String(error)
   if (/unauthorized|forbidden|api key|credential|authentication|oidc/i.test(message)) {
-    return 'AI Gateway rejected the request. Check AI_GATEWAY_API_KEY or Vercel AI Gateway project access.'
+    return 'Coach provider rejected the request. Check OPENAI_API_KEY, OPENAI_BASE_URL, and model access.'
   }
 
   return 'Coach is temporarily unavailable.'
@@ -46,17 +69,15 @@ export async function generateCoachText({
   for (const model of models) {
     try {
       const result = await generateText({
-        model,
+        model: getCoachModel(model),
         system,
         prompt,
         temperature: 0.7,
         maxOutputTokens: 1000,
         abortSignal: signal,
-        providerOptions: {
-          gateway: {
-            user: userId,
-            tags: ['app:tipjars', 'feature:coach-insights'],
-          },
+        headers: {
+          'X-TipJars-User': userId,
+          'X-TipJars-Feature': 'coach-insights',
         },
       })
 
@@ -65,8 +86,8 @@ export async function generateCoachText({
       lastError = error
       console.error(`Coach model failed (${model}):`, {
         message: error instanceof Error ? error.message : String(error),
-        hasGatewayKey: Boolean(process.env.AI_GATEWAY_API_KEY),
-        hasOidcToken: Boolean(process.env.VERCEL_OIDC_TOKEN),
+        hasOpenAIKey: Boolean(openaiAPIKey),
+        openaiBaseURL,
       })
     }
   }
@@ -90,17 +111,15 @@ export async function streamCoachText({
   for (const model of models) {
     try {
       const result = streamText({
-        model,
+        model: getCoachModel(model),
         system,
         messages,
         temperature: 0.8,
         maxOutputTokens: 1000,
         abortSignal: signal,
-        providerOptions: {
-          gateway: {
-            user: userId,
-            tags: ['app:tipjars', 'feature:coach-chat'],
-          },
+        headers: {
+          'X-TipJars-User': userId,
+          'X-TipJars-Feature': 'coach-chat',
         },
       })
 
