@@ -7,6 +7,7 @@ import { useAuthContext } from '@/providers/AuthProvider'
 import { useSubscription } from '@/hooks/useSubscription'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 const ADMIN_EMAILS = ['apeltekci@gmail.com', 'vhugo9021@icloud.com']
 
@@ -95,6 +96,10 @@ export function DesktopSidebar() {
           </>
         )}
       </nav>
+
+      <div className="border-t px-3 py-3">
+        <ThemeToggle />
+      </div>
     </aside>
   )
 }

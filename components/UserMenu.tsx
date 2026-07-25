@@ -12,14 +12,24 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { LogOut, Settings } from 'lucide-react'
+import { LogOut, Moon, Settings, Sun } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { useTheme } from 'next-themes'
+import { useEffect, useState } from 'react'
 
 export function UserMenu() {
   const { user, signOut } = useAuthContext()
   const { profile } = useProfile(user?.id)
   const router = useRouter()
+  const { resolvedTheme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    queueMicrotask(() => setMounted(true))
+  }, [])
+
+  const isDark = mounted && resolvedTheme === 'dark'
 
   const handleSignOut = async () => {
     const { error } = await signOut()
@@ -54,6 +64,10 @@ export function UserMenu() {
         <DropdownMenuItem onClick={() => router.push('/settings')}>
           <Settings className="mr-2 h-4 w-4" />
           Settings
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme(isDark ? 'light' : 'dark')}>
+          {isDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+          {isDark ? 'Light mode' : 'Dark mode'}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />

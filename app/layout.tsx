@@ -4,6 +4,7 @@ import './globals.css'
 import { AuthProvider } from '@/providers/AuthProvider'
 import { Toaster } from '@/providers/Toaster'
 import { OfflineProvider } from '@/providers/OfflineProvider'
+import { ThemeProvider } from '@/providers/ThemeProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -29,17 +30,19 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
       <body className={inter.className}>
-        <AuthProvider>
-          <OfflineProvider>
-            {children}
-          </OfflineProvider>
-          <Toaster />
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <OfflineProvider>
+              {children}
+            </OfflineProvider>
+            <Toaster />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
