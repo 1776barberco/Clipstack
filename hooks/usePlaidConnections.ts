@@ -57,6 +57,16 @@ export type PlaidTransaction = {
 
 const effectiveUserId = (userId?: string) => (DEMO_MODE ? DEMO_USER.id : userId)
 
+const PLAID_TRANSACTION_LOOKBACK_DAYS = 180
+const PLAID_TRANSACTION_LIMIT = 500
+const REVIEWABLE_STATUSES = ['needs_review', 'pending'] as const
+
+function plaidTransactionCutoffDate() {
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - PLAID_TRANSACTION_LOOKBACK_DAYS)
+  return cutoff.toISOString().slice(0, 10)
+}
+
 export function usePlaidConnections(userId?: string) {
   const [items, setItems] = useState<PlaidItem[]>([])
   const [accounts, setAccounts] = useState<PlaidAccount[]>([])
@@ -96,8 +106,9 @@ export function usePlaidConnections(userId?: string) {
         .from('plaid_transactions')
         .select('id,user_id,plaid_account_id,plaid_transaction_id,amount,iso_currency_code,date,authorized_date,name,merchant_name,primary_category,detailed_category,payment_channel,pending,transaction_type,review_status,matched_bucket_id,income_entry_id,expense_id,assignment_note,assigned_at,created_at,updated_at')
         .eq('user_id', uid)
+        .or(`review_status.in.(${REVIEWABLE_STATUSES.join(',')}),date.gte.${plaidTransactionCutoffDate()}`)
         .order('date', { ascending: false })
-        .limit(25),
+        .limit(PLAID_TRANSACTION_LIMIT),
     ])
 
     if (itemsResult.error || accountsResult.error || transactionsResult.error) {

@@ -143,7 +143,7 @@ export function PlaidTransactionReview({ userId, transactions, buckets, onAssign
             No synced transactions need review right now. New income and expenses will land here first.
           </div>
         ) : (
-          needsReview.slice(0, 10).map((transaction) => {
+          needsReview.map((transaction) => {
             const isIncome = transaction.transaction_type === 'income'
             const isExpense = transaction.transaction_type === 'expense' || transaction.primary_category === 'TRANSFER_OUT'
             const split = incomeSplits[transaction.id] ?? {}
