@@ -2,8 +2,6 @@ import { generateText, streamText, type ModelMessage } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 
 const DEFAULT_OPENAI_BASE_URL = 'https://openai.kainotomic.com/v1'
-const DEFAULT_OPENAI_API_KEY = 'change-me-to-a-strong-key'
-
 export const COACH_MODEL = (process.env.COACH_MODEL || 'gpt-5.4-mini').trim()
 
 const FALLBACK_MODELS = (process.env.COACH_FALLBACK_MODELS || '')
