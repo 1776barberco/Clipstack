@@ -1,161 +1,225 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, CheckCircle2 } from 'lucide-react'
+import {
+  ArrowRight,
+  Banknote,
+  MessageSquareText,
+  ShieldCheck,
+  Split,
+  Target,
+  WifiOff,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Footer } from '@/components/Footer'
 import { HeroAnimation } from '@/components/HeroAnimation'
+import { HeroCommand } from '@/components/HeroCommand'
+import { HeroProductPreview } from '@/components/HeroProductPreview'
 
 export const metadata: Metadata = {
-  title: 'TipJars — Smart Money Management for Barbers & Stylists',
-  description: 'Split your tips, track expenses, and build savings — all in one app built for beauty professionals.',
+  title: 'TipJars — Agentic money management for barbers & stylists',
+  description:
+    'Ask TipJars what to do with uneven income. Split tips, fund taxes and booth rent, and get coach-level decisions in seconds.',
   openGraph: {
-    title: 'TipJars — Smart Money Management for Barbers & Stylists',
-    description: 'Split your tips, track expenses, and build savings — all in one app built for beauty professionals.',
+    title: 'TipJars — Agentic money management for barbers & stylists',
+    description:
+      'Ask TipJars what to do with uneven income. Split tips, fund taxes and booth rent, and get coach-level decisions in seconds.',
     url: 'https://www.tipjars.co',
     siteName: 'TipJars',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'TipJars — Smart Money Management for Barbers & Stylists',
-    description: 'Split your tips, track expenses, and build savings — all in one app built for beauty professionals.',
+    title: 'TipJars — Agentic money management for barbers & stylists',
+    description:
+      'Ask TipJars what to do with uneven income. Split tips, fund taxes and booth rent, and get coach-level decisions in seconds.',
   },
 }
 
+const CAPABILITIES = [
+  {
+    icon: MessageSquareText,
+    title: 'Ask first, click second',
+    desc: 'Type a money question in plain English. TipJars answers with your real jars, not generic advice.',
+  },
+  {
+    icon: Split,
+    title: 'Instant income splits',
+    desc: 'Drop in today’s tips and watch taxes, booth rent, savings, and tools fill automatically.',
+  },
+  {
+    icon: Target,
+    title: 'Next best action',
+    desc: 'Every session ends with one clear move: what to fund, what to hold, what is safe to spend.',
+  },
+  {
+    icon: Banknote,
+    title: 'Built for uneven weeks',
+    desc: 'Chair days, slow Tuesdays, walk-in spikes. Stability score tracks the reality of your book.',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Read-only bank sync',
+    desc: 'Connect accounts for visibility without write access. Review activity, keep control.',
+  },
+  {
+    icon: WifiOff,
+    title: 'Offline between clients',
+    desc: 'Log income on the floor without Wi-Fi. Sync when you are back online.',
+  },
+]
+
+const STEPS = [
+  {
+    num: '01',
+    title: 'Connect your world',
+    desc: 'Add jars for taxes, booth rent, savings, and tools. Optional read-only bank sync.',
+  },
+  {
+    num: '02',
+    title: 'Talk to the coach',
+    desc: 'Ask what is safe to spend, how to split a payout, or whether rent is covered.',
+  },
+  {
+    num: '03',
+    title: 'Act with confidence',
+    desc: 'One recommended move, backed by your balances. Less spreadsheet, more booked-out calm.',
+  },
+]
+
+const PROOF = [
+  {
+    quote: 'I used to dread tax season. Now I just check my tax jar and I am good.',
+    name: 'Marcus T.',
+    role: 'Barber · Atlanta',
+  },
+  {
+    quote: 'Finally something that gets how we earn. Not every week is the same behind the chair.',
+    name: 'Jasmine R.',
+    role: 'Cosmetologist · Houston',
+  },
+  {
+    quote: 'Between booth rent and supplies, I never knew where my money went. Now I do.',
+    name: 'Priya M.',
+    role: 'Nail tech · Chicago',
+  },
+]
+
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    <div className="min-h-screen bg-[#fbfbfa] text-zinc-900">
       {/* Nav */}
-      <nav className="flex items-center justify-between px-6 sm:px-10 py-5 max-w-6xl mx-auto">
-        <Link href="/" className="flex items-center gap-2">
-          <Image src="/logo-icon.png" alt="TipJars" width={28} height={28} />
-          <span className="text-lg font-semibold tracking-tight">TipJars</span>
-        </Link>
-        <div className="flex items-center gap-6 text-sm">
-          <a href="#features" className="hidden sm:block text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
-            Features
-          </a>
-          <a href="#pricing" className="hidden sm:block text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
-            Pricing
-          </a>
-          <Link href="/blog" className="hidden sm:block text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
-            Blog
+      <header className="sticky top-0 z-40 border-b border-zinc-200/70 bg-[#fbfbfa]/80 backdrop-blur-xl">
+        <nav className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
+          <Link href="/" className="flex items-center gap-2.5">
+            <Image src="/logo-icon.png" alt="TipJars" width={28} height={28} />
+            <span className="text-[15px] font-semibold tracking-tight">TipJars</span>
           </Link>
-          <Link href="/login">
-            <Button className="bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 rounded-full px-5 h-9 text-sm">
-              Sign In
-            </Button>
-          </Link>
-        </div>
-      </nav>
-
-      {/* Hero */}
-      <section className="relative overflow-hidden px-6 pb-16 pt-16 text-center sm:pb-20 sm:pt-20">
-        <HeroAnimation />
-        <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center">
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/95 px-3 py-1.5 text-xs font-semibold text-zinc-600 shadow-sm backdrop-blur">
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-            Read-only bank sync, jar tracking, and AI coaching
-          </div>
-          <h1 className="mb-6 max-w-3xl text-5xl font-black leading-[1.02] tracking-tight text-zinc-950 text-balance sm:text-7xl">
-            Run your money like a booked-out business.
-          </h1>
-          <p className="mx-auto mb-10 max-w-2xl text-lg leading-8 text-zinc-600 text-pretty sm:text-xl">
-            TipJars turns uneven income into clear jars for taxes, bills, savings, and real life. Built for barbers, stylists, and independent pros who need decisions faster than spreadsheets.
-          </p>
-          <div className="flex flex-col justify-center gap-3 sm:flex-row">
+          <div className="flex items-center gap-5 text-sm">
+            <a href="#product" className="hidden text-zinc-500 transition hover:text-zinc-900 sm:block">
+              Product
+            </a>
+            <a href="#how" className="hidden text-zinc-500 transition hover:text-zinc-900 sm:block">
+              How it works
+            </a>
+            <a href="#pricing" className="hidden text-zinc-500 transition hover:text-zinc-900 sm:block">
+              Pricing
+            </a>
+            <Link href="/blog" className="hidden text-zinc-500 transition hover:text-zinc-900 sm:block">
+              Blog
+            </Link>
             <Link href="/login">
-              <Button className="h-12 rounded-full bg-zinc-950 px-8 text-base text-white hover:bg-zinc-800">
-                Get Started
-                <ArrowRight className="ml-2 h-4 w-4" />
+              <Button className="h-9 rounded-full bg-zinc-950 px-4 text-sm text-white hover:bg-zinc-800">
+                Sign in
               </Button>
             </Link>
-            <a href="#features">
-              <Button variant="outline" className="h-12 rounded-full border-zinc-300 bg-white/90 px-8 text-base text-zinc-700 backdrop-blur hover:bg-white">
-                See How It Works
-              </Button>
-            </a>
           </div>
-          <div className="mt-10 grid w-full max-w-2xl gap-2 text-xs text-zinc-500 sm:grid-cols-3 sm:text-sm">
-            {['Split tips automatically', 'Review bank activity', 'Know what is safe to spend'].map((item) => (
-              <div key={item} className="rounded-2xl border border-zinc-200 bg-white/90 px-3 py-2 text-center font-medium shadow-sm backdrop-blur">
-                {item}
-              </div>
-            ))}
+        </nav>
+      </header>
+
+      {/* Hero */}
+      <section className="relative overflow-hidden px-5 pb-16 pt-14 sm:px-8 sm:pb-24 sm:pt-20">
+        <HeroAnimation />
+        <div className="relative z-10 mx-auto max-w-6xl">
+          <div className="mx-auto max-w-3xl text-center">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/90 px-3 py-1.5 text-xs font-medium text-zinc-600 shadow-sm">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              Agentic money OS for beauty pros
+            </div>
+            <h1 className="text-balance text-5xl font-semibold tracking-[-0.04em] text-zinc-950 sm:text-6xl lg:text-7xl">
+              Your money has a coach now.
+            </h1>
+            <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-8 text-zinc-500 sm:text-xl">
+              TipJars turns uneven tip income into clear jars, safe-to-spend answers, and one next action —
+              built for barbers, stylists, and independents who do not live in spreadsheets.
+            </p>
           </div>
 
-          {/* In-flow product mock — cannot collide with absolute decorations */}
-          <div className="relative z-10 mt-12 w-full max-w-sm rounded-3xl border border-zinc-200 bg-white p-5 text-left shadow-2xl shadow-zinc-900/10">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">Total in jars</p>
-                <p className="text-3xl font-black tracking-tight text-zinc-950">$6,118.49</p>
-              </div>
-              <div className="rounded-full border border-zinc-200 px-2 py-1 text-[11px] font-semibold text-zinc-600">
-                Live
-              </div>
-            </div>
-            <div className="space-y-2">
-              {[
-                ['Essentials', '40%', 'bg-blue-500'],
-                ['Taxes', '25%', 'bg-red-500'],
-                ['Savings', '15%', 'bg-emerald-500'],
-              ].map(([name, pct, color]) => (
-                <div key={name} className="grid grid-cols-[6rem_1fr_2.5rem] items-center gap-2 text-xs">
-                  <span className="truncate font-semibold text-zinc-800">{name}</span>
-                  <span className="h-2 overflow-hidden rounded-full bg-zinc-100">
-                    <span className={`block h-full rounded-full ${color}`} style={{ width: pct }} />
+          <div className="mt-10">
+            <HeroCommand />
+          </div>
+
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-sm text-zinc-500">
+            <span className="rounded-full border border-zinc-200 bg-white px-3 py-1.5">Read-only bank sync</span>
+            <span className="rounded-full border border-zinc-200 bg-white px-3 py-1.5">Tax + booth rent jars</span>
+            <span className="rounded-full border border-zinc-200 bg-white px-3 py-1.5">AI coach included</span>
+          </div>
+
+          <div id="product" className="mt-16 sm:mt-20">
+            <HeroProductPreview />
+          </div>
+        </div>
+      </section>
+
+      {/* Capabilities */}
+      <section className="border-t border-zinc-200/80 px-5 py-20 sm:px-8 sm:py-28">
+        <div className="mx-auto max-w-6xl">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400">Why TipJars</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 sm:text-4xl">
+              Agent-first. Industry-native. Zero clutter.
+            </h2>
+            <p className="mt-4 text-base leading-7 text-zinc-500 sm:text-lg">
+              Most finance apps show charts. TipJars answers the only question that matters after a long day:
+              what should I do with this money right now?
+            </p>
+          </div>
+
+          <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {CAPABILITIES.map((item) => {
+              const Icon = item.icon
+              return (
+                <div
+                  key={item.title}
+                  className="rounded-3xl border border-zinc-200/80 bg-white p-6 shadow-[0_1px_2px_rgba(15,15,15,0.03)]"
+                >
+                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-950 text-white">
+                    <Icon className="h-4 w-4" />
                   </span>
-                  <span className="text-right font-semibold text-zinc-500">{pct}</span>
+                  <h3 className="mt-5 text-base font-semibold text-zinc-950">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-zinc-500">{item.desc}</p>
                 </div>
-              ))}
-            </div>
+              )
+            })}
           </div>
         </div>
       </section>
 
       {/* How it works */}
-      <section className="px-6 py-24 border-t border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-16 tracking-tight">How it works</h2>
-          <div className="grid sm:grid-cols-3 gap-0">
-            {[
-              { num: '1', title: 'Sign up', desc: 'Create your free account in thirty seconds.' },
-              { num: '2', title: 'Set your jars', desc: 'Choose how to split your income. We suggest a starting point.' },
-              { num: '3', title: 'Track everything', desc: 'Log what you earn. Every dollar flows to the right place.' },
-            ].map((step, i) => (
-              <div key={step.num} className={`text-center px-8 py-4 ${
-                i < 2 ? 'sm:border-r sm:border-zinc-200 sm:dark:border-zinc-800' : ''
-              }`}>
-                <div className="text-3xl font-bold text-zinc-300 dark:text-zinc-700 mb-3">{step.num}</div>
-                <h3 className="font-semibold mb-2">{step.title}</h3>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">{step.desc}</p>
-              </div>
-            ))}
+      <section id="how" className="border-t border-zinc-200/80 bg-white px-5 py-20 sm:px-8 sm:py-28">
+        <div className="mx-auto max-w-6xl">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400">How it works</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 sm:text-4xl">
+              Three moves. Booked-out calm.
+            </h2>
           </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section id="features" className="px-6 py-24 border-t border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-16 tracking-tight">Built for how you actually work</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-10">
-            {[
-              { title: 'Income splitting', desc: 'Split every dollar automatically across your jars.' },
-              { title: 'Tax jar', desc: 'Set aside taxes as you earn. No more April surprises.' },
-              { title: 'Rent tracking', desc: 'Track booth rent, chair rent, station rent, and business expenses in one place.' },
-              { title: 'Stability score', desc: 'See how consistent your income is, week over week.' },
-              { title: 'Offline mode', desc: 'Log income between clients, even without Wi-Fi.' },
-              { title: 'Simple setup', desc: 'No accounting degree required. Up and running in minutes.' },
-            ].map((feature) => (
-              <div key={feature.title}>
-                <h3 className="font-semibold mb-1.5 flex items-center gap-2">
-                  <span className="text-zinc-300 dark:text-zinc-600">&mdash;</span>
-                  {feature.title}
-                </h3>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed pl-5">{feature.desc}</p>
+          <div className="mt-14 grid gap-6 lg:grid-cols-3">
+            {STEPS.map((step) => (
+              <div key={step.num} className="rounded-3xl border border-zinc-200 bg-[#fbfbfa] p-7">
+                <p className="font-mono text-sm font-medium text-zinc-400">{step.num}</p>
+                <h3 className="mt-4 text-xl font-semibold tracking-tight text-zinc-950">{step.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-zinc-500">{step.desc}</p>
               </div>
             ))}
           </div>
@@ -163,43 +227,50 @@ export default function HomePage() {
       </section>
 
       {/* Social proof */}
-      <section className="px-6 py-24 border-t border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-16 tracking-tight">Trusted by beauty and grooming professionals</h2>
-          <div className="grid sm:grid-cols-3 gap-8">
-            {[
-              { quote: 'I used to dread tax season. Now I just check my tax jar and I\'m good.', name: 'Marcus T.', city: 'Atlanta, Barber' },
-              { quote: 'Finally something that gets how we earn. Not every week is the same when you\'re behind the chair.', name: 'Jasmine R.', city: 'Houston, Cosmetologist' },
-              { quote: 'Between booth rent and supplies, I never knew where my money went. Now I do.', name: 'Priya M.', city: 'Chicago, Nail Tech' },
-            ].map((t) => (
-              <div key={t.name} className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-6">
-                <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed mb-4">&ldquo;{t.quote}&rdquo;</p>
-                <p className="text-sm font-medium">{t.name}</p>
-                <p className="text-xs text-zinc-400">{t.city}</p>
-              </div>
+      <section className="border-t border-zinc-200/80 px-5 py-20 sm:px-8 sm:py-28">
+        <div className="mx-auto max-w-6xl">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400">Proof</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 sm:text-4xl">
+              Built for people who get paid irregularly.
+            </h2>
+          </div>
+          <div className="mt-14 grid gap-5 md:grid-cols-3">
+            {PROOF.map((item) => (
+              <figure key={item.name} className="rounded-3xl border border-zinc-200 bg-white p-6">
+                <blockquote className="text-sm leading-7 text-zinc-700">“{item.quote}”</blockquote>
+                <figcaption className="mt-6">
+                  <p className="text-sm font-semibold text-zinc-950">{item.name}</p>
+                  <p className="text-xs text-zinc-400">{item.role}</p>
+                </figcaption>
+              </figure>
             ))}
           </div>
         </div>
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="px-6 py-24 border-t border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-3 tracking-tight">Simple pricing</h2>
-          <p className="text-zinc-500 dark:text-zinc-400 text-center mb-12 max-w-lg mx-auto">
-            Start free. Upgrade when you&apos;re ready for personalized coaching.
-          </p>
+      <section id="pricing" className="border-t border-zinc-200/80 bg-white px-5 py-20 sm:px-8 sm:py-28">
+        <div className="mx-auto max-w-5xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400">Pricing</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 sm:text-4xl">
+              Start free. Upgrade when the coach earns it.
+            </h2>
+            <p className="mt-4 text-base text-zinc-500">
+              No lock-in. Built so the free tier already feels premium.
+            </p>
+          </div>
 
-          <div className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
-            {/* Free Tier */}
-            <div className="border border-zinc-200 dark:border-zinc-800 rounded-2xl p-8">
-              <h3 className="font-bold text-lg mb-1">Free</h3>
-              <p className="text-zinc-500 dark:text-zinc-400 text-sm mb-6">Everything you need to get organized.</p>
-              <div className="mb-6">
-                <span className="text-4xl font-bold">$0</span>
-                <span className="text-zinc-400 text-sm"> / forever</span>
+          <div className="mt-14 grid gap-5 md:grid-cols-2">
+            <div className="rounded-3xl border border-zinc-200 bg-[#fbfbfa] p-8">
+              <p className="text-sm font-semibold text-zinc-950">Free</p>
+              <p className="mt-1 text-sm text-zinc-500">Everything to get organized.</p>
+              <div className="mt-6 flex items-end gap-1">
+                <span className="text-5xl font-semibold tracking-tight">$0</span>
+                <span className="pb-1 text-sm text-zinc-400">/ forever</span>
               </div>
-              <ul className="text-sm text-zinc-600 dark:text-zinc-300 space-y-3 mb-8">
+              <ul className="mt-8 space-y-3 text-sm text-zinc-600">
                 {[
                   'Unlimited income tracking',
                   'Custom jar splits',
@@ -209,72 +280,83 @@ export default function HomePage() {
                   'Offline mode',
                   '2 AI insights per refresh',
                 ].map((item) => (
-                  <li key={item} className="flex items-center gap-3">
-                    <span className="text-green-500 text-xs">✓</span>
+                  <li key={item} className="flex gap-3">
+                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
                     {item}
                   </li>
                 ))}
               </ul>
-              <Link href="/login">
-                <Button variant="outline" className="w-full rounded-full h-11 border-zinc-300 dark:border-zinc-700">
-                  Get Started
+              <Link href="/login" className="mt-8 block">
+                <Button variant="outline" className="h-11 w-full rounded-full border-zinc-300">
+                  Get started
                 </Button>
               </Link>
             </div>
 
-            {/* AI Coach Pro Tier */}
-            <div className="relative border-2 border-primary rounded-2xl p-8 bg-gradient-to-b from-primary/5 to-transparent">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
-                  Most Popular
-                </span>
+            <div className="relative rounded-3xl border border-zinc-950 bg-zinc-950 p-8 text-white shadow-[0_20px_60px_rgba(15,15,15,0.18)]">
+              <span className="absolute -top-3 left-8 rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-zinc-950">
+                Most popular
+              </span>
+              <p className="text-sm font-semibold">AI Coach Pro</p>
+              <p className="mt-1 text-sm text-zinc-400">Your personal financial operator.</p>
+              <div className="mt-6 flex items-end gap-1">
+                <span className="text-5xl font-semibold tracking-tight">$9.99</span>
+                <span className="pb-1 text-sm text-zinc-500">/ month</span>
               </div>
-              <h3 className="font-bold text-lg mb-1">AI Coach Pro</h3>
-              <p className="text-zinc-500 dark:text-zinc-400 text-sm mb-6">Your personal financial coach.</p>
-              <div className="mb-6">
-                <span className="text-4xl font-bold">$9.99</span>
-                <span className="text-zinc-400 text-sm"> / month</span>
-              </div>
-              <ul className="text-sm text-zinc-600 dark:text-zinc-300 space-y-3 mb-8">
+              <ul className="mt-8 space-y-3 text-sm text-zinc-300">
                 {[
                   'Everything in Free',
                   'Unlimited AI insights',
                   '1-on-1 AI Coach chat',
-                  'Choose your coach personality',
+                  'Coach personality control',
                   'Personalized savings goals',
                   'Spending habit analysis',
                   'Seasonal income forecasts',
                   'Priority support',
                 ].map((item) => (
-                  <li key={item} className="flex items-center gap-3">
-                    <span className="text-primary text-xs">✓</span>
+                  <li key={item} className="flex gap-3">
+                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
                     {item}
                   </li>
                 ))}
               </ul>
-              <Link href="/login">
-                <Button className="w-full rounded-full h-11 bg-primary hover:bg-primary/90">
-                  Start 7-Day Free Trial
+              <Link href="/login" className="mt-8 block">
+                <Button className="h-11 w-full rounded-full bg-white text-zinc-950 hover:bg-zinc-100">
+                  Start 7-day free trial
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <p className="text-[11px] text-zinc-400 text-center mt-3">Cancel anytime. No commitment.</p>
+              <p className="mt-3 text-center text-[11px] text-zinc-500">Cancel anytime. No commitment.</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Final CTA */}
-      <section className="px-6 py-28 text-center border-t border-zinc-200 dark:border-zinc-800">
-        <h2 className="text-3xl sm:text-4xl font-bold mb-4 tracking-tight">Ready to take control?</h2>
-        <p className="text-zinc-500 dark:text-zinc-400 mb-8">Start organizing your money in minutes.</p>
-        <Link href="/login">
-          <Button className="bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 rounded-full px-8 h-12 text-base">
-            Get Started
-          </Button>
-        </Link>
+      <section className="border-t border-zinc-200/80 px-5 py-24 sm:px-8">
+        <div className="mx-auto max-w-4xl rounded-[2rem] border border-zinc-200 bg-white px-8 py-14 text-center shadow-[0_1px_2px_rgba(15,15,15,0.03),0_30px_60px_rgba(15,15,15,0.06)] sm:px-16">
+          <h2 className="text-3xl font-semibold tracking-tight text-zinc-950 sm:text-4xl">
+            Stop guessing after every tip day.
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-zinc-500">
+            Open TipJars, ask one question, and leave with a funded plan for taxes, rent, and real life.
+          </p>
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link href="/login">
+              <Button className="h-12 rounded-full bg-zinc-950 px-8 text-base text-white hover:bg-zinc-800">
+                Start free
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <a href="#product">
+              <Button variant="outline" className="h-12 rounded-full border-zinc-300 px-8 text-base">
+                See the product
+              </Button>
+            </a>
+          </div>
+        </div>
       </section>
 
-      {/* Footer */}
       <Footer />
     </div>
   )
