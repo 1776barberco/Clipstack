@@ -133,7 +133,7 @@ Generate coaching insights as JSON with keys: weekly_recap (title, body), jar_re
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ prompt, userId }),
+        body: JSON.stringify({ prompt }),
       })
 
       if (!res.ok) {

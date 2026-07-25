@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 import { coachAIErrorMessage, coachGatewayConfigError, generateCoachText, isCoachGatewayConfigured } from '@/lib/coach-ai'
 
 export const dynamic = 'force-dynamic'
@@ -6,15 +7,18 @@ export const maxDuration = 30
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { prompt, userId } = body
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!prompt) {
-      return NextResponse.json({ error: 'No prompt provided' }, { status: 400 })
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    if (!userId) {
-      return NextResponse.json({ error: 'No user provided' }, { status: 400 })
+    const body = await request.json()
+    const { prompt } = body
+
+    if (typeof prompt !== 'string' || !prompt.trim()) {
+      return NextResponse.json({ error: 'No prompt provided' }, { status: 400 })
     }
 
     if (!isCoachGatewayConfigured()) {
@@ -24,7 +28,7 @@ export async function POST(request: NextRequest) {
     const { text, model } = await generateCoachText({
       system: 'You are a financial coach for barbers and stylists. Return only valid JSON.',
       prompt,
-      userId,
+      userId: user.id,
       signal: request.signal,
     })
 

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { isAdminEmail } from '@/lib/admin'
-import { coachAIErrorMessage, coachGatewayConfigError, generateCoachText, isCoachGatewayConfigured } from '@/lib/coach-ai'
+import { coachAIErrorMessage, coachGatewayConfigError, isCoachGatewayConfigured, streamCoachText } from '@/lib/coach-ai'
 import type { ModelMessage } from 'ai'
 
 export const dynamic = 'force-dynamic'
@@ -134,14 +134,13 @@ export async function POST(request: NextRequest) {
       return new Response(JSON.stringify({ error: 'No message provided' }), { status: 400 })
     }
 
-    const { text } = await generateCoachText({
+    const { textStream, model } = await streamCoachText({
       system: systemMessage,
-      prompt: apiMessages.map((message) => `${message.role}: ${message.content}`).join('\n\n'),
+      messages: apiMessages,
       userId: user.id,
       signal: request.signal,
     })
 
-    // Save user message to DB
     const lastUserMessage = messages[messages.length - 1]
     if (lastUserMessage?.role === 'user') {
       await supabase.from('coach_messages').insert({
@@ -156,23 +155,31 @@ export async function POST(request: NextRequest) {
 
     const stream = new ReadableStream({
       async start(controller) {
-        try {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: text })}\n\n`))
-          controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+        let fullText = ''
 
-          if (text) {
+        try {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ model })}\n\n`))
+
+          for await (const chunk of textStream) {
+            if (!chunk) continue
+            fullText += chunk
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: chunk })}\n\n`))
+          }
+
+          if (fullText) {
             await supabase.from('coach_messages').insert({
               user_id: user.id,
               role: 'assistant',
-              content: text,
+              content: fullText,
               tone,
             })
           }
+
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'))
         } catch (err) {
           console.error('Coach chat save/stream error:', err)
-          if (text) {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: text })}\n\n`))
-          }
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: coachAIErrorMessage(err) })}\n\n`))
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'))
         } finally {
           controller.close()
         }
