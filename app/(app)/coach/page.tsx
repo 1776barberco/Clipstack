@@ -23,6 +23,7 @@ export default function CoachPage() {
   const [userName, setUserName] = useState<string | undefined>()
 
   const isSuccess = searchParams.get('success') === 'true'
+  const initialPrompt = searchParams.get('q') ?? undefined
 
   // Load user's preferred tone
   useEffect(() => {
@@ -89,7 +90,7 @@ export default function CoachPage() {
         )}
 
         <div className="flex-1 overflow-hidden lg:pl-0">
-          <CoachChat tone={tone} userName={userName} />
+          <CoachChat tone={tone} userName={userName} initialPrompt={initialPrompt} />
         </div>
 
       </div>

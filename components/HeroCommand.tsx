@@ -15,10 +15,14 @@ export function HeroCommand() {
   const router = useRouter()
   const [value, setValue] = useState('')
 
+  function openCoach(prompt: string) {
+    const q = prompt.trim()
+    router.push(q ? `/login?next=${encodeURIComponent(`/coach?q=${encodeURIComponent(q)}`)}` : '/login')
+  }
+
   function submit(event: FormEvent) {
     event.preventDefault()
-    const q = value.trim()
-    router.push(q ? `/login?next=${encodeURIComponent(`/coach?q=${encodeURIComponent(q)}`)}` : '/login')
+    openCoach(value)
   }
 
   return (
@@ -51,7 +55,7 @@ export function HeroCommand() {
             <button
               key={prompt}
               type="button"
-              onClick={() => setValue(prompt)}
+              onClick={() => openCoach(prompt)}
               className="shrink-0 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:border-zinc-300 hover:bg-white hover:text-zinc-900"
             >
               {prompt}

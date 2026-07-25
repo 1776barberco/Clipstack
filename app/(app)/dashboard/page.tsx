@@ -124,7 +124,7 @@ export default function DashboardPage() {
               </div>
 
               <Link
-                href="/coach"
+                href="/coach?q=What%20should%20I%20do%20with%20my%20money%20today%3F"
                 className="group flex min-h-16 items-center gap-3 rounded-[1.5rem] border border-zinc-200 bg-[#fbfbfa] p-3 shadow-inner transition hover:border-zinc-300 hover:bg-white"
               >
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-zinc-950 text-white">
@@ -144,7 +144,7 @@ export default function DashboardPage() {
               <div className="flex flex-wrap gap-2">
                 {coachPrompts.map((prompt) => (
                   <Button key={prompt} asChild variant="outline" className="h-9 rounded-full border-zinc-200 bg-white text-zinc-600">
-                    <Link href="/coach">{prompt}</Link>
+                    <Link href={`/coach?q=${encodeURIComponent(prompt)}`}>{prompt}</Link>
                   </Button>
                 ))}
               </div>

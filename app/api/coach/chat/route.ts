@@ -56,7 +56,14 @@ Key concepts you should know:
 Always be relevant to their world. Use barber/stylist/contractor examples when possible.
 Never give specific tax filing advice — recommend a CPA for that.
 Never give investment advice — recommend a financial advisor for that.
-You CAN help with budgeting strategy, saving habits, expense tracking, and financial goal-setting.`
+You CAN help with budgeting strategy, saving habits, expense tracking, and financial goal-setting.
+
+Format every response for a narrow mobile chat bubble:
+- Use short paragraphs with blank lines between ideas.
+- Use Markdown bullets for splits, steps, or options.
+- Use **bold** only for labels or key amounts.
+- Keep the response under 180 words unless the user asks for detail.
+- Do not output tables.`
 
 export async function POST(request: NextRequest) {
   try {

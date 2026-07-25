@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Send, Loader2, Brain, User } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 
 interface Message {
   id: string
@@ -24,14 +25,16 @@ const COACH_FALLBACK_MESSAGE = "Coach is having trouble responding right now. Tr
 interface CoachChatProps {
   tone: string
   userName?: string
+  initialPrompt?: string
 }
 
-export function CoachChat({ tone, userName }: CoachChatProps) {
+export function CoachChat({ tone, userName, initialPrompt }: CoachChatProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const initialPromptSentRef = useRef(false)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -41,7 +44,7 @@ export function CoachChat({ tone, userName }: CoachChatProps) {
     scrollToBottom()
   }, [messages])
 
-  const sendMessage = async (content: string) => {
+  const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || loading) return
 
     const userMessage: Message = {
@@ -134,7 +137,15 @@ export function CoachChat({ tone, userName }: CoachChatProps) {
       setLoading(false)
       inputRef.current?.focus()
     }
-  }
+  }, [loading, messages, tone])
+
+  useEffect(() => {
+    const prompt = initialPrompt?.trim()
+    if (!prompt || initialPromptSentRef.current || loading) return
+
+    initialPromptSentRef.current = true
+    sendMessage(prompt)
+  }, [initialPrompt, loading, sendMessage])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -187,7 +198,23 @@ export function CoachChat({ tone, userName }: CoachChatProps) {
                     : 'bg-muted rounded-bl-md'
                 }`}
               >
-                {message.content || (
+                {message.content ? (
+                  message.role === 'assistant' ? (
+                    <ReactMarkdown
+                      components={{
+                        p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                        ul: ({ children }) => <ul className="my-2 list-disc space-y-1 pl-5">{children}</ul>,
+                        ol: ({ children }) => <ol className="my-2 list-decimal space-y-1 pl-5">{children}</ol>,
+                        li: ({ children }) => <li className="pl-0.5">{children}</li>,
+                        strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                  ) : (
+                    message.content
+                  )
+                ) : (
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-3 w-3 animate-spin" />
                     <span className="text-xs text-muted-foreground">Thinking...</span>
