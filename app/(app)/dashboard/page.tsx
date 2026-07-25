@@ -1,15 +1,12 @@
 import { BankTotalCard } from '@/components/BankTotalCard'
-import { BucketBalances } from '@/components/BucketBalances'
 import { DailyMomentumCard } from '@/components/DailyMomentumCard'
 import { DailyReminderNudge } from '@/components/DailyReminderNudge'
 import { DashboardOnboardingTour } from '@/components/DashboardOnboardingTour'
 import { DashboardWelcomeModal } from '@/components/DashboardWelcomeModal'
-import { EveningStreakReminder } from '@/components/EveningStreakReminder'
 import { Footer } from '@/components/Footer'
 import { JarSnapshot } from '@/components/JarSnapshot'
 import { MilestoneToast } from '@/components/MilestoneToast'
 import { PlaidJarMovementCard } from '@/components/PlaidJarMovementCard'
-import { QuickExpenseEntry } from '@/components/QuickExpenseEntry'
 import { QuickIncomeEntry } from '@/components/QuickIncomeEntry'
 import { StreakCelebration } from '@/components/StreakCelebration'
 import { StreakProtectedToast } from '@/components/StreakProtectedToast'
@@ -22,13 +19,11 @@ import {
   ArrowRight,
   BarChart3,
   Brain,
-  CheckCircle2,
   Inbox,
   ListChecks,
   PiggyBank,
   Search,
   Settings,
-  Sparkles,
   WalletCards,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -66,12 +61,6 @@ const nextSteps = [
   },
 ]
 
-const systemChecks = [
-  'Tips split into jars',
-  'Booth rent stays visible',
-  'Coach keeps the next move clear',
-]
-
 export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#fbfbfa] text-zinc-950">
@@ -101,77 +90,53 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl space-y-5 px-4 py-5 pb-24 sm:px-6 lg:pb-8">
+      <main className="mx-auto max-w-7xl space-y-6 px-4 py-5 pb-24 sm:px-6 lg:pb-8">
         <MilestoneToast />
         <StreakCelebration />
         <StreakProtectedToast />
 
-        <section className="overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-[0_24px_80px_rgba(15,15,15,0.06)]">
-          <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_390px]">
-            <div className="space-y-7 p-5 sm:p-7 lg:p-8">
-              <div className="max-w-3xl">
-                <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-[#fbfbfa] px-3 py-1.5 text-xs font-medium text-zinc-600">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  Agentic money OS active
-                </div>
-                <h2 className="text-balance text-4xl font-semibold tracking-[-0.04em] text-zinc-950 sm:text-5xl lg:text-6xl">
-                  Ask first. Move money second.
-                </h2>
-                <p className="mt-5 max-w-2xl text-pretty text-base leading-7 text-zinc-500 sm:text-lg">
-                  Your dashboard should not feel like accounting homework. Start with the coach, confirm the next move,
-                  then let TipJars keep taxes, booth rent, savings, and tools in line.
-                </p>
+        <section className="rounded-[2rem] border border-zinc-200 bg-white shadow-[0_12px_40px_rgba(15,15,15,0.04)]">
+          <div className="space-y-5 p-5 sm:p-7 lg:p-8">
+            <div className="max-w-3xl">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-[#fbfbfa] px-3 py-1.5 text-xs font-medium text-zinc-600">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                Agentic money OS active
               </div>
-
-              <Link
-                href="/coach?q=What%20should%20I%20do%20with%20my%20money%20today%3F"
-                className="group flex min-h-16 items-center gap-3 rounded-[1.5rem] border border-zinc-200 bg-[#fbfbfa] p-3 shadow-inner transition hover:border-zinc-300 hover:bg-white"
-              >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-zinc-950 text-white">
-                  <Search className="h-4 w-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-400">Ask TipJars</p>
-                  <p className="truncate text-sm font-medium text-zinc-800 sm:text-base">
-                    What should I do with my money today?
-                  </p>
-                </div>
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 transition group-hover:translate-x-0.5 group-hover:text-zinc-950">
-                  <ArrowRight className="h-4 w-4" />
-                </span>
-              </Link>
-
-              <div className="flex flex-wrap gap-2">
-                {coachPrompts.map((prompt) => (
-                  <Button key={prompt} asChild variant="outline" className="h-9 rounded-full border-zinc-200 bg-white text-zinc-600">
-                    <Link href={`/coach?q=${encodeURIComponent(prompt)}`}>{prompt}</Link>
-                  </Button>
-                ))}
-              </div>
+              <h2 className="text-balance text-3xl font-semibold tracking-[-0.035em] text-zinc-950 sm:text-4xl lg:text-5xl">
+                Ask first. Move money second.
+              </h2>
+              <p className="mt-4 max-w-2xl text-pretty text-base leading-7 text-zinc-500">
+                Start with one money question, then review only the details that need action.
+              </p>
             </div>
 
-            <div className="border-t border-zinc-200 bg-zinc-950 p-5 text-white sm:p-7 lg:border-l lg:border-t-0">
-              <div className="flex h-full flex-col justify-between gap-8">
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-medium text-zinc-300">
-                    <Sparkles className="h-4 w-4 text-emerald-300" />
-                    Coach readout
-                  </div>
-                  <p className="mt-5 text-3xl font-semibold tracking-tight">One calm money move at a time.</p>
-                  <p className="mt-3 text-sm leading-6 text-zinc-400">
-                    The old dashboard showed everything at once. This version prioritizes the decision loop: ask,
-                    review, split, repeat.
-                  </p>
-                </div>
-                <div className="space-y-3">
-                  {systemChecks.map((check) => (
-                    <div key={check} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-zinc-200">
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-300" />
-                      {check}
-                    </div>
-                  ))}
-                </div>
+            <Link
+              href="/coach?q=What%20should%20I%20do%20with%20my%20money%20today%3F"
+              className="group flex min-h-16 items-center gap-3 rounded-[1.5rem] border border-zinc-200 bg-[#fbfbfa] p-3 transition hover:border-zinc-300 hover:bg-white"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-zinc-950 text-white">
+                <Search className="h-4 w-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-400">Ask TipJars</p>
+                <p className="truncate text-sm font-medium text-zinc-800 sm:text-base">
+                  What should I do with my money today?
+                </p>
               </div>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 transition group-hover:translate-x-0.5 group-hover:text-zinc-950">
+                <ArrowRight className="h-4 w-4" />
+              </span>
+            </Link>
+
+            <div className="flex flex-wrap gap-2">
+              {coachPrompts.slice(0, 2).map((prompt) => (
+                <Button key={prompt} asChild variant="outline" className="h-9 rounded-full border-zinc-200 bg-white text-zinc-600">
+                  <Link href={`/coach?q=${encodeURIComponent(prompt)}`}>{prompt}</Link>
+                </Button>
+              ))}
+              <Button asChild variant="ghost" className="h-9 rounded-full text-zinc-500">
+                <Link href="/coach">More coach prompts</Link>
+              </Button>
             </div>
           </div>
         </section>
@@ -199,8 +164,8 @@ export default function DashboardPage() {
               <JarSnapshot />
             </section>
 
-            <section className="hidden lg:block" id="tour-buckets">
-              <BucketBalances />
+            <section className="hidden lg:block">
+              <JarSnapshot />
             </section>
           </div>
 
@@ -209,10 +174,10 @@ export default function DashboardPage() {
               <CardContent className="space-y-4 p-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-400">Next best actions</p>
-                  <p className="mt-1 text-sm text-zinc-500">Four places to go when the coach needs proof or action.</p>
+                  <p className="mt-1 text-sm text-zinc-500">Keep only the next couple moves visible.</p>
                 </div>
                 <div className="grid gap-2">
-                  {nextSteps.map((item) => (
+                  {nextSteps.slice(0, 2).map((item) => (
                     <Button key={item.href} asChild variant="ghost" className="h-auto justify-start rounded-2xl border border-zinc-200 bg-[#fbfbfa] p-3 text-left hover:bg-white">
                       <Link href={item.href} className="flex w-full items-start gap-3">
                         <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-zinc-700 shadow-sm">
@@ -231,8 +196,6 @@ export default function DashboardPage() {
             </Card>
 
             <QuickIncomeEntry />
-            <QuickExpenseEntry />
-            <EveningStreakReminder />
 
             <Button asChild variant="outline" className="h-11 w-full rounded-full border-zinc-200 bg-white lg:hidden">
               <Link href="/insights">
