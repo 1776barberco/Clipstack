@@ -19,8 +19,8 @@ function normalizeOpenAIBaseURL(value: string) {
   return trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`
 }
 
-const openaiBaseURL = normalizeOpenAIBaseURL(process.env.OPENAI_BASE_URL || DEFAULT_OPENAI_BASE_URL)
-const openaiAPIKey = process.env.OPENAI_API_KEY || DEFAULT_OPENAI_API_KEY
+const openaiBaseURL = normalizeOpenAIBaseURL(process.env.OPENAI_BASE_URL || process.env.OPENAI_API_BASE_URL || DEFAULT_OPENAI_BASE_URL)
+const openaiAPIKey = process.env.OPENAI_API_KEY
 
 const coachProvider = createOpenAI({
   baseURL: openaiBaseURL,
