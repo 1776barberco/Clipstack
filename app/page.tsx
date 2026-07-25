@@ -51,10 +51,10 @@ export default function HomePage() {
       </nav>
 
       {/* Hero */}
-      <section className="relative min-h-[calc(100svh-5rem)] overflow-hidden px-6 py-24 text-center sm:py-28">
+      <section className="relative min-h-[calc(100svh-5rem)] overflow-hidden px-6 pb-36 pt-20 text-center sm:pb-44 sm:pt-24">
         <HeroAnimation />
-        <div className="relative z-10 mx-auto flex min-h-[calc(100svh-13rem)] max-w-4xl flex-col items-center justify-center">
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/90 px-3 py-1.5 text-xs font-semibold text-zinc-600 shadow-sm backdrop-blur">
+        <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center justify-start pt-6 sm:pt-10">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/95 px-3 py-1.5 text-xs font-semibold text-zinc-600 shadow-sm backdrop-blur">
             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
             Read-only bank sync, jar tracking, and AI coaching
           </div>
@@ -72,18 +72,20 @@ export default function HomePage() {
               </Button>
             </Link>
             <a href="#features">
-              <Button variant="outline" className="h-12 rounded-full border-zinc-300 bg-white/80 px-8 text-base text-zinc-700 backdrop-blur hover:bg-white">
+              <Button variant="outline" className="h-12 rounded-full border-zinc-300 bg-white/90 px-8 text-base text-zinc-700 backdrop-blur hover:bg-white">
                 See How It Works
               </Button>
             </a>
           </div>
           <div className="mt-10 grid w-full max-w-2xl gap-2 text-xs text-zinc-500 sm:grid-cols-3 sm:text-sm">
             {['Split tips automatically', 'Review bank activity', 'Know what is safe to spend'].map((item) => (
-              <div key={item} className="rounded-2xl border border-zinc-200 bg-white/80 px-3 py-2 text-center font-medium shadow-sm backdrop-blur">
+              <div key={item} className="rounded-2xl border border-zinc-200 bg-white/90 px-3 py-2 text-center font-medium shadow-sm backdrop-blur">
                 {item}
               </div>
             ))}
           </div>
+          {/* Spacer so the decorative product mock below has room without overlapping copy */}
+          <div className="mt-10 hidden h-44 w-full sm:block" aria-hidden="true" />
         </div>
       </section>
 
