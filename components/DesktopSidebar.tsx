@@ -38,14 +38,14 @@ export function DesktopSidebar() {
   return (
     <aside className="hidden lg:flex lg:flex-col lg:w-56 lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 border-r bg-background/95 backdrop-blur">
       {/* Logo */}
-      <div className="flex items-center gap-2 h-16 px-5 border-b">
+      <div className="flex items-center gap-2 px-5 pb-4 pt-5">
         <span className="text-xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
           TipJars
         </span>
       </div>
 
       {/* Nav items */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="flex-1 px-3 pb-4 space-y-1">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
           const Icon = item.icon
