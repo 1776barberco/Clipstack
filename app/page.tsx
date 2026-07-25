@@ -51,9 +51,9 @@ export default function HomePage() {
       </nav>
 
       {/* Hero */}
-      <section className="relative min-h-[calc(100svh-5rem)] overflow-hidden px-6 pb-36 pt-20 text-center sm:pb-44 sm:pt-24">
+      <section className="relative overflow-hidden px-6 pb-16 pt-16 text-center sm:pb-20 sm:pt-20">
         <HeroAnimation />
-        <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center justify-start pt-6 sm:pt-10">
+        <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/95 px-3 py-1.5 text-xs font-semibold text-zinc-600 shadow-sm backdrop-blur">
             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
             Read-only bank sync, jar tracking, and AI coaching
@@ -84,8 +84,34 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-          {/* Spacer so the decorative product mock below has room without overlapping copy */}
-          <div className="mt-10 hidden h-44 w-full sm:block" aria-hidden="true" />
+
+          {/* In-flow product mock — cannot collide with absolute decorations */}
+          <div className="relative z-10 mt-12 w-full max-w-sm rounded-3xl border border-zinc-200 bg-white p-5 text-left shadow-2xl shadow-zinc-900/10">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">Total in jars</p>
+                <p className="text-3xl font-black tracking-tight text-zinc-950">$6,118.49</p>
+              </div>
+              <div className="rounded-full border border-zinc-200 px-2 py-1 text-[11px] font-semibold text-zinc-600">
+                Live
+              </div>
+            </div>
+            <div className="space-y-2">
+              {[
+                ['Essentials', '40%', 'bg-blue-500'],
+                ['Taxes', '25%', 'bg-red-500'],
+                ['Savings', '15%', 'bg-emerald-500'],
+              ].map(([name, pct, color]) => (
+                <div key={name} className="grid grid-cols-[6rem_1fr_2.5rem] items-center gap-2 text-xs">
+                  <span className="truncate font-semibold text-zinc-800">{name}</span>
+                  <span className="h-2 overflow-hidden rounded-full bg-zinc-100">
+                    <span className={`block h-full rounded-full ${color}`} style={{ width: pct }} />
+                  </span>
+                  <span className="text-right font-semibold text-zinc-500">{pct}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
