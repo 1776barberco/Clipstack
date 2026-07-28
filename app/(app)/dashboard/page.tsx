@@ -63,20 +63,20 @@ const nextSteps = [
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen bg-[#fbfbfa] text-zinc-950">
-      <header className="sticky top-0 z-50 border-b border-zinc-200/70 bg-[#fbfbfa]/85 backdrop-blur-xl">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link href="/dashboard" className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-2xl bg-zinc-950 text-white shadow-sm">
+            <span className="flex h-8 w-8 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
               <WalletCards className="h-4 w-4" />
             </span>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-400">Today</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Today</p>
               <h1 className="text-sm font-semibold tracking-tight sm:text-base">TipJars Command</h1>
             </div>
           </Link>
           <div className="flex items-center gap-3">
-            <Button asChild variant="ghost" className="hidden h-9 rounded-full text-zinc-600 hover:text-zinc-950 sm:inline-flex">
+            <Button asChild variant="ghost" className="hidden h-9 rounded-full text-muted-foreground hover:text-foreground sm:inline-flex">
               <Link href="/settings">
                 <Settings className="h-4 w-4" />
                 Settings
@@ -95,46 +95,46 @@ export default function DashboardPage() {
         <StreakCelebration />
         <StreakProtectedToast />
 
-        <section className="rounded-[2rem] border border-zinc-200 bg-white shadow-[0_12px_40px_rgba(15,15,15,0.04)]">
+        <section className="rounded-[2rem] border border-border bg-card text-card-foreground shadow-[0_12px_40px_rgba(15,15,15,0.04)] dark:shadow-none">
           <div className="space-y-5 p-5 sm:p-7 lg:p-8">
             <div className="max-w-3xl">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-[#fbfbfa] px-3 py-1.5 text-xs font-medium text-zinc-600">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 Agentic money OS active
               </div>
-              <h2 className="text-balance text-3xl font-semibold tracking-[-0.035em] text-zinc-950 sm:text-4xl lg:text-5xl">
+              <h2 className="text-balance text-3xl font-semibold tracking-[-0.035em] text-foreground sm:text-4xl lg:text-5xl">
                 Ask first. Move money second.
               </h2>
-              <p className="mt-4 max-w-2xl text-pretty text-base leading-7 text-zinc-500">
+              <p className="mt-4 max-w-2xl text-pretty text-base leading-7 text-muted-foreground">
                 Start with one money question, then review only the details that need action.
               </p>
             </div>
 
             <Link
               href="/coach?q=What%20should%20I%20do%20with%20my%20money%20today%3F"
-              className="group flex min-h-16 items-center gap-3 rounded-[1.5rem] border border-zinc-200 bg-[#fbfbfa] p-3 transition hover:border-zinc-300 hover:bg-white"
+              className="group flex min-h-16 items-center gap-3 rounded-[1.5rem] border border-border bg-muted p-3 transition hover:border-ring hover:bg-accent"
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-zinc-950 text-white">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
                 <Search className="h-4 w-4" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-400">Ask TipJars</p>
-                <p className="truncate text-sm font-medium text-zinc-800 sm:text-base">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Ask TipJars</p>
+                <p className="truncate text-sm font-medium text-foreground sm:text-base">
                   What should I do with my money today?
                 </p>
               </div>
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 transition group-hover:translate-x-0.5 group-hover:text-zinc-950">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-foreground">
                 <ArrowRight className="h-4 w-4" />
               </span>
             </Link>
 
             <div className="flex flex-wrap gap-2">
               {coachPrompts.slice(0, 2).map((prompt) => (
-                <Button key={prompt} asChild variant="outline" className="h-9 rounded-full border-zinc-200 bg-white text-zinc-600">
+                <Button key={prompt} asChild variant="outline" className="h-9 rounded-full border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground">
                   <Link href={`/coach?q=${encodeURIComponent(prompt)}`}>{prompt}</Link>
                 </Button>
               ))}
-              <Button asChild variant="ghost" className="h-9 rounded-full text-zinc-500">
+              <Button asChild variant="ghost" className="h-9 rounded-full text-muted-foreground">
                 <Link href="/coach">More coach prompts</Link>
               </Button>
             </div>
@@ -170,24 +170,24 @@ export default function DashboardPage() {
           </div>
 
           <aside className="min-w-0 space-y-4 lg:sticky lg:top-24 lg:max-h-[calc(100svh-7rem)] lg:overflow-y-auto lg:pr-1">
-            <Card className="border-zinc-200 bg-white shadow-[0_1px_2px_rgba(15,15,15,0.03)]">
+            <Card className="border-border bg-card text-card-foreground shadow-[0_1px_2px_rgba(15,15,15,0.03)] dark:shadow-none">
               <CardContent className="space-y-4 p-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-400">Next best actions</p>
-                  <p className="mt-1 text-sm text-zinc-500">Keep only the next couple moves visible.</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Next best actions</p>
+                  <p className="mt-1 text-sm text-muted-foreground">Keep only the next couple moves visible.</p>
                 </div>
                 <div className="grid gap-2">
                   {nextSteps.slice(0, 2).map((item) => (
-                    <Button key={item.href} asChild variant="ghost" className="h-auto justify-start rounded-2xl border border-zinc-200 bg-[#fbfbfa] p-3 text-left hover:bg-white">
+                    <Button key={item.href} asChild variant="ghost" className="h-auto justify-start rounded-2xl border border-border bg-muted p-3 text-left hover:bg-accent">
                       <Link href={item.href} className="flex w-full items-start gap-3">
-                        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-zinc-700 shadow-sm">
+                        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-card text-card-foreground shadow-sm dark:shadow-none">
                           <item.icon className="h-4 w-4" />
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-semibold text-zinc-950">{item.label}</span>
-                          <span className="mt-0.5 block whitespace-normal text-xs leading-5 text-zinc-500">{item.detail}</span>
+                          <span className="block text-sm font-semibold text-foreground">{item.label}</span>
+                          <span className="mt-0.5 block whitespace-normal text-xs leading-5 text-muted-foreground">{item.detail}</span>
                         </span>
-                        <ArrowRight className="mt-2 h-4 w-4 shrink-0 text-zinc-400" />
+                        <ArrowRight className="mt-2 h-4 w-4 shrink-0 text-muted-foreground" />
                       </Link>
                     </Button>
                   ))}
@@ -197,7 +197,7 @@ export default function DashboardPage() {
 
             <QuickIncomeEntry />
 
-            <Button asChild variant="outline" className="h-11 w-full rounded-full border-zinc-200 bg-white lg:hidden">
+            <Button asChild variant="outline" className="h-11 w-full rounded-full border-border bg-card lg:hidden">
               <Link href="/insights">
                 <BarChart3 className="h-4 w-4" />
                 Open insights

@@ -30,11 +30,11 @@ export function DailyMomentumCard() {
   }, [balances])
 
   return (
-    <Card className="overflow-hidden border-zinc-200 bg-white shadow-[0_1px_2px_rgba(15,15,15,0.03)]">
+    <Card className="overflow-hidden border-border bg-card text-card-foreground shadow-[0_1px_2px_rgba(15,15,15,0.03)] dark:shadow-none">
       <CardContent className="p-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="min-w-0">
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-[#fbfbfa] px-3 py-1 text-xs font-medium text-zinc-600">
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
               <Sparkles className="h-3.5 w-3.5" />
               Daily Momentum
             </div>
@@ -47,7 +47,7 @@ export function DailyMomentumCard() {
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:min-w-[360px]">
-            <div className="rounded-2xl border border-zinc-200 bg-[#fbfbfa] p-3">
+            <div className="rounded-2xl border border-border bg-muted p-3">
               <div className="mb-1 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
                 <TrendingUp className="h-3.5 w-3.5" />
                 Streak
@@ -55,7 +55,7 @@ export function DailyMomentumCard() {
               <p className="text-xl font-bold">{currentStreak} day{currentStreak === 1 ? '' : 's'}</p>
             </div>
 
-            <div className="rounded-2xl border border-zinc-200 bg-[#fbfbfa] p-3">
+            <div className="rounded-2xl border border-border bg-muted p-3">
               <div className="mb-1 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
                 <Target className="h-3.5 w-3.5" />
                 Today
@@ -63,7 +63,7 @@ export function DailyMomentumCard() {
               <p className="text-xl font-bold">{formatCurrency(todayIncome)}</p>
             </div>
 
-            <div className="rounded-2xl border border-zinc-200 bg-[#fbfbfa] p-3">
+            <div className="rounded-2xl border border-border bg-muted p-3">
               <div className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">Top Jar</div>
               <p className="truncate text-sm font-semibold">
                 {strongestJar?.bucket_name || 'No jars yet'}
